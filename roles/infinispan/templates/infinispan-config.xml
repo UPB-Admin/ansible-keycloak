@@ -77,8 +77,8 @@
       <stack name="xsite" extends="udp">
          <relay.RELAY2 site="{{ cluster_name }}" max_site_masters="1000"/>
          <remote-sites default-stack="global-cluster">
-{% for server in node_clusters %}
-            <remote-site name="{{ server }}"/>
+{% for cluster in node_clusters %}
+            <remote-site name="{{ cluster }}"/>
 {% endfor %}
          </remote-sites>
       </stack>
@@ -91,8 +91,8 @@
       <replicated-cache-configuration name="sessions-cfg" mode="{{ infinispan_backup_strategy }}">
          <locking acquire-timeout="0" />
          <backups>
-{% for server in (node_clusters | difference(cluster_name)) %}
-            <backup site="{{ server }}" strategy="{{ infinispan_backup_strategy }}" timeout="{{ infinispan_backup_timeout }}">
+{% for cluster in (node_clusters | difference(cluster_name)) %}
+            <backup site="{{ cluster }}" strategy="{{ infinispan_backup_strategy }}" timeout="{{ infinispan_backup_timeout }}">
                <take-offline after-failures="{{ infinispan_backup_failures_till_offline }}" min-wait="{{ infinispan_backup_wait_till_offline }}"/>
             </backup>
 {% endfor %}
