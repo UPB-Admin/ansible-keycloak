@@ -1,0 +1,118 @@
+<!--
+     This file is managed by ansible. Manual overrides may be overwritten
+-->
+
+<!-- Based on the default configuration ${ISPN_HOME}/server/conf/infinispan.xml -->
+
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:12.1 https://infinispan.org/schemas/infinispan-config-12.1.xsd
+                            urn:infinispan:server:12.1 https://infinispan.org/schemas/infinispan-server-12.1.xsd"
+        xmlns="urn:infinispan:config:12.1"
+        xmlns:server="urn:infinispan:server:12.1">
+
+   <cache-container name="default" statistics="true">
+      <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
+      <security>
+         <authorization/>
+      </security>
+   </cache-container>
+
+   <server xmlns="urn:infinispan:server:12.1">
+      <interfaces>
+         <interface name="public">
+            <inet-address value="${infinispan.bind.address:{{ interfaces_internal_ip }}}"/>
+         </interface>
+      </interfaces>
+
+      <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+         <socket-binding name="default" port="${infinispan.bind.port:{{ infinispan_hotrod_port }}}"/>
+      </socket-bindings>
+
+      <security>
+         <credential-stores>
+            <credential-store name="credentials" path="credentials.pfx">
+               <clear-text-credential clear-text="secret"/>
+            </credential-store>
+         </credential-stores>
+         <security-realms>
+            <security-realm name="default">
+               <server-identities>
+                  <ssl>
+                     <!-- Configure the use of a keystore for SSL communication -->
+                     <keystore path="server.jks"
+                        relative-to="infinispan.server.config.path"
+                        keystore-password="{{ vault.infinispan.keystore.pass }}"
+                        alias="{{ infinispan_keystore_cert_alias }}"/>
+                  </ssl>
+               </server-identities>
+               <properties-realm groups-attribute="Roles">
+                  <user-properties path="users.properties"/>
+                  <group-properties path="groups.properties"/>
+               </properties-realm>
+            </security-realm>
+         </security-realms>
+      </security>
+
+      <!-- Configure the use of the hotrod connector -->
+      <endpoints socket-binding="default" security-realm="default">
+         <hotrod-connector name="hotrod">
+            <authentication>
+               <sasl mechanisms="SCRAM-SHA-512" server-name="infinispan" />
+            </authentication>
+         </hotrod-connector>
+         <rest-connector name="rest"/>
+      </endpoints>
+   </server>
+
+   <jgroups>
+      <!-- Create a cluster of hosts with all members listening on a specific port
+           The MPING protocol is replaced with TCPPING -->
+      <stack name="global-cluster" extends="tcp">
+         <TCPPING initial_hosts="{{ infinispan_tcpping_server_list }}" stack.combine="REPLACE" stack.position="MPING"/>
+      </stack>
+
+      <!-- Add a cross-site replication jgroup using RELAY2. The group
+           allows a maximum of 1000 master nodes per site -->
+      <stack name="xsite" extends="udp">
+         <relay.RELAY2 site="{{ cluster_name }}" max_site_masters="1000"/>
+         <remote-sites default-stack="global-cluster">
+{% for server in node_clusters %}
+            <remote-site name="{{ server }}"/>
+{% endfor %}
+         </remote-sites>
+      </stack>
+   </jgroups>
+
+   <!-- Configure the clustering transport to use the xsite stack -->
+   <cache-container name="default" statistics="true">
+      <transport cluster="${infinispan.cluster.name:cluster}" stack="xsite"/>
+
+      <replicated-cache-configuration name="sessions-cfg" mode="{{ infinispan_backup_strategy }}">
+         <locking acquire-timeout="0" />
+         <backups>
+{% for server in (node_clusters | difference(cluster_name)) %}
+            <backup site="{{ server }}" strategy="{{ infinispan_backup_strategy }}" timeout="{{ infinispan_backup_timeout }}">
+               <take-offline after-failures="{{ infinispan_backup_failures_till_offline }}" min-wait="{{ infinispan_backup_wait_till_offline }}"/>
+            </backup>
+{% endfor %}
+         </backups>
+         <encoding>
+            <key media-type="application/x-jboss-marshalling"/>
+            <value media-type="application/x-jboss-marshalling"/>
+         </encoding>
+         <persistence>
+            <rocksdb-store xmlns="urn:infinispan:config:store:rocksdb:12.1" path="rocksdb/keycloak/data" shared="false" preload="true" fetch-state="true" segmented="false">
+               <expiration path="rocksdb/keycloak/expired"/>
+            </rocksdb-store>
+         </persistence>
+      </replicated-cache-configuration>
+
+{% for cache_name, _ in infinispan_caches.items() %}
+      <replicated-cache name="{{ cache_name }}" configuration="sessions-cfg"/>
+{% endfor %}
+   </cache-container>
+</infinispan>
+
+<!-- vi: ft=xml expandtab sw=3 sts=3 ts=3
+-->

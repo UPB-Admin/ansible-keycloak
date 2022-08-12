@@ -1,0 +1,6 @@
+- name: restart load balancer
+  become: yes
+  systemd:
+    name: "{{ load_balancer_service }}"
+    state: restarted
+    enabled: yes

@@ -1,0 +1,2 @@
+- name: restart database
+  include_tasks: "restart_database_{{ 'cluster' if database_create_galera_cluster else 'single' }}.yml"

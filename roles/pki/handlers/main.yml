@@ -1,0 +1,3 @@
+- name: pki changed
+  set_fact:
+    pki_changed: True

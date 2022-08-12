@@ -1,0 +1,14 @@
+- name: restart infinispan
+  become: yes
+  systemd:
+    name: infinispan
+    state: restarted
+    enabled: yes
+  listen: restart java service
+
+- name: register infinispan restarted
+  set_fact:
+    infinispan_restarted: True
+  listen:
+    - restart infinispan
+    - restart java service

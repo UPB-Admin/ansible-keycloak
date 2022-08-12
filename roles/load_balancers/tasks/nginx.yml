@@ -1,0 +1,127 @@
+- name: Install nginx
+  become: yes
+  block:
+    - name: Add nginx repository file
+      copy:
+        src: nginx/nginx.repo
+        dest: /etc/yum.repos.d/nginx.repo
+        mode: 0644
+        owner: root
+        group: root
+
+    - name: Install nginx and dependencies
+      package:
+        name:
+          - nginx
+        state: latest
+
+
+- name: Set file permissions for nginx directories
+  become: yes
+  block:
+    - name: Create nginx directories if they do not exist
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        recurse: yes
+        mode: "{{ item.mode | default('u=rX,g-rwx,o-rwx') }}"
+        owner: root
+        group: root
+        seuser: system_u
+        setype: "{{ item.setype }}"
+      with_items: "{{ nginx_dirs }}"
+      loop_control:
+        label: "{{ item.disp_name }} directory => selinux type {{ item.setype }}"
+
+    - name: Allow only root to access main nginx configs directory
+      file:
+        path: "{{ nginx_root_dir }}"
+        state: directory
+        recurse: yes
+        mode: u=rX,g-rwx,o-rwx
+        owner: root
+        group: root
+        seuser: system_u
+        setype: httpd_config_t
+
+
+- name: Add nginx configuration files
+  become: yes
+  block:
+    - name: Set main nginx.conf configuration file
+      template:
+        src: nginx/nginx.conf
+        dest: /etc/nginx/nginx.conf
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: httpd_config_t
+      notify: restart load balancer
+
+    - name: Add SSL configuration snippet
+      template:
+        src: nginx/snippets.d/ssl.conf
+        dest: "{{ nginx_snippets_dir }}/ssl.conf"
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: httpd_config_t
+      notify: restart load balancer
+
+    - name: Modify settings for nginx service
+      template:
+        src: nginx/limits.conf
+        dest: "{{ nginx_systemd_override_file }}"
+        mode: 0644
+        owner: root
+        group: root
+        seuser: system_u
+        setype: systemd_unit_file_t
+      notify:
+        - systemd reload
+        - restart load balancer
+
+    - name: Add Keycloak proxy configuration snippet
+      template:
+        src: nginx/snippets.d/proxy.conf
+        dest: "{{ nginx_snippets_dir }}/proxy.conf"
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: httpd_config_t
+      notify: restart load balancer
+
+    - name: Add default nginx configuration file
+      template:
+        src: nginx/conf.d/default.conf
+        dest: "{{ nginx_conf_dir }}/default.conf"
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: httpd_config_t
+      notify: restart load balancer
+
+    - name: Add configuration file for keycloak reverse proxy
+      template:
+        src: nginx/conf.d/keycloak.conf
+        dest: "{{ nginx_conf_dir }}/keycloak.conf"
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: httpd_config_t
+      notify: restart load balancer
+
+
+- name: Set extra selinux parameters for nginx
+  become: yes
+  block:
+    - name: Allow nginx to connect to backend servers
+      seboolean:
+        name: httpd_can_network_relay
+        state: yes
+        persistent: yes

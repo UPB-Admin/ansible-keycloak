@@ -1,0 +1,25 @@
+- name: Exporter initial configuration
+  become: yes
+  block:
+    - name: Create prometheus exporter user
+      user:
+        name: "{{ prometheus_system_user }}"
+        comment: Prometheus exporter user
+        create_home: no
+        home: /
+        local: yes
+        password_lock: yes
+        shell: /sbin/nologin
+        state: present
+        system: yes
+
+
+- name: Install and configure {{ item }} exporter
+  include_tasks: "install_exporter.yml"
+  when:
+    - exporter.key in prometheus_exporters_to_install
+    - exporter.value.extra_cond | default(True)
+  with_dict: "{{ prometheus_exporters }}"
+  loop_control:
+    loop_var: exporter
+    label: "{{ exporter.key }}"

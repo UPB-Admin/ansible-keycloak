@@ -1,0 +1,71 @@
+- name: Run prerequisite tasks (if any)
+  include_tasks: "{{ exporter.value.prereq_tasks }}"
+  when: exporter.value.prereq_tasks is defined
+
+- become: yes
+  block:
+    - name: Check if {{ exporter.key }} exporter directory exists
+      stat:
+        path: "{{ exporter.value.install_dir }}"
+      register: prometheus_exporter_dir_stat
+
+    - name: Download and extract {{ exporter.key }} exporter if it does not exist
+      when: not prometheus_exporter_dir_stat.stat.exists
+      block:
+      - name: Create {{ exporter.key }} exporter directory if it does not exist
+        file:
+          path: "{{ exporter.value.install_dir }}"
+          state: directory
+          mode: 0555
+          owner: root
+          group: root
+
+      - name: Download {{ exporter.key }} exporter archive
+        get_url:
+          url: "{{ exporter.value.archive }}"
+          dest: "{{ exporter.value.tmp_file }}"
+          http_agent: wget
+          checksum: "{{ exporter.value.checksum }}"
+          owner: root
+          group: root
+          mode: 0400
+
+      - name: Unarchive {{ exporter.key }} exporter archive
+        unarchive:
+          src: "{{ exporter.value.tmp_file }}"
+          dest: "{{ exporter.value.install_dir }}"
+          extra_opts: [ "--strip-components=1" ]
+          remote_src: yes
+          owner: root
+          group: root
+
+      - name: Set file permissions on {{ exporter.key }} exporter files
+        file:
+          path: "{{ exporter.value.install_dir }}"
+          state: directory
+          mode: u=rX,g=rX,o=rX
+          owner: root
+          group: root
+          recurse: yes
+
+    # Rules below are not part of the block above
+    - name: Configure {{ exporter.key }} exporter service
+      template:
+        src: "{{ exporter.key }}_exporter.service"
+        dest: "{{ systemd_service_dir }}/{{ exporter.key }}_exporter.service"
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - systemd reload
+        - restart {{ exporter.key }} exporter
+
+    - name: Open firewall port for {{ exporter.key }} exporter
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ item }}' port port='{{ exporter.value.port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{  prometheus_servers }}"

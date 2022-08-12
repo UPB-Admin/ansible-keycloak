@@ -1,0 +1,47 @@
+- hosts: all
+  tags: always
+  tasks:
+    - name: Include vault file (with passwords and other secrets) for all hosts
+      include_vars:
+        file: group_vars/vault
+
+- hosts: all
+  tags: common
+  roles:
+    - role: common
+      public: yes
+    - role: pki
+      public: yes
+
+- hosts: load_balancers
+  tags: load_balancers
+  roles:
+    - load_balancers
+
+- hosts: database
+  tags: database
+  roles:
+    - database
+
+- hosts: infinispan
+  tags: infinispan
+  roles:
+    - infinispan
+
+- hosts: keycloak
+  tags: keycloak
+  roles:
+    - keycloak
+
+- hosts: ldap
+  tags: ldap
+  roles:
+    - ldap
+
+- hosts: all
+  tags: prometheus_export
+  tasks:
+    - name: Include prometheus exporter role
+      include_role:
+        name: prometheus_export
+      when: prometheus_monitor

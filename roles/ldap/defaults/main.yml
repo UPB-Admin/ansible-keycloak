@@ -1,0 +1,33 @@
+ldap_ds_template_path: /root/ds-template.inf
+ldap_dsrc_path: /root/.dsrc
+
+ldap_instance_name: keycloak_ldap               # the LDAP instance name
+
+ldap_instance_config_dir: "/etc/dirsrv/slapd-{{ ldap_instance_name }}"
+ldap_instance_dse_file: "{{ ldap_instance_config_dir }}/dse.ldif"
+
+ldap_listen_port: 389                             # server port for non-secure connections
+ldap_secure_listen_port: 636                      # server port for secure connections
+
+ldap_use_self_sign_cert: "True"                   # whether to create a self-signed certificate. If false, a certificate must be specified otherwise
+ldap_self_sign_cert_validity_months: 60           # validity period of self-signed certificate, in months
+
+ldap_create_sample_entries: "no"                  # create sample entries in the LDAP database
+ldap_require_index: "no"                          # whether to refuse non-indexed database searches
+
+ldap_unix_socket: "/var/run/slapd-{{ ldap_instance_name }}.socket"
+ldap_server_uri: "ldapi://{{ ldap_unix_socket | regex_replace('/', '%2f') }}"
+
+
+# Get the index of the node in the cluster; use this as an unique identifier for the node
+ldap_node_index: "{{ lookup('ansible.utils.index_of', groups['ldap'], 'eq', inventory_hostname, wantlist=True) | first }}"
+ldap_unique_index: "{{ (cluster_number|int * 100) + ldap_node_index|int + 1 }}"
+
+ldap_root_suffix: "dc=test,dc=keycloak,dc=local"  # the suffix of entries in the database
+ldap_suffix_escaped: '{{ ldap_root_suffix | regex_replace("(\W)", "\\\1") }}' # Special characters need to be escaped with a '\' for replication parameters
+
+ldap_keycloak_user: "{{ vault.ldap.user.keycloak.dn_no_suffix }},{{ ldap_root_suffix }}"
+ldap_keycloak_user_aci: >-
+  (targetattr = "uid||cn||givenName||sn||displayName||mail||telephoneNumber||mobile||objectClass||employeeNumber")
+  (version 3.0; acl "Give {{ ldap_keycloak_user }} read-only access to people OU";
+  allow (search, read) userdn = "ldap:///{{ ldap_keycloak_user }}";)

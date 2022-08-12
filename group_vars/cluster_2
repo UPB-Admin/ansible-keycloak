@@ -1,0 +1,4 @@
+cluster_number: 2
+cluster_name: cluster_2
+
+# vim: ft=yaml

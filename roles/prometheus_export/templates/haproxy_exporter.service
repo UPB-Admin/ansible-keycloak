@@ -1,0 +1,10 @@
+[Unit]
+Description=HAProxy Exporter
+After=network-online.target
+
+[Service]
+User={{ prometheus_system_user }}
+ExecStart={{ prometheus_expoters.haproxy.install_dir }}/haproxy_exporter --haproxy.scrape-uri=unix:/run/haproxy/admin.sock
+
+[Install]
+WantedBy=default.target

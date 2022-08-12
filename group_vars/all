@@ -1,0 +1,109 @@
+keycloak_version: 15.1.1
+
+# Interfaces, available to the server
+# In case there is more than one interface, the correct internal/external interfaces should be set
+interfaces_internal_name: "{{ ansible_facts.default_ipv4.interface }}"
+interfaces_external_name: "{{ ansible_facts.default_ipv4.interface }}"
+
+interfaces_internal_ip: "{{ ansible_facts[interfaces_internal_name].ipv4.address }}"
+interfaces_external_ip: "{{ ansible_facts[interfaces_external_name].ipv4.address }}"
+
+# Names of firewall(d) zones
+# The DMZ zone is used only if more than one interface is present on the server
+firewalld_internal_zone: keycloak
+firewalld_dmz_zone: dmz
+firewalld_has_external: "{{ interfaces_internal_name != interfaces_external_name }}"
+firewalld_external_zone: "{{ firewalld_dmz_zone if firewalld_has_external else firewalld_internal_zone }}"
+
+# PKI file locations
+pki_root_dir: "/etc/pki/{{ pki_service_name }}"
+pki_private_dir: "{{ pki_root_dir }}/private"
+pki_trusted_dir: "{{ pki_root_dir }}/trusted"
+
+pki_certificate_key_path: "{{ pki_private_dir }}/server.key"
+pki_certificate_csr_path: "{{ pki_root_dir }}/server.csr"
+pki_certificate_crt_path: "{{ pki_root_dir }}/server.crt"
+pki_dhparams_path: "{{ pki_root_dir }}/dhparams.pem"
+
+# PKI parameters
+pki_country_name: XX
+pki_organization_name: Test-Organization
+pki_locality_name: Some-Locality
+
+pki_file_owner: root
+pki_file_group: root
+pki_dir_mode: "0510"
+pki_file_mode: "0440"
+pki_key_type: RSA
+pki_key_size: 4096
+
+pki_common_name: "{{ function_group }}"
+pki_subject_alt_names: "{{ [function_group] + groups[function_group] }}"
+
+# Variable used to keep track of whether PKI files have been updated
+pki_changed: False
+
+# Type of load balancer to use. Can be either nginx or HAProxy
+load_balancer_service: nginx
+
+# Ports Keycloak listens on. Must be the same between Keycloak (server) and the
+# load balancers (clients)
+keycloak_http_port: 8080
+keycloak_https_port: 8443
+
+# port 11222 is used by default for the hot rod protocol. Is common for
+# Infinispan (server) and Keycloak (client)
+infinispan_hotrod_port: 11222
+
+# User and database used for keycloak
+database_keycloak_database: keycloak
+database_keycloak_user: keycloak
+database_listen_port: 3306
+database_unix_socket: /var/lib/mysql/mysql.sock
+
+# Caches with their respective cache types (from keycloak's point of view;
+# infinispan creates all caches as replicated caches)
+infinispan_caches:
+  work: replicated
+  sessions: distributed
+  clientSessions: distributed
+  offlineSessions: distributed
+  offlineClientSessions: distributed
+  loginFailures: distributed
+  actionTokens: distributed
+  authenticationSessions: distributed
+
+# User used by keycloak to connect to the infinispan cluster
+infinispan_keycloak_user: keycloak
+
+# Function groups - group of nodes that perform operations
+function_groups:
+  database:
+    master: "{{ groups['database'][0] }}"
+  infinispan:
+    master: "{{ groups['infinispan'][0] }}"
+  keycloak:
+    master: "{{ groups['keycloak'][0] }}"
+  ldap:
+    master: "{{ groups['ldap'][0] }}"
+  load_balancers:
+    master: "{{ groups['load_balancers'][0] }}"
+
+# List of node clusters. They MUST be named "cluster_*" - e.g. "cluster_1", "cluster_2"
+node_clusters: "{{ groups | select('match', 'cluster_*') }}"
+
+# Array containing IPs of hosts that can access the admin console
+access_admin_allowed_sources: []
+
+# Dictionary containing IPs of hosts that can access realms' admin console
+# e.g., OIDC client service accounts.
+access_admin_realm_allowed_sources: {}
+
+# List of prometheus servers that can access the nodes
+prometheus_servers: []
+# Whether to monitor services using Prometheus
+prometheus_monitor: "{{ prometheus_servers | length > 0 }}"
+# Exporters to install on the nodes
+prometheus_exporters_to_install: [ "node" ]
+
+# vim: ft=yaml

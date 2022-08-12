@@ -1,0 +1,53 @@
+- become: yes
+  block:
+    - name: Grant exporter user access to database certificate parent directory
+      acl:
+        path: "{{ pki_root_dir }}"
+        entity: "{{ prometheus_system_user }}"
+        etype: user
+        permissions: x
+        state: present
+
+    - name: Grant exporter user read access to database certificate
+      acl:
+        path: "{{ pki_certificate_crt_path }}"
+        entity: "{{ prometheus_system_user }}"
+        etype: user
+        permissions: r
+        state: present
+
+    - name: Create database user {{ database_prometheus_user }}
+      community.mysql.mysql_user:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        name: "{{ database_prometheus_user }}"
+        host: "{{ inventory_hostname }}"
+        password: "{{ vault.database.user.exporter.pass }}"
+        update_password: always
+        state: present
+        resource_limits:
+          MAX_USER_CONNECTIONS: 3
+
+    - name: Grant permissions for {{ database_prometheus_user }} user on all databases
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "GRANT PROCESS, REPLICATION CLIENT, SLAVE MONITOR, SELECT ON *.* TO '{{ database_prometheus_user }}'@'{{ inventory_hostname }}';"
+
+    - name: Create database exporter configuration file with credentials
+      template:
+        src: mysqld_exporter.cnf
+        dest: "{{ exporter.value.conf_file }}"
+        mode: 0440
+        owner: root
+        group: "{{ prometheus_system_user }}"
+
+- name: Mark database exporter service for restart if the PKI files have changed
+  debug:
+    msg: "Notify restart of database exporter service"
+  when: pki_changed
+  changed_when: true
+  notify:
+    - restart database exporter

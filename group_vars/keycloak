@@ -1,0 +1,4 @@
+function_group: keycloak
+pki_service_name: keycloak
+
+# vim: ft=yaml

@@ -1,0 +1,10 @@
+[Unit]
+Description=Node Exporter
+After=network-online.target
+
+[Service]
+User={{ prometheus_system_user }}
+ExecStart={{ prometheus_exporters.node.install_dir }}/node_exporter
+
+[Install]
+WantedBy=default.target

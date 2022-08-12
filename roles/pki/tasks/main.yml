@@ -1,0 +1,100 @@
+- name: Create PKI file directories
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "{{ pki_dir_mode }}"
+    seuser: system_u
+    setype: cert_t
+  with_items:
+    - "{{ pki_root_dir }}"
+    - "{{ pki_private_dir }}"
+    - "{{ pki_trusted_dir }}"
+  notify: pki changed
+
+
+- name: Create PKI certificate files
+  become: yes
+  when: inventory_hostname == function_groups[function_group].master
+  block:
+    - name: Check if OpenSSL {{ pki_key_type }} private key exists
+      stat:
+        path: "{{ pki_certificate_key_path }}"
+      register: pki_private_key_stat
+
+    - name: Create OpenSSL {{ pki_key_type }} private key
+      openssl_privatekey:
+        path: "{{ pki_certificate_key_path }}"
+        type: "{{ pki_key_type }}"
+        size: "{{ pki_key_size }}"
+        mode: "{{ pki_file_mode }}"
+      notify: pki changed
+      when: not pki_private_key_stat.stat.exists
+
+    - name: Create certificate sign request
+      openssl_csr:
+        path: "{{ pki_certificate_csr_path }}"
+        privatekey_path: "{{ pki_certificate_key_path }}"
+        common_name: "{{ pki_common_name }}"
+        country_name: "{{ pki_country_name }}"
+        organization_name: "{{ pki_organization_name }}"
+        locality_name: "{{ pki_locality_name }}"
+        subject_alt_name: "{{ pki_subject_alt_names | map('regex_replace', '^', 'DNS:') | list }}"
+        mode: "{{ pki_file_mode }}"
+      notify: pki changed
+
+    - name: Check if certificate contains the correct subject alt names and common name
+      openssl_certificate_info:
+        path: "{{ pki_certificate_crt_path }}"
+      ignore_errors: True
+      register: pki_certificate_check
+
+    - name: Create OpenSSL certificate
+      openssl_certificate:
+        path: "{{ pki_certificate_crt_path }}"
+        privatekey_path: "{{ pki_certificate_key_path }}"
+        csr_path: "{{ pki_certificate_csr_path }}"
+        provider: selfsigned
+        mode: "{{ pki_file_mode }}"
+      when: >
+        pki_certificate_check.failed
+        or pki_certificate_check.subject.commonName | default('') != pki_common_name
+        or pki_certificate_check.subject_alt_name   | symmetric_difference(pki_subject_alt_names | map('regex_replace', '^', 'DNS:') | list)
+      notify: pki changed
+
+
+- name: Copy PKI certificate files from masters
+  include_tasks:
+    file: copy_ssl_files.yml
+    apply:
+      tags: always
+  with_items:
+    - path: "{{ pki_certificate_key_path }}"
+    - path: "{{ pki_certificate_csr_path }}"
+    - path: "{{ pki_certificate_crt_path }}"
+      fact_key: pki_certificate
+
+
+- name: Create Diffie-Helman parameters on first host and slurp contents
+  become: yes
+  run_once: yes
+  block:
+    - name: Create Diffie-Hellman parameters
+      openssl_dhparam:
+        path: "{{ pki_dhparams_path }}"
+        size: "{{ pki_key_size }}"
+        mode: "{{ pki_file_mode }}"
+      notify: pki changed
+
+    - name: Slurp Diffie-Hellman parameters
+      slurp:
+        src: "{{ pki_dhparams_path }}"
+      register: dhparams
+
+- name: Copy Diffie-Hellman parameters to all other servers
+  become: yes
+  copy:
+    content: "{{ dhparams['content'] | b64decode }}"
+    dest: "{{ pki_dhparams_path }}"
+    mode: "{{ pki_file_mode }}"
+  notify: pki changed

@@ -1,0 +1,6 @@
+function_group: infinispan
+pki_service_name: infinispan
+
+infinispan_restarted: False
+
+# vim: ft=yaml

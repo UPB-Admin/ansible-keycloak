@@ -1,0 +1,6 @@
+- name: Restart database service (single mode)
+  become: yes
+  systemd:
+    name: mariadb
+    state: restarted
+    enabled: yes

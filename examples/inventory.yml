@@ -1,0 +1,57 @@
+all:
+  children:
+    load_balancers:
+      hosts:
+        keycloak-load-balancer-1:
+
+    cluster_1:
+      children:
+        keycloak_1:
+          hosts:
+            keycloak-cluster-1-keycloak-1:
+            keycloak-cluster-1-keycloak-2:
+        database_1:
+          hosts:
+            keycloak-cluster-1-db:
+        infinispan_1:
+          hosts:
+            keycloak-cluster-1-infinispan:
+        ldap_1:
+          hosts:
+            keycloak-cluster-1-ldap:
+
+    cluster_2:
+      children:
+        keycloak_2:
+          hosts:
+            keycloak-cluster-2-keycloak-1:
+            keycloak-cluster-2-keycloak-2:
+        database_2:
+          hosts:
+            keycloak-cluster-2-db:
+        infinispan_2:
+          hosts:
+            keycloak-cluster-2-infinispan:
+        ldap_2:
+          hosts:
+            keycloak-cluster-2-ldap:
+
+    keycloak:
+      children:
+        keycloak_1:
+        keycloak_2:
+
+    database:
+      children:
+        database_1:
+        database_2:
+
+    infinispan:
+      children:
+        infinispan_1:
+        infinispan_2:
+
+    ldap:
+      children:
+        ldap_1:
+        ldap_2:

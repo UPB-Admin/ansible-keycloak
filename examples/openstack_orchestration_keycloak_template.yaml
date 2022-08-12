@@ -1,0 +1,338 @@
+heat_template_version: queens
+
+description: >
+    This template creates the topology needed to test and deploy Keycloak.
+    This topology will contain three networks: one for the load balancers and two identical clusters.
+    The load balancers's network contains one server.
+    A cluster contains: a database, an infinispan instance, a LDAP server and two keycloak instances.
+    All three networks are connected to the same router.
+
+parameters:
+    key_name:
+        type: string
+        description: Name of key that will be injected by cloud-init
+        default: default
+    image:
+        type: string
+        description: Name of image that will be used for creating the servers
+        default: Centos Stream 8
+    flavor:
+        type: string
+        description: Flavor to use for servers
+        default: m1.large
+    loadbalancer_network_name:
+        type: string
+        default: kc-loadbalancer-network
+    loadbalancer_subnet_name:
+        type: string
+        default: kc-loadbalancer-subnet
+    loadbalancer_subnet_ip_fmt:
+        type: string
+        default: "192.168.150.X"
+    cluster1_network_name:
+        type: string
+        default: kc-cluster1-network
+    cluster1_subnet_name:
+        type: string
+        default: kc-cluster1-subnet
+    cluster1_subnet_ip_fmt:
+        type: string
+        default: "192.168.151.X"
+    cluster2_network_name:
+        type: string
+        default: kc-cluster2-network
+    cluster2_subnet_name:
+        type: string
+        default: kc-cluster2-subnet
+    cluster2_subnet_ip_fmt:
+        type: string
+        default: "192.168.152.X"
+    router_name:
+        type: string
+        description: Name of the router
+        default: kc-router
+    dns_nameservers:
+        type: comma_delimited_list
+        description: DNS resolvers injected by cloud-init. Values are separated by commas
+        default: "1.1.1.1,8.8.8.8"
+    external_network:
+        type: string
+        description: Name of the network that will be used as link to the outside world (i.e., you will access the Keycloak networks from)
+
+resources:
+    loadbalancer_network:
+        type: OS::Neutron::Net
+        properties:
+            name: { get_param: loadbalancer_network_name }
+
+    loadbalancer_subnet:
+        type: OS::Neutron::Subnet
+        properties:
+            name: { get_param: loadbalancer_subnet_name }
+            network_id: { get_resource: loadbalancer_network }
+            cidr: { str_replace: { template: { get_param: loadbalancer_subnet_ip_fmt }, params: { X: "0/24" }}}
+            gateway_ip: { str_replace: { template: { get_param: loadbalancer_subnet_ip_fmt }, params: { X: "100" }}}
+            allocation_pools:
+                - start: { str_replace: { template: { get_param: loadbalancer_subnet_ip_fmt }, params: { X: "101" }}}
+                  end: { str_replace: { template: { get_param: loadbalancer_subnet_ip_fmt }, params: { X: "254" }}}
+            dns_nameservers: { get_param: dns_nameservers }
+
+    cluster1_network:
+        type: OS::Neutron::Net
+        properties:
+            name: { get_param: cluster1_network_name }
+
+    cluster1_subnet:
+        type: OS::Neutron::Subnet
+        properties:
+            name: { get_param: cluster1_subnet_name }
+            network_id: { get_resource: cluster1_network }
+            cidr: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "0/24" }}}
+            gateway_ip: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "100" }}}
+            allocation_pools:
+                - start: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "101" }}}
+                  end: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "254" }}}
+            dns_nameservers: { get_param: dns_nameservers }
+
+    cluster2_network:
+        type: OS::Neutron::Net
+        properties:
+            name: { get_param: cluster2_network_name }
+
+    cluster2_subnet:
+        type: OS::Neutron::Subnet
+        properties:
+            name: { get_param: cluster2_subnet_name }
+            network_id: { get_resource: cluster2_network }
+            cidr: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "0/24" }}}
+            gateway_ip: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "100" }}}
+            allocation_pools:
+                - start: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "101" }}}
+                  end: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "254" }}}
+            dns_nameservers: { get_param: dns_nameservers }
+
+    router:
+        type: OS::Neutron::Router
+        properties:
+            name: { get_param : router_name }
+            external_gateway_info:
+                network: { get_param: external_network }
+
+    router_interface_loadbalancer:
+        type: OS::Neutron::RouterInterface
+        properties:
+            router_id: { get_resource: router }
+            subnet_id: { get_resource: loadbalancer_subnet }
+
+    router_interface_cluster1:
+        type: OS::Neutron::RouterInterface
+        properties:
+            router_id: { get_resource: router }
+            subnet_id: { get_resource: cluster1_subnet }
+
+    router_interface_cluster2:
+        type: OS::Neutron::RouterInterface
+        properties:
+            router_id: { get_resource: router }
+            subnet_id: { get_resource: cluster2_subnet }
+
+    lb1_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: loadbalancer_network }
+            fixed_ips:
+                - subnet_id: { get_resource: loadbalancer_subnet }
+                  ip_address: { str_replace: { template: { get_param: loadbalancer_subnet_ip_fmt }, params: { X: "1" }}}
+
+    lb1:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-LB1
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: lb1_port }
+
+    c1_ldap_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster1_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster1_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "41" }}}
+
+    c1_ldap:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-LDAP1
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c1_ldap_port }
+
+    c1_infinispan_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster1_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster1_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "21" }}}
+
+    c1_infinispan:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-IS1
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c1_infinispan_port }
+
+    c1_db_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster1_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster1_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "31" }}}
+
+    c1_db:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-DB1
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c1_db_port }
+
+
+    c1_keycloak1_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster1_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster1_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "11" }}}
+
+    c1_keycloak1:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-KC11
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c1_keycloak1_port }
+
+
+    c1_keycloak2_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster1_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster1_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "12" }}}
+
+    c1_keycloak2:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-KC12
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c1_keycloak2_port }
+
+
+    c2_ldap_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster2_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster2_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "41" }}}
+
+    c2_ldap:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-LDAP2
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c2_ldap_port }
+
+    c2_infinispan_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster2_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster2_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "21" }}}
+
+    c2_infinispan:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-IS2
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c2_infinispan_port }
+
+    c2_db_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster2_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster2_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "31" }}}
+
+    c2_db:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-DB2
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c2_db_port }
+
+    c2_keycloak1_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster2_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster2_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "11" }}}
+
+    c2_keycloak1:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-KC21
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c2_keycloak1_port }
+
+    c2_keycloak2_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: cluster2_network }
+            fixed_ips:
+                - subnet_id: { get_resource: cluster2_subnet }
+                  ip_address: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "12" }}}
+
+    c2_keycloak2:
+        type: OS::Nova::Server
+        properties:
+          name: TEST-KC-KC22
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: key_name }
+          networks:
+            - port: { get_resource: c2_keycloak2_port }

@@ -1,0 +1,106 @@
+- name: Load balancer server initial configurations
+  become: yes
+  block:
+    - name: Set owner / group on PKI files
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ pki_root_dir }}"
+        owner: "{{ pki_file_owner }}"
+        group: "{{ pki_file_group }}"
+        seuser: system_u
+        setype: cert_t
+
+
+- name: Install and configure reverse proxy service
+  include_tasks: "{{ load_balancer_service }}.yml"
+
+
+- name: Create OpenSSL dummy certificate on first load balancer
+  become: yes
+  run_once: yes
+  block:
+    - name: Create dummy certificate sign request
+      openssl_csr:
+        path: "{{ pki_dummy_certificate_csr_path }}"
+        privatekey_path: "{{ pki_certificate_key_path }}"
+        subject_alt_name: "DNS:Web-Server"
+        mode: "{{ pki_file_mode }}"
+        seuser: system_u
+        setype: cert_t
+
+    - name: Create dummy OpenSSL certificate
+      openssl_certificate:
+        path: "{{ pki_dummy_certificate_crt_path }}"
+        csr_path: "{{ pki_dummy_certificate_csr_path }}"
+        privatekey_path: "{{ pki_certificate_key_path }}"
+        provider: selfsigned
+        mode: "{{ pki_file_mode }}"
+        seuser: system_u
+        setype: cert_t
+      notify: restart load balancer
+
+
+- name: Setup dummy certificates on other load balancers
+  block:
+    - name: Copy load balancers SSL certificates
+      include_tasks: copy_ssl_files.yml
+      with_items:
+        - "{{ pki_dummy_certificate_csr_path }}"
+        - "{{ pki_dummy_certificate_crt_path }}"
+
+    - name: Add the certificate used by the keycloak servers
+      become: yes
+      copy:
+        content: "{{ hostvars[function_groups['keycloak'].master]['pki_certificate'] }}"
+        dest: "{{ keycloak_trusted_certificate_path }}"
+        mode: "{{ pki_file_mode }}"
+        seuser: system_u
+        setype: cert_t
+      notify: restart load balancer
+
+
+- name: Set sysctl parameters
+  become: yes
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: yes
+  with_dict: "{{ server_sysctl_params }}"
+
+
+- name: Mark load balancer service for restart if the PKI files have changed
+  debug:
+    msg: "Notify restart of load balancer service"
+  when: pki_changed
+  changed_when: True
+  notify: restart load balancer
+
+
+- name: Open firewall ports for load balancer
+  become: yes
+  block:
+    - name: Allow incoming connections on port {{ load_balancer_http_port }}
+      firewalld:
+        zone: "{{ firewalld_external_zone }}"
+        port: "{{ load_balancer_http_port }}/tcp"
+        state: enabled
+        permanent: yes
+        immediate: yes
+
+    - name: Allow incoming connections on port {{ load_balancer_https_port }}
+      firewalld:
+        zone: "{{ firewalld_external_zone }}"
+        port: "{{ load_balancer_https_port }}/tcp"
+        state: enabled
+        permanent: yes
+        immediate: yes
+
+
+- name: Ensure load balancer is started
+  become: yes
+  service:
+    name: "{{ load_balancer_service }}"
+    state: started
+    enabled: yes

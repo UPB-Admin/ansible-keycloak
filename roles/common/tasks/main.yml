@@ -1,0 +1,125 @@
+- name: Install packages and set up host entries
+  become: yes
+  block:
+    - name: Install common system packages
+      package:
+        name:
+          - acl
+          - chrony
+          - firewalld
+          - gzip
+          - python3
+          - python3-libsemanage
+          - python3-pyOpenSSL
+          - rsync
+          - tar
+          - unzip
+          - vim
+          - zip
+        state: latest
+
+    - name: Add hosts entries
+      lineinfile:
+        path: /etc/hosts
+        state: present
+        regexp: "{{ item.name }}"
+        line: "{{ item.ip }} {{ item.name }}"
+      loop_control:
+        label: "{{ item.name }} -> {{ item.ip }}"
+      with_items: "{{ groups['all'] | map('extract', hostvars) | list | json_query('[*].{ name: inventory_hostname, ip: interfaces_internal_ip }') }}"
+
+
+- name: Firewalld common configurations
+  become: yes
+  block:
+    - name: Ensure firewalld is started and enabled
+      systemd:
+        name: firewalld
+        state: started
+        enabled: yes
+
+    - name: Make sure {{ firewalld_internal_zone }} firewalld zone (internal) exists
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        state: present
+        permanent: yes
+      register: zone_created
+
+    - name: Reload firewalld if {{ firewalld_internal_zone }} zone was created
+      command:
+        argv: [ "firewall-cmd", "--reload" ]
+      when: zone_created.changed
+
+    - name: Move internal interface to {{ firewalld_internal_zone }} zone
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        interface: "{{ interfaces_internal_name }}"
+        state: enabled
+        permanent: yes
+        immediate: yes
+
+    - name: Allow ssh connections in {{ firewalld_internal_zone }} zone
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        service: ssh
+        state: enabled
+        permanent: yes
+        immediate: yes
+
+    - name: Configure {{ firewall_dmz_zone }} if server has distinct external interface
+      when: firewalld_has_external
+      block:
+        - name: Make sure {{ firewalld_dmz_zone }} firewalld zone (external) exists
+          firewalld:
+            zone: "{{ firewalld_dmz_zone }}"
+            state: present
+            permanent: yes
+          register: zone_created
+
+        - name: Reload firewalld if {{ firewalld_dmz_zone }} zone was created
+          command:
+            argv: [ "firewall-cmd", "--reload" ]
+          when: zone_created.changed
+
+        - name: Add external interface (if distinct from internal) to {{ firewalld_dmz_zone }} firewalld zone
+          firewalld:
+            zone: "{{ firewalld_dmz_zone }}"
+            interface: "{{ interfaces_external_name }}"
+            state: enabled
+            permanent: yes
+            immediate: yes
+
+        - name: Block new SSH connections on {{ firewalld_dmz_zone }} firewalld zone
+          firewalld:
+            zone: "{{ firewalld_dmz_zone }}"
+            service: ssh
+            state: disabled
+            permanent: yes
+            immediate: yes
+
+    - name: Move loopback interface to trusted chain
+      firewalld:
+        zone: trusted
+        interface: lo
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+
+- name: Configure service for NTP synchronization
+  become: yes
+  block:
+    - name: Copy chrony configuration template
+      template:
+        src: chrony.conf
+        dest: /etc/chrony.conf
+        mode: 0644
+        owner: root
+        group: root
+      notify: restart chronyd
+
+    - name: Make sure chrony is started and enabled
+      service:
+        name: chronyd
+        state: started
+        enabled: yes

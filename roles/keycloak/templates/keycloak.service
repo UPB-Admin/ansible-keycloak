@@ -1,0 +1,25 @@
+# This script allows you to run Keycloak Server as a systemd service.
+# Modify environment properties in this script as appropriate.
+# Copy this script to the following location: /etc/systemd/system
+# Activate with 'systemctl daemon-reload'
+#               'systemctl start|enable infinispan'
+#
+# File managed by ansible. Manual editing may be overwritten!
+
+[Unit]
+Description=Keycloak Server Service
+After=syslog.target network-online.target
+
+[Service]
+Environment=LAUNCH_JBOSS_IN_BACKGROUND=1 KEYCLOAK_HOME="{{ keycloak_install_dir }}"
+Environment=JAVA_OPTS="{{ keycloak_java_opts }}"
+ExecStart=/bin/bash "{{ keycloak_server_script }}" -c "{{ keycloak_conf_xml | basename }}" -Djboss.node.name="{{ keycloak_node_name }}" -Djboss.site.name="{{ keycloak_site_name }}"
+Type=simple
+User={{ keycloak_system_user }}
+LimitNOFILE=102642
+PIDFile=/var/run/keycloak/keycloak.pid
+
+[Install]
+WantedBy=multi-user.target
+
+# vim: ft=conf

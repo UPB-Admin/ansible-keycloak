@@ -1,0 +1,45 @@
+vault:
+  infinispan:
+    user:
+      admin: # Credentials for infinispan admin user
+        pass: changeme
+      keycloak: # Credentials used by keycloak to connect to infinispan
+        pass: changeme
+    keystore: # Password used to lock the keystore used by the infinispan servers
+      pass: changeme
+
+  keycloak:
+    user:
+      admin: # Credentials for the keycloak administrator interface
+        pass: changeme
+    keystore: # Password used to lock the keystore used by the keycloak servers
+      pass: changeme
+    truststore: # Password used to lock the truststores used by the keycloak servers
+      pass: changeme
+
+  database:
+    user:
+      root: # Root database user's password
+        pass: changeme
+      mariadb_sys: # Password that will be set for the builtin mariadb_sys database user
+        pass: changeme
+      mysql: # Password that will be set for the builtin mysql database user
+        pass: changeme
+      keycloak: # Credentials that will be used by keycloak to connect to the database
+        pass: changeme
+      exporter: # Credentials used by the prometheus exporter to connect to the database
+        pass: changeme
+
+  ldap:
+    user:
+      root:
+        bind_dn: "cn=Directory Manager" # Bind DN (username) used to connect to LDAP with elevated privileges
+        pass: changeme # Password for the directory manager bind DN
+      replication:
+        bind_dn: "cn=replication manager,cn=config" # Bind DN (username) used by the LDAP replication service
+        pass: changeme # Password used for the replication manager bind DN
+      keycloak:
+        dn_no_suffix: "uid=keycloak" # Bind DN (username) without the full suffix tree of the user keycloak will use
+        pass: changeme # Password of the user used by keycloak
+
+# vim: ft=yaml noswapfile nobackup nowritebackup clipboard=""

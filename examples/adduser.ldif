@@ -1,0 +1,13 @@
+dn: uid=test.user,ou=People,dc=test,dc=keycloak,dc=local
+changetype: add
+cn: Test
+sn: User
+givenName: Test
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+ou: People
+telephoneNumber: 0123456789
+userpassword: changeme
+mail: test.user@example.com

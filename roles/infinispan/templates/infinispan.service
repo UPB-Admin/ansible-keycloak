@@ -1,0 +1,29 @@
+##
+## This file is managed by ansible. Manual overrides may be overwritten
+##
+
+# This script allows you to run Infinispan Server as a systemd service.
+# Modify environment properties in this script as appropriate.
+# Copy this script to the following location: /etc/systemd/system
+# Activate with 'systemctl daemon-reload'
+#               'systemctl start|enable infinispan'
+#
+# Based on the file from ${ISPN_HOME}/docs/systemd/infinispan.service
+#
+# File managed by ansible. Manual editing may be overwritten!
+
+[Unit]
+Description=Infinispan Server Service
+After=network-online.target
+
+[Service]
+Environment=INFINISPAN_HOME="{{ infinispan_install_dir }}"
+Environment=JAVA_OPTS="{{ infinispan_java_opts }}"
+ExecStart=/bin/bash "{{ infinispan_server_script }}"
+Type=simple
+User={{ infinispan_system_user }}
+
+[Install]
+WantedBy=multi-user.target
+
+# vim: ft=conf

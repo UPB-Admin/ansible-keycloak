@@ -1,0 +1,6 @@
+# Settings for the chrony server
+ntp_server: 2.fedora.pool.ntp.org
+ntp_bind_cmd_address:
+  - 127.0.0.1
+  - ::1
+

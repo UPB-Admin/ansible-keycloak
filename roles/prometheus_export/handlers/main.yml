@@ -1,0 +1,20 @@
+- name: restart node exporter
+  become: yes
+  systemd:
+    name: node_exporter
+    state: restarted
+    enabled: yes
+
+- name: restart database exporter
+  become: yes
+  systemd:
+    name: database_exporter
+    state: restarted
+    enabled: yes
+
+- name: restart haproxy exporter
+  become: yes
+  systemd:
+    name: haproxy_exporter
+    state: restarted
+    enabled: yes

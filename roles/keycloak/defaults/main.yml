@@ -1,0 +1,82 @@
+keycloak_archive_checksum: sha1:914803c64b43941178acb6bdff9d99076fc7dccd
+keycloak_archive_url: "https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz"
+keycloak_install_dir: "/opt/keycloak-{{ keycloak_version }}"
+keycloak_tmp_file: "/tmp/keycloak-{{ keycloak_version }}.tar.gz"
+
+keycloak_bin_subdir: "{{ keycloak_install_dir }}/bin"
+keycloak_sa_conf_subdir: "{{ keycloak_install_dir }}/standalone/configuration"
+keycloak_sa_log_subdir: "{{ keycloak_install_dir }}/standalone/log"
+keycloak_sa_data_subdir: "{{ keycloak_install_dir }}/standalone/data"
+keycloak_sa_tmp_subdir: "{{ keycloak_install_dir }}/standalone/tmp"
+keycloak_sa_deployments_subdir: "{{ keycloak_install_dir }}/standalone/deployments"
+keycloak_module_layers_subdir: "{{ keycloak_install_dir }}/modules/system/layers/keycloak"
+keycloak_themes_subdir: "{{ keycloak_install_dir }}/themes"
+
+keycloak_infinispan_model_module_dir: "{{ keycloak_module_layers_subdir }}/org/keycloak/keycloak-model-infinispan/main"
+keycloak_infinispan_model_module_xml: "{{ keycloak_infinispan_model_module_dir }}/module.xml"
+
+keycloak_truststore: "{{ keycloak_sa_conf_subdir }}/truststore.jks"
+keycloak_keystore: "{{ keycloak_sa_conf_subdir }}/application.keystore"
+keycloak_conf_xml: "{{ keycloak_sa_conf_subdir }}/standalone-ha.xml"
+
+keycloak_add_user_json: "{{ keycloak_sa_conf_subdir }}/keycloak-add-user.json"
+keycloak_add_user_marker_file: "{{ keycloak_sa_conf_subdir}}/.keycloak-users-created"
+keycloak_startup_marker_file: "{{ keycloak_sa_tmp_subdir }}/startup-marker"
+keycloak_add_user_cli: "{{ keycloak_bin_subdir }}/add-user-keycloak.sh"
+keycloak_server_script: "{{ keycloak_bin_subdir }}/standalone.sh"
+keycloak_exec_params_conf: "{{ keycloak_bin_subdir }}/standalone.conf"
+keycloak_jboss_cli: "{{ keycloak_bin_subdir }}/jboss-cli.sh"
+keycloak_migrate_cli: "{{ keycloak_bin_subdir }}/migrate-standalone-ha.cli"
+
+database_trusted_certificate_path: "{{ pki_trusted_dir }}/database.crt"
+infinispan_trusted_certificate_path: "{{ pki_trusted_dir }}/infinispan.crt"
+
+keycloak_random_source: /dev/urandom
+
+keycloak_jgroup_tcp_port: 7600            # port used for the TCPPING for cluster discovery
+keycloak_jgroup_tcpping_timeout: 3000     # TCPPING cluster establishment timeout (3s)
+keycloak_jgroup_tcp_fd_port: 57600        # port used for TCP FD (failure detection heartbit protocol)
+keycloak_backend_to_frontend_url: "False" # force requests that would normally go through a backend endpoint (e.g., token endpoint) to go through the public endpoint
+
+keycloak_tcpping_server_list: "{{ groups[cluster_name] | intersect(groups['keycloak']) | product(['[%d]' % keycloak_jgroup_tcp_port]) | map('join') | join(',') }}"
+keycloak_cluster_infinispan_servers: "{{ groups[cluster_name] | intersect(groups['infinispan']) }}"
+
+# Create an unique name for the node and cluster for the keycloak service
+keycloak_node_index: "{{ lookup('ansible.utils.index_of', groups['keycloak'], 'eq', inventory_hostname, wantlist=True) | first }}"
+keycloak_node_name: "{{ 'k_%d%d' % (cluster_number, keycloak_node_index|int + 1) }}"
+keycloak_site_name: "c_{{ cluster_number }}"
+
+wildfly_statistics_enabled: "true"
+keycloak_debug_infinispan: "false"
+
+keycloak_keystore_cert_alias: server
+keycloak_system_user: keycloak
+
+keycloak_custom_theme: {}
+keycloak_custom_theme_repo_dir: "/opt/keycloak-custom-theme"
+keycloak_custom_theme_src_dir: "{{ keycloak_custom_theme_repo_dir }}/{{ keycloak_custom_theme.path }}/"
+keycloak_custom_theme_dir: "{{ keycloak_themes_subdir }}/{{ keycloak_custom_theme.name }}"
+
+keycloak_java_opts: "{{ java_common_mem_opts }} -server -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=$JBOSS_MODULES_SYSTEM_PKGS -Djava.awt.headless=true -Djava.security.egd=file:{{ keycloak_random_source }} -Dwildfly.statistics-enabled={{ wildfly_statistics_enabled }}"
+
+jdbc_mariadb_version: 2.7.3
+jdbc_mariadb_checksum: sha256:7c823b2f8fdda522a7f76e69cb287482b46247c135c4c44b27b98fb2ae092747
+jdbc_mariadb_download_url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ jdbc_mariadb_version }}/mariadb-java-client-{{ jdbc_mariadb_version }}.jar"
+
+# A list of parameters for JDBC connections
+jdbc_mariadb_pool_size: 20            # The connection pool kept alive to connect jdbc to the databases
+jdbc_mariadb_conn_params:
+  "useSsl": "true"
+  "trustStore": "{{ jdbc_truststore }}"
+  "trustStorePassword": "{{ jdbc_truststore_pass }}"
+  "enabledSslProtocolSuites": "TLSv1.3"
+  "enabledSslCipherSuites": "TLS_AES_256_GCM_SHA384"
+jdbc_mariadb_servers: "{{ groups[cluster_name] | intersect(groups['database']) | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
+jdbc_mariadb_conn_url: "jdbc:mariadb://{{ jdbc_mariadb_servers }}/{{ database_keycloak_database }}"
+
+jdbc_mariadb_module_dir: "{{ keycloak_module_layers_subdir }}/org/mariadb/main"
+jdbc_mariadb_module_jar: "{{ jdbc_mariadb_module_dir }}/mariadb-{{ jdbc_mariadb_version }}.jar"
+jdbc_mariadb_module_xml: "{{ jdbc_mariadb_module_dir }}/module.xml"
+
+jdbc_truststore: "{{ jdbc_mariadb_module_dir }}/truststore.jks"
+jdbc_truststore_pass: "{{ vault.keycloak.truststore.pass }}"

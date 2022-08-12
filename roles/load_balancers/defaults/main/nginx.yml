@@ -1,0 +1,36 @@
+nginx_root_dir: /etc/nginx
+nginx_snippets_dir: "{{ nginx_root_dir }}/snippets.d"
+nginx_conf_dir: "{{ nginx_root_dir }}/conf.d"
+nginx_systemd_override_dir: "{{ systemd_override_dir }}/nginx.service.d"
+nginx_systemd_override_file: "{{ nginx_systemd_override_dir }}/limits.conf"
+
+nginx_dirs:
+  - disp_name: snippets
+    path: "{{ nginx_snippets_dir }}"
+    setype: httpd_config_t
+
+  - disp_name: config
+    path: "{{ nginx_conf_dir }}"
+    setype: httpd_config_t
+
+  - disp_name: systemd service config
+    path: "{{ nginx_systemd_override_dir }}"
+    setype: systemd_unit_file_t
+    mode: u=rwX,g=rX,o=rX
+
+nginx_upstream_name: keycloak
+
+nginx_worker_count: "{{ ansible_processor_vcpus }}"
+nginx_worker_connections: 4096
+
+nginx_resolver_ips: 1.1.1.1 8.8.8.8
+nginx_resolver_validity: 300s
+nginx_resolver_timeout: 5s
+
+nginx_healthcheck_max_fails: 1
+nginx_healthcheck_fail_timeout: 30s
+
+nginx_proxy_buffers_count: 8
+nginx_proxy_buffers_size: 16k
+nginx_proxy_header_buffer_size: 32k
+nginx_proxy_busy_buffers_size: 64k

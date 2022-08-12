@@ -1,0 +1,7 @@
+[nginx]
+name=nginx-mainline
+baseurl=https://nginx.org/packages/centos/$releasever/$basearch/
+gpgkey=https://nginx.org/keys/nginx_signing.key
+gpgcheck=1
+enabled=1
+module_hotfixes=1

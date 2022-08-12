@@ -1,0 +1,8 @@
+dn: {{ vault.ldap.user.replication.bind_dn }}
+objectClass: top
+objectClass: device
+objectClass: simpleSecurityObject
+cn: replication manager
+userPassword: {{ vault.ldap.user.replication.pass }}
+passwordExpirationTime: 20380119031407Z
+nsIdleTimeout: 0

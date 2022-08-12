@@ -1,0 +1,20 @@
+pki_country_name: XX
+pki_organization_name: Some-Organization
+pki_locality_name: Some-Locality
+
+load_balancer_service: nginx # Can be a load balancer name - nginx or haproxy
+service_hostname_dns: login.example.com
+
+access_admin_allowed_sources:
+  - 127.0.0.1
+access_admin_realm_allowed_sources:
+  Test_Realm:
+    - 127.0.1.1
+prometheus_servers:
+  - 127.0.2.1
+
+keycloak_custom_theme:
+  url: https://github.com/someone/custom-theme.git
+  version: HEAD
+  name: custom
+  path: themes/custom

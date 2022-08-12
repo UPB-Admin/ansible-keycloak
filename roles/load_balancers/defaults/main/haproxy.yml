@@ -1,0 +1,6 @@
+haproxy_chroot_dir: /var/empty/haproxy
+haproxy_cache_max_size: "{{ [(ansible_memtotal_mb / 512)|int * 256, 4095] | min }}"
+haproxy_cache_max_object_size: "{{ (1024 * 1024)|int }}" # 1MB
+haproxy_cache_max_age: 600 # seconds
+
+haproxy_cert_ocsp_script: /usr/bin/cert_ocsp.sh

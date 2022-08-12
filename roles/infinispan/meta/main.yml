@@ -1,0 +1,5 @@
+dependencies:
+  - role: systemd
+  - role: java_service
+    vars:
+      java_version: 1.8.0

@@ -1,0 +1,7 @@
+*.swo
+*.swp
+Session.vim
+group_vars/vault
+inventory.yml
+overrides.yml
+vault.pwd

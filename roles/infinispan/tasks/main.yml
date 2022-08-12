@@ -1,0 +1,265 @@
+- name: Infinispan server initial configurations
+  become: yes
+  block:
+    - name: Create infinispan user
+      user:
+        name: "{{ infinispan_system_user }}"
+        comment: Infinispan system user
+        create_home: no
+        home: /
+        local: yes
+        password_lock: yes
+        shell: /sbin/nologin
+        state: present
+        system: yes
+
+    - name: Set owner / group on PKI files
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ pki_root_dir }}"
+        owner: "{{ pki_file_owner }}"
+        group: "{{ pki_file_group }}"
+        seuser: system_u
+        setype: cert_t
+
+
+- name: Create infinispan server directory and install code
+  become: yes
+  block:
+    - name: Check if infinispan install directory exists
+      stat:
+        path: "{{ infinispan_install_dir }}"
+      register: infinispan_dir_stat
+
+    - name: Download and extract infinispan
+      when: not infinispan_dir_stat.stat.exists
+      block:
+      - name: Download infinispan server zip archive
+        get_url:
+          url: "{{ infinispan_archive_url }}"
+          dest: "{{ infinispan_tmp_file }}"
+          http_agent: wget
+          checksum: "{{ infinispan_archive_checksum }}"
+          mode: 0400
+          owner: root
+          group: root
+
+      - name: Unarchive infinispan
+        unarchive:
+          src: "{{ infinispan_tmp_file }}"
+          dest: "{{ infinispan_install_base_dir }}"
+          remote_src: yes
+
+      - name: Set permissions on infinispan directory
+        file:
+          path: "{{ infinispan_install_dir }}"
+          state: directory
+          recurse: yes
+          mode: u=rX,g=rX
+
+      - name: Create infinispan server logs subdirectory if it does not exist
+        file:
+          path: "{{ infinispan_server_log_subdir }}"
+          state: directory
+          mode: 0770
+
+      - name: Create infinispan server data subdirectory if it does not exist
+        file:
+          path: "{{ infinispan_server_data_subdir }}"
+          state: directory
+          mode: 0770
+
+      - name: Give infinispan write access on users property files
+        file:
+          path: "{{ infinispan_server_conf_subdir }}/users.properties"
+          state: file
+          mode: 0660
+
+      - name: Give infinispan write access on groups property files
+        file:
+          path: "{{ infinispan_server_conf_subdir }}/groups.properties"
+          state: file
+          mode: 0660
+
+      - name: Set owner / group on infinispan directory
+        file:
+          path: "{{ infinispan_install_dir }}"
+          state: directory
+          recurse: yes
+          owner: root
+          group: "{{ infinispan_system_user }}"
+
+      - name: Remove infinispan archive
+        file:
+          path: "{{ infinispan_tmp_file }}"
+          state: absent
+
+
+- name: Configure infinispan service
+  become: yes
+  block:
+    - name: Add infinispan systemd service file
+      template:
+        src: infinispan.service
+        dest: "{{ systemd_service_dir }}/infinispan.service"
+        mode: 0644
+        owner: root
+        group: root
+      notify:
+        - systemd reload
+        - restart infinispan
+
+    - name: Leave server wait loop if server java process ended
+      lineinfile:
+        path: "{{ infinispan_server_script }}"
+        line: '         kill -0 $ISPN_PID 2>/dev/null || break'
+        regexp: 'kill -0 \$ISPN_PID 2>/dev/null'
+        insertafter: 'Server process \(\$ISPN_PID\) received \$SIGNAL_NAME signal'
+        state: present
+      notify: restart infinispan
+
+
+- name: Mark infinispan service for restart if the PKI files have changed
+  debug:
+    msg: "Notify restart of infinispan service"
+  when: pki_changed
+  changed_when: True
+  notify: restart infinispan
+
+
+- name: Set file ACLs on infinispan server files
+  become: yes
+  block:
+    - name: Set default facl permissions on infinispan directory
+      acl:
+        path: "{{ infinispan_install_dir }}"
+        default: yes
+        etype: other
+        permissions: 0
+        recursive: yes
+        state: present
+
+    - name: Apply facl permissions on infinispan directory
+      acl:
+        path: "{{ infinispan_install_dir }}"
+        etype: other
+        permissions: 0
+        recursive: yes
+        state: present
+
+
+- name: Configure infinispan for cross DC function
+  become: yes
+  block:
+    - name: Create java keystore based on PKI certificate and key
+      openssl_pkcs12:
+        action: export
+        certificate_path: "{{ pki_certificate_crt_path }}"
+        privatekey_path: "{{ pki_certificate_key_path }}"
+        friendly_name: "{{ infinispan_keystore_cert_alias }}"
+        path: "{{ infinispan_keystore }}"
+        passphrase: "{{ vault.infinispan.keystore.pass }}"
+        mode: 0440
+        owner: root
+        group: "{{ infinispan_system_user }}"
+        state: present
+      notify: restart infinispan
+
+    - name: Add the infinispan configuration file
+      template:
+        src: infinispan-config.xml
+        dest: "{{ infinispan_server_conf_subdir }}/infinispan.xml"
+        mode: 0440
+        owner: root
+        group: "{{ infinispan_system_user }}"
+      notify: restart infinispan
+
+
+- name: Restart infinispan if required, make sure it finishes starting
+  become: yes
+  block:
+    - name: Force flush handlers to reload / restart infinispan service
+      meta: flush_handlers
+
+    - name: Make sure the infinispan service is running
+      systemd:
+        name: infinispan
+        state: started
+        enabled: yes
+
+
+- name: Configure infinispan users
+  become: yes
+  become_user: "{{ infinispan_system_user }}"
+  block:
+    - name: Wait until infinispan starts and opens the hotrod port
+      wait_for:
+        port: "{{ infinispan_hotrod_port }}"
+        host: "{{ inventory_hostname }}"
+        timeout: "{{ service_start_timeout }}"
+        msg: "Infinispan did not start after {{ service_start_timeout }} seconds"
+        state: started
+
+    - name: Check if infinispan admin user exists
+      command:
+        argv: [ "{{ infinispan_cli }}", "user", "describe", "admin" ]
+      register: user_describe_admin
+      changed_when: False
+
+    - name: Create infinispan admin user if it does not exist
+      command:
+        argv: [ "{{ infinispan_cli }}", "user", "create", "admin", "-p", "{{ vault.infinispan.user.admin.pass }}" ]
+      when: user_describe_admin.stdout_lines[0] | regex_search("User `admin` does not exist")
+      register: result
+      failed_when: '"Exception" in result.stdout'
+
+    - name: Check if infinispan {{ infinispan_keycloak_user }} user exists
+      command:
+        argv: [ "{{ infinispan_cli }}", "user", "describe", "{{ infinispan_keycloak_user }}" ]
+      register: user_describe_keycloak
+      changed_when: False
+
+    - name: Create infinispan {{ infinispan_keycloak_user }} user if it does not exist
+      command:
+        argv: [ "{{ infinispan_cli }}", "user", "create", "{{ infinispan_keycloak_user }}", "-p", "{{ vault.infinispan.user.keycloak.pass }}" ]
+      when: user_describe_keycloak.stdout_lines[0] | regex_search("User `" + infinispan_keycloak_user + "` does not exist")
+      register: result
+      failed_when: '"Exception" in result.stdout'
+  vars:
+    ansible_remote_tmp: "/tmp/${USER}/.ansible"
+
+
+- name: Open firewall ports for infinispan
+  become: yes
+  block:
+    - name: Allow connections to infinispan intra-cluster clustering port from infinispan servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ infinispan_tcpping_port }}' protocol='udp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['infinispan'] }}"
+
+    - name: Allow connections to infinispan inter-cluster clustering port from infinispan servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ infinispan_tcpping_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['infinispan'] }}"
+
+    - name: Allow connections to infinispan hot rod port from infinispan and keycloak servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ infinispan_hotrod_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['keycloak'] }}"
+        - "{{ groups['infinispan'] }}"

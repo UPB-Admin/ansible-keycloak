@@ -1,0 +1,29 @@
+infinispan_version: 12.1.4.Final
+infinispan_archive_checksum: sha1:737614459d788a4992963202c21c1049918cba22
+infinispan_archive_url: "https://downloads.jboss.org/infinispan/{{ infinispan_version }}/infinispan-server-{{ infinispan_version }}.zip"
+infinispan_install_base_dir: /opt           # the archive already has a top-level directory in it
+infinispan_install_dir: "{{ infinispan_install_base_dir }}/infinispan-server-{{ infinispan_version }}"
+infinispan_tmp_file: "/tmp/infinispan-{{ infinispan_version }}.zip"
+
+infinispan_server_bin_subdir:  "{{ infinispan_install_dir }}/bin"
+infinispan_server_log_subdir:  "{{ infinispan_install_dir }}/server/log"
+infinispan_server_data_subdir: "{{ infinispan_install_dir }}/server/data"
+infinispan_server_conf_subdir: "{{ infinispan_install_dir }}/server/conf"
+infinispan_server_lib_subdir:  "{{ infinispan_install_dir }}/server/lib"
+
+infinispan_cli: "{{ infinispan_server_bin_subdir }}/cli.sh"
+infinispan_server_script: "{{ infinispan_server_bin_subdir }}/server.sh"
+infinispan_keystore: "{{ infinispan_server_conf_subdir }}/server.jks"
+
+infinispan_backup_strategy: SYNC              # synchronous backups have better consistency
+infinispan_backup_timeout: 10000              # 10s
+infinispan_backup_failures_till_offline: 6    # take site offline after 6 failures
+infinispan_backup_wait_till_offline: 30000    # wait min 30s before taking taking site offline
+infinispan_tcpping_port: 7800                 # port 7800 is used by default for cluster communication (tcpping)
+
+infinispan_tcpping_server_list: "{{ groups['infinispan'] | product(['[%d]' % infinispan_tcpping_port]) | map('join') | join(',') }}"
+infinispan_keystore_cert_alias: server
+
+infinispan_system_user: infinispan
+
+infinispan_java_opts: "{{ java_common_mem_opts}} -server -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true"

@@ -1,0 +1,4 @@
+function_group: ldap
+pki_service_name: ldap
+
+# vim: ft=yaml

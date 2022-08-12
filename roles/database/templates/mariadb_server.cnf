@@ -1,0 +1,82 @@
+##
+## This file is managed by ansible. Manual overrides may be overwritten
+##
+
+# These groups are read by MariaDB server.
+# Use it for options that only the server (but not clients) should see
+#
+# See the examples of server my.cnf files in /usr/share/mysql/
+#
+
+# this is read by the standalone daemon and embedded servers
+[server]
+
+# this is only for the mysqld standalone daemon
+# generated using Mozilla Guideline v5.6, MySQL 8.0.19, OpenSSL 1.1.1d, modern configuration
+# https://ssl-config.mozilla.org/#server=mysql&version=8.0.19&config=modern&openssl=1.1.1d&guideline=5.6
+[mysqld]
+require_secure_transport = on
+ssl-cert = {{ pki_certificate_crt_path }}
+ssl-key = {{ pki_certificate_key_path }}
+tls_version = TLSv1.3
+
+# Network settings
+max_connections = 32768
+wait_timeout = 3600
+interactive_timeout = 3600
+max_allowed_packet = 128M
+
+# Caching settings
+query_cache_size = 0
+query_cache_type = 0
+query_cache_limit = 1M
+join_buffer_size = 2M
+tmp_table_size = 64M
+max_heap_table_size = 64M
+innodb_buffer_pool_size = {{ (ansible_memtotal_mb / 2)|int }}M
+innodb_log_file_size = {{ (ansible_memtotal_mb / 8)|int }}M
+performance_schema = ON
+table_open_cache = 1000
+
+log-error = "{{ database_log_dir }}/mariadb.log"
+
+slow_query_log = 1
+slow_query_log_file = "{{ database_log_dir }}/mariadb-slow-queries.log"
+
+innodb_file_format = Barracuda
+innodb_file_per_table = 1
+innodb_large_prefix = 1
+
+#
+# * Galera-related settings
+#
+[galera]
+# Mandatory settings
+#wsrep_on=ON
+#wsrep_provider=
+#wsrep_cluster_address=
+#binlog_format=row
+#default_storage_engine=InnoDB
+#innodb_autoinc_lock_mode=2
+#
+# Allow server to accept connections on all interfaces.
+#
+#bind-address=0.0.0.0
+#
+# Optional setting
+#wsrep_slave_threads=1
+#innodb_flush_log_at_trx_commit=0
+
+# this is only for embedded server
+[embedded]
+
+# This group is only read by MariaDB servers, not by MySQL.
+# If you use the same .cnf file for MySQL and MariaDB,
+# you can put MariaDB-only options here
+[mariadb]
+
+# This group is only read by MariaDB-10.6 servers.
+# If you use the same .cnf file for MariaDB of different versions,
+# use this group for options that older servers don't understand
+[mariadb-10.6]
+

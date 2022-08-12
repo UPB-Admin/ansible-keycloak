@@ -1,0 +1,342 @@
+- name: Database server initial configurations
+  become: yes
+  block:
+    - name: Add mariadb repository file
+      copy:
+        src: mariadb.repo
+        dest: /etc/yum.repos.d/mariadb.repo
+        mode: 0600
+
+    - name: Database install
+      package:
+        name:
+          - MariaDB-server
+          - MariaDB-client
+        state: installed
+      notify: restart database
+
+    - name: Install PyMySQL
+      pip:
+        name: pymysql
+        state: present
+
+    # This is required for mysql since the service is created as the database user
+    # and is not originally started as root and then forked
+    - name: Set owner / group on PKI files
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ pki_root_dir }}"
+        owner: "{{ pki_file_owner }}"
+        group: "{{ pki_file_group }}"
+        seuser: system_u
+        setype: cert_t
+
+
+# check if "{{ database_secure_install_marker }}" exists
+- name: Checking if secure install script was already run
+  become: yes
+  stat:
+    path: "{{ database_secure_install_marker }}"
+  register: marker_stat
+
+
+- name: MySQL Secure Installation
+  become: yes
+  when: not marker_stat.stat.exists
+  block:
+    # Start mariadb on all nodes in order to run initial configuration
+    - name: Start MariaDB
+      service:
+        name: mariadb
+        state: started
+        enabled: True
+
+    - name: Enable UNIX Socket for the root user
+      community.mysql.mysql_query:
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "UPDATE mysql.global_priv SET priv=json_set(priv, '$.password_last_changed', UNIX_TIMESTAMP(), '$.plugin', 'mysql_native_password', '$.authentication_string', 'invalid', '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
+      when: database_use_unix_socket
+
+    - name: Update database root password
+      community.mysql.mysql_query:
+        login_unix_socket: "{{ database_unix_socket }}"
+        single_transaction: yes
+        query:
+          - "UPDATE mysql.global_priv SET priv=json_set(priv, '$.plugin', 'mysql_native_password', '$.authentication_string', PASSWORD('{{ vault.database.user.root.pass }}')) WHERE User='root';"
+          - "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ vault.database.user.root.pass }}'"
+          - "FLUSH PRIVILEGES;"
+
+    - name: Complete initial installation
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        single_transaction: yes
+        query:
+          - "DELETE FROM mysql.global_priv WHERE User='';"
+          - "DELETE FROM mysql.global_priv WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+          - "DROP DATABASE IF EXISTS test"
+          - "DELETE FROM mysql.db WHERE db='test' OR db='test\\_%'"
+          - "ALTER USER 'mariadb.sys'@'localhost' IDENTIFIED BY '{{ vault.database.user.mariadb_sys.pass }}';"
+          - "ALTER USER 'mysql'@'localhost' IDENTIFIED BY '{{ vault.database.user.mysql.pass }}';"
+
+
+- name: Create database for keycloak
+  become: yes
+  when: not marker_stat.stat.exists
+  block:
+    - name: Create {{ database_keycloak_database }} database
+      community.mysql.mysql_db:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        name: "{{ database_keycloak_database }}"
+        state: present
+        encoding: "{{ database_keycloak_encoding }}"
+
+    - name: Create {{ database_keycloak_user }} user for all hosts in the keycloak group
+      community.mysql.mysql_user:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        name: "{{ database_keycloak_user }}"
+        host: "{{ item }}"
+        password: "{{ vault.database.user.keycloak.pass }}"
+        update_password: always
+        state: present
+      with_items: "{{ groups['keycloak'] }}"
+
+    - name: Grant permissions for {{ database_keycloak_user }} user on {{ database_keycloak_database }} database
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "GRANT ALL ON {{ database_keycloak_database }}.* to '{{ database_keycloak_user }}'@'{{ item }}' IDENTIFIED BY '{{ vault.database.user.keycloak.pass }}' WITH GRANT OPTION;"
+      with_items: "{{ groups['keycloak'] }}"
+
+    - name: Reload privilage table
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "FLUSH PRIVILEGES;"
+
+
+- name: Create marker file if it does not exist
+  become: yes
+  when: not marker_stat.stat.exists
+  copy:
+    content: "# Do not delete this file"
+    dest: "{{ database_secure_install_marker }}"
+    mode: 0400
+
+
+- name: Copy database configuration files
+  become: yes
+  block:
+    - name: Create database log directory
+      file:
+        path: "{{ database_log_dir }}"
+        state: directory
+        mode: 0700
+        owner: "{{ database_system_user }}"
+        group: "{{ database_system_user }}"
+        seuser: system_u
+        setype: mysqld_log_t
+
+    - name: Copy server configuration file
+      template:
+        src: mariadb_server.cnf
+        dest: /etc/my.cnf.d/server.cnf
+      notify: restart database
+
+    - name: Ensure database service override directory exists
+      file:
+        path: "{{ database_systemd_override_dir }}"
+        state: directory
+        mode: 0755
+        owner: root
+        group: root
+        seuser: system_u
+        setype: systemd_unit_file_t
+
+    - name: Modify settings for database service
+      template:
+        src: limits.conf
+        dest: "{{ database_systemd_override_file }}"
+        mode: 0644
+        owner: root
+        group: root
+        seuser: system_u
+        setype: systemd_unit_file_t
+      notify:
+        - systemd reload
+        - restart database
+
+    - name: Allow connections to database port from keycloak and database servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_listen_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['keycloak'] }}"
+        - "{{ groups['database'] }}"
+
+
+- name: Configure Galera Cluster
+  become: yes
+  when: database_create_galera_cluster
+  block:
+    - name: Install prerequirements
+      package:
+        name:
+          - rsync
+          - galera-4
+          - stunnel
+        state: latest
+
+    - name: Link Shared Library
+      file:
+        src: /usr/lib64/galera-4
+        dest: /usr/lib64/galera
+        state: link
+
+    - name: Copy galera config file (master)
+      template:
+        src: "{{ 'master_galera.cnf' if inventory_hostname == function_groups['database'].master else 'slave_galera.cnf' }}"
+        dest: /etc/my.cnf.d/galera.cnf
+      notify: restart database
+
+    - name: Allow connections to Galera Cluster replication TCP port from database servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_replication_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['database'] }}"
+
+    - name: Allow connections to Galera Cluster replication UDP port from database servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_replication_port }}' protocol='udp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['database'] }}"
+
+    - name: Allow connections to Incremental State Transfer (IST) port from database servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_ist_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['database'] }}"
+
+    - name: Allow connections to State Snapshot Transfer (SST) traffic TCP port from database servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_sst_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['database'] }}"
+
+    - name: Allow connections to State Snapshot Transfer (SST) traffic UDP port from database servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_sst_port }}' protocol='udp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['database'] }}"
+
+
+- name: Mark database service for restart if the PKI files have changed
+  debug:
+    msg: "Notify restart of database service"
+  when: pki_changed
+  changed_when: true
+  notify: restart database
+
+
+- name: Force flush handlers to reload / restart database service
+  meta: flush_handlers
+
+
+- name: Check database to verify if keycloak is being upgraded
+  run_once: yes
+  become: yes
+  block:
+    - name: Check if the MIGRATION_MODEL table exists
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_keycloak_database }}' AND TABLE_NAME = 'MIGRATION_MODEL';"
+      register: table_exists
+
+    - name: Check if keycloak is upgrading
+      when: table_exists.rowcount[0] > 0
+      block:
+        - name: Get installed keycloak version from MIGRATION_MODEL table
+          community.mysql.mysql_query:
+            login_user: root
+            login_password: "{{ vault.database.user.root.pass }}"
+            login_unix_socket: "{{ database_unix_socket }}"
+            query: "SELECT VERSION from {{ database_keycloak_database }}.MIGRATION_MODEL ORDER BY UPDATE_TIME LIMIT 1;"
+          register: keycloak_versions
+
+        - name: Set the latest installed keycloak version as a fact
+          set_fact:
+            keycloak_max_version: "{{ keycloak_versions.query_result[0][0].VERSION }}"
+          when: keycloak_versions.rowcount[0] > 0
+
+        - name: Fail if keycloak would be downgraded
+          fail:
+            msg: "Cannot downgrade Keycloak!"
+          when: keycloak_version is version(keycloak_max_version, "<")
+
+
+- name: Backup database if keycloak is being upgraded
+  run_once: yes
+  become: yes
+  when:
+    - keycloak_max_version != keycloak_not_installed_version
+    - keycloak_version is version(keycloak_max_version, ">")
+  block:
+    - name: Make sure backup directory exists
+      file:
+        path: "{{ database_backups_dir }}"
+        state: directory
+        mode: 0700
+        owner: "{{ database_system_user }}"
+        group: "{{ database_system_user }}"
+
+    - name: Create database backup
+      community.mysql.mysql_db:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        name: "{{ database_keycloak_database }}"
+        encoding: "{{ database_keycloak_encoding }}"
+        state: dump
+        target: "{{ database_backups_dir }}/keycloak-{{ keycloak_max_version }}.sql"
+        single_transaction: yes
+
+    - name: Set file permissions on backup file
+      file:
+        path: "{{ database_backups_dir }}/keycloak-{{ keycloak_max_version }}.sql"
+        state: file
+        mode: 0640
+        owner: root
+        group: "{{ database_system_user }}"

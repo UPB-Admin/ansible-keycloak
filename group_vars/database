@@ -1,0 +1,6 @@
+function_group: database
+prometheus_exporters_to_install: ["node", "database"]
+pki_service_name: mariadb
+pki_file_group: "{{ database_system_user }}"
+
+# vim: ft=yaml

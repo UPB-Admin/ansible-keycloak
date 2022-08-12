@@ -1,0 +1,19 @@
+- name: Slurp contents of {{ item.path }} from master
+  become: yes
+  delegate_to: "{{ function_groups[function_group].master }}"
+  slurp:
+    src: "{{ item.path }}"
+  register: file_content
+
+- name: Copy {{ item.path }} to server
+  become: yes
+  copy:
+    content: "{{ file_content['content'] | b64decode }}"
+    dest: "{{ item.path }}"
+    mode: "{{ pki_file_mode }}"
+  notify: pki changed
+
+- name: Remember certificate file as fact
+  set_fact:
+    "{{ item.fact_key }}": "{{ file_content['content'] | b64decode }}"
+  when: item.fact_key is defined

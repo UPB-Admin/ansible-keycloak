@@ -1,0 +1,6 @@
+[client]
+user={{ database_prometheus_user }}
+password={{ vault.database.user.exporter.pass }}
+host={{ inventory_hostname }}
+
+ssl-ca={{ pki_certificate_crt_path }}

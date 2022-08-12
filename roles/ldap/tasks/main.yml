@@ -1,0 +1,231 @@
+- name: LDAP server initial setup
+  become: yes
+  block:
+    - name: Install EPEL Release repository
+      package:
+        name: epel-release
+        state: latest
+
+    - name: Install 389 directory service
+      dnf:
+        name: "@389-directory-server:stable/default"
+        state: installed
+
+    - name: Set owner / group on PKI files
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ pki_root_dir }}"
+        owner: "{{ pki_file_owner }}"
+        group: "{{ pki_file_group }}"
+        seuser: system_u
+        setype: cert_t
+
+
+- name: Set up LDAP directory server instance
+  become: yes
+  block:
+    - name: Copy dsrc file to server
+      template:
+        src: dsrc
+        dest: "{{ ldap_dsrc_path }}"
+        mode: 0400
+        owner: root
+        group: root
+
+    - name: Check if the instance exists
+      command:
+        argv: ["dsctl", "{{ ldap_instance_name }}", "status"]
+      register: ldap_instance_status
+      failed_when: False
+      changed_when: False
+
+    - name: Create LDAP directory server instance if it does not exist (dsrc not set yet)
+      when: ldap_instance_status.stdout | regex_search("No such instance \'" + ldap_instance_name + "\'")
+      block:
+        - name: Copy directory server template to the server
+          template:
+            src: ds-template.inf
+            dest: "{{ ldap_ds_template_path }}"
+            mode: 0400
+            owner: root
+            group: root
+
+        - name: Create the server instance based on the template
+          command:
+            argv: ["dscreate", "from-file", "{{ ldap_ds_template_path }}"]
+
+        - name: Remove directory server template
+          file:
+            path: "{{ ldap_ds_template_path }}"
+            state: absent
+
+
+- name: Open firewall ports for LDAP
+  become: yes
+  block:
+    - name: Allow connections to the LDAP non-secure port from keycloak and LDAP servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ ldap_listen_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['ldap'] }}"
+        - "{{ groups['keycloak'] }}"
+
+    - name: Allow connections to the LDAP secure port from keycloak and LDAP servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ ldap_secure_listen_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['ldap'] }}"
+        - "{{ groups['keycloak'] }}"
+
+
+- name: Configure LDAP and start server
+  become: yes
+  block:
+    - name: Check if the replication Bind DN exists in the file already
+      lineinfile:
+        path: "{{ ldap_instance_dse_file }}"
+        line: "dn: {{ vault.ldap.user.replication.bind_dn }}"
+        state: present
+      check_mode: yes
+      register: replication_user_exists
+
+    - name: Add replication user block in dse.ldif file
+      blockinfile:
+        path: "{{ ldap_instance_dse_file }}"
+        block: "{{ lookup('template', 'ldif/replication-manager') }}"
+        marker: "# {mark} Block managed by ansible - replication manager bind DN"
+        state: present
+        create: no
+      when: replication_user_exists.changed
+
+    - name: Start LDAP service
+      systemd:
+        name: "dirsrv@{{ ldap_instance_name }}"
+        state: started
+        enabled: yes
+
+
+- name: Configure LDAP replication - ALL nodes are masters (max 20)
+  become: yes
+  throttle: 1
+  block:
+    - name: Enable changelog (exception catch block)
+      block:
+        - name: Enable changelog
+          ldap_entry:
+            dn: "cn=changelog5,cn=config"
+            objectClass:
+              - "top"
+              - "extensibleObject"
+            state: present
+            server_uri: "{{ ldap_server_uri }}"
+            attributes:
+              changetype: "add"
+              cn: "changelog5"
+              nsslapd-chalogdir: "/var/lib/dirsrv/slapd-{{ ldap_instance_name }}/changelogdb"
+              nsslapd-changelogmaxage: "10d"
+          register: changelog_create_out
+          failed_when:
+            - changelog_create_out.failed
+            - not (changelog_create_out.details | regex_search("Changelog configuration is part of the backend configuration"))
+      rescue:
+        - name: Check error reason
+          debug:
+            msg: "{{ changelog_create_out }}"
+
+    - name: Enable supplier replica
+      ldap_entry:
+        dn: "cn=replica,cn={{ ldap_suffix_escaped }},cn=mapping tree,cn=config"
+        objectClass:
+          - "top"
+          - "nsds5replica"
+          - "extensibleObject"
+        state: present
+        server_uri: "{{ ldap_server_uri }}"
+        attributes:
+          changetype: "add"
+          cn: "replica"
+          nsds5replicaroot: "{{ ldap_root_suffix }}"
+          nsds5replicaid: "{{ ldap_unique_index }}"
+          nsds5replicatype: "3"
+          nsds5flags: "1"
+          nsds5replicapurgedelay: "604800"
+          nsds5replicabinddn: "{{ vault.ldap.user.replication.bind_dn }}"
+
+    - name: Define replication agreements
+      ldap_entry:
+        dn: "cn=ReplicaAgreeemnt_{{ item }},cn=replica,cn={{ ldap_suffix_escaped }},cn=mapping tree,cn=config"
+        objectClass:
+          - "top"
+          - "nsds5ReplicationAgreement"
+        state: present
+        server_uri: "{{ ldap_server_uri }}"
+        attributes:
+          nsds5replicahost: "{{ item }}"
+          nsds5replicaport: "{{ ldap_listen_port }}"
+          nsds5replicabinddn: "{{ vault.ldap.user.replication.bind_dn }}"
+          nsds5replicabindmethod: "SIMPLE"
+          nsds5replicaroot: "{{ ldap_root_suffix }}"
+          description: "Replication aggreement between {{ inventory_hostname }} and {{ item }}"
+          nsds5replicaupdateschedule: "0000-2359 0123456"
+          nsds5replicatedattributelist: "(objectClass=*) $ EXCLUDE authorityRevocationList accountUnlockTime memberof"
+          nsds5replicatedattributelisttotal: "(objectClass=*) $ EXCLUDE accountUnlockTime"
+          nsds5replicacredentials: "{{ vault.ldap.user.replication.pass }}"
+          nsds5beginreplicarefresh: "start"
+      with_items: "{{ groups['ldap'] | difference([inventory_hostname]) }}"
+
+
+- name: Create LDAP entries
+  become: yes
+  run_once: yes
+  block:
+    - name: Create LDAP user for keycloak service
+      ldap_entry:
+        dn: "{{ ldap_keycloak_user }}"
+        objectClass:
+          - "top"
+          - "person"
+          - "organizationalPerson"
+          - "inetOrgPerson"
+        state: present
+        server_uri: "{{ ldap_server_uri }}"
+        attributes:
+          cn: "Keycloak service user"
+          sn: "Keycloak"
+          description: "Keycloak service bind user"
+          userPassword: "{{ vault.ldap.user.keycloak.pass }}"
+
+    - name: Create a organizational units
+      ldap_entry:
+        dn: "ou={{ item }},{{ ldap_root_suffix }}"
+        objectClass:
+          - "top"
+          - "organizationalUnit"
+        state: present
+        server_uri: "{{ ldap_server_uri }}"
+      with_items:
+        - groups
+        - permissions
+        - services
+      loop_control:
+        label: "Organizational unit: {{ item }}"
+
+    - name: Create people organization unit. Grant keycloak user access to it
+      ldap_entry:
+        dn: "ou=people,{{ ldap_root_suffix }}"
+        objectClass:
+          - "top"
+          - "organizationalUnit"
+        state: present
+        server_uri: "{{ ldap_server_uri }}"
+        attributes:
+          aci: "{{ ldap_keycloak_user_aci }}"

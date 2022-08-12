@@ -1,0 +1,449 @@
+- name: Keyclock server initial configurations
+  become: yes
+  block:
+    - name: Create keycloak user
+      user:
+        name: "{{ keycloak_system_user }}"
+        comment: Keycloak system user
+        create_home: no
+        home: /
+        local: yes
+        password_lock: yes
+        shell: /sbin/nologin
+        state: present
+        system: yes
+
+    - name: Set owner / group on PKI files
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ pki_root_dir }}"
+        owner: "{{ pki_file_owner }}"
+        group: "{{ pki_file_group }}"
+        seuser: system_u
+        setype: cert_t
+
+
+- name: Create keycloak server directory and install code
+  become: yes
+  block:
+    - name: Check if keycloak install directory exists
+      stat:
+        path: "{{ keycloak_install_dir }}"
+      register: keycloak_dir_stat
+
+    - name: Download and extract keycloak
+      when: not keycloak_dir_stat.stat.exists
+      block:
+      - name: Create keycloak directory if it does not exist
+        file:
+          path: "{{ keycloak_install_dir }}"
+          state: directory
+          mode: 0550
+          owner: root
+          group: "{{ keycloak_system_user }}"
+
+      - name: Download keycloak server tar archive
+        get_url:
+          url: "{{ keycloak_archive_url }}"
+          dest: "{{ keycloak_tmp_file }}"
+          http_agent: "wget"
+          checksum: "{{ keycloak_archive_checksum }}"
+          mode: 0400
+          owner: root
+          group: root
+
+      - name: Unarchive keycloak
+        unarchive:
+          src: "{{ keycloak_tmp_file }}"
+          dest: "{{ keycloak_install_dir }}"
+          extra_opts: [ "--strip-components=1" ]
+          remote_src: yes
+          owner: root
+          group: "{{ keycloak_system_user }}"
+
+      - name: Set permissions on keycloak directory
+        file:
+          path: "{{ keycloak_install_dir }}"
+          state: directory
+          recurse: yes
+          mode: u=rX,g=rX
+
+      - name: Create keycloak server data subdirectory if it does not exist
+        file:
+          path: "{{ keycloak_sa_data_subdir }}"
+          state: directory
+          mode: 0770
+
+      - name: Create keycloak server log subdirectory if it does not exist
+        file:
+          path: "{{ keycloak_sa_log_subdir }}"
+          state: directory
+          mode: 0770
+
+      - name: Create keycloak server tmp subdirectory if it does not exist
+        file:
+          path: "{{ keycloak_sa_tmp_subdir }}"
+          state: directory
+          mode: 0770
+
+      - name: Create keycloak server deployments subdirectory if it does not exist
+        file:
+          path: "{{ keycloak_sa_deployments_subdir }}"
+          state: directory
+          mode: 0770
+
+      - name: Create keycloak standalone xml history directory if it does not exist
+        file:
+          path: "{{ keycloak_sa_conf_subdir }}/standalone_xml_history"
+          state: directory
+          mode: 0770
+
+      - name: Give keycloak write access on users property files
+        file:
+          path: "{{ keycloak_sa_conf_subdir }}/application-users.properties"
+          state: file
+          mode: 0660
+
+      - name: Give keycloak write access on roles property files
+        file:
+          path: "{{ keycloak_sa_conf_subdir }}/application-roles.properties"
+          state: file
+          mode: 0660
+
+      - name: Give keycloak write access on logging properties files
+        file:
+          path: "{{ keycloak_sa_conf_subdir }}/logging.properties"
+          state: file
+          mode: 0660
+
+      - name: Create add users JSON file if it does not exist
+        run_once: yes
+        copy:
+          content: "[]"
+          dest: "{{ keycloak_add_user_json }}"
+          force: no
+          mode: 0660
+
+      - name: Recursively set owner / group on keycloak directory
+        file:
+          path: "{{ keycloak_install_dir }}"
+          state: directory
+          recurse: yes
+          owner: root
+          group: "{{ keycloak_system_user }}"
+
+      - name: Remove keycloak archive
+        file:
+          path: "{{ keycloak_tmp_file }}"
+          state: absent
+
+
+- name: Add custom theme files
+  become: yes
+  when: keycloak_custom_theme
+  block:
+    - name: Install git
+      package:
+        name: git
+        state: latest
+
+    - name: Make sure custom theme git directory exists
+      file:
+        path: "{{ keycloak_custom_theme_repo_dir }}"
+        state: directory
+        mode: 0700
+        owner: root
+        group: root
+        
+    - name: Git fetch the custom theme repo
+      git:
+        repo: "{{ keycloak_custom_theme.url }}"
+        dest: "{{ keycloak_custom_theme_repo_dir }}"
+        clone: yes
+        update: yes
+        version: "{{ keycloak_custom_theme.version }}"
+
+    - name: Copy the custom theme to the keycloak directory
+      copy:
+        src: "{{ keycloak_custom_theme_src_dir }}/" # The trailing slash is important here, recursive copy
+        dest: "{{ keycloak_custom_theme_dir }}"
+        remote_src: yes
+      notify:
+        - delete theme cache
+        - restart keycloak
+
+    - name: Set permissions on themes directory
+      file:
+        path: "{{ keycloak_custom_theme_dir }}"
+        state: directory
+        recurse: yes
+        mode: u=rX,g=rX,o-rwx
+        owner: root
+        group: "{{ keycloak_system_user }}"
+
+
+- name: Download and install MariaDB JDBC Driver
+  become: yes
+  block:
+    - name: Create module driver directory
+      file:
+        path: "{{ jdbc_mariadb_module_dir }}"
+        state: directory
+        mode: 0550
+        owner: root
+        group: "{{ keycloak_system_user }}"
+
+    - name: Download MariaDB JDBC connector
+      get_url:
+        url: "{{ jdbc_mariadb_download_url }}"
+        dest: "{{ jdbc_mariadb_module_jar }}"
+        http_agent: "wget"
+        checksum: "{{ jdbc_mariadb_checksum }}"
+        mode: 0440
+        owner: root
+        group: "{{ keycloak_system_user }}"
+
+    - name: Add MariaDB JDBC module xml
+      template:
+        src: mariadb-module.xml
+        dest: "{{ jdbc_mariadb_module_xml }}"
+        mode: 0440
+        owner: root
+        group: "{{ keycloak_system_user }}"
+      notify: restart keycloak
+
+
+- name: Configure other keycloak modules
+  become: yes
+  block:
+    - name: Update keycloak infinispan model module dependencies
+      lineinfile:
+        path: "{{ keycloak_infinispan_model_module_xml }}"
+        regexp: 'name="org.keycloak.keycloak-services"'
+        insertafter: '^    <dependencies>'
+        line: '        <module name="org.keycloak.keycloak-services"/>'
+      notify: restart keycloak
+
+
+- name: Set file ACLs on keycloak server files
+  become: yes
+  block:
+    - name: Set default facl permissions on keycloak directory
+      acl:
+        path: "{{ keycloak_install_dir }}"
+        default: yes
+        etype: other
+        permissions: 0
+        recursive: yes
+        state: present
+
+    - name: Apply facl permissions on keycloak directory
+      acl:
+        path: "{{ keycloak_install_dir }}"
+        etype: other
+        permissions: 0
+        recursive: yes
+        state: present
+
+
+- name: Open firewall ports for keycloak
+  become: yes
+  block:
+    - name: Allow connections to keycloak TCP clustering port from keycloak servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ keycloak_jgroup_tcp_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['keycloak'] }}"
+
+    - name: Allow connections to keycloak TCP FD_ALL socket from keycloak servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ keycloak_jgroup_tcp_fd_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['keycloak'] }}"
+
+    - name: Allow connections to keycloak HTTP port from load balancer servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ keycloak_http_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['load_balancers'] }}"
+
+    - name: Allow connections to keycloak HTTPS port from load balancer servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ keycloak_https_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - "{{ groups['load_balancers'] }}"
+
+
+- name: Configure keycloak for cross DC function
+  become: yes
+  block:
+    - name: Add the certificate used by the remote servers
+      copy:
+        content: "{{ hostvars[function_groups[item.group].master]['pki_certificate'] }}"
+        dest: "{{ item.path }}"
+        mode: 0400
+        owner: root
+        group: root
+      with_items:
+        - { group: "infinispan", path: "{{ infinispan_trusted_certificate_path }}" }
+        - { group: "database", path: "{{ database_trusted_certificate_path }}" }
+      loop_control:
+        label: "Group certificate for {{ item.group }} saved in {{ item.path }}"
+
+    - name: Create java truststore with infinispan certificate
+      java_cert:
+        cert_path: "{{ infinispan_trusted_certificate_path }}"
+        cert_alias: infinispan
+        keystore_path: "{{ keycloak_truststore }}"
+        keystore_pass: "{{ vault.keycloak.truststore.pass }}"
+        keystore_create: yes
+        keystore_type: "JKS"
+        state: present
+      notify: restart keycloak
+
+    - name: Create java truststore with database certificate
+      java_cert:
+        cert_path: "{{ database_trusted_certificate_path }}"
+        cert_alias: database
+        keystore_path: "{{ jdbc_truststore }}"
+        keystore_pass: "{{ jdbc_truststore_pass }}"
+        keystore_create: yes
+        keystore_type: "JKS"
+        state: present
+      notify: restart keycloak
+
+    - name: Set file permissions on java truststores
+      file:
+        path: "{{ item }}"
+        state: file
+        mode: 0440
+        owner: root
+        group: "{{ keycloak_system_user }}"
+      with_items:
+        - "{{ keycloak_truststore }}"
+        - "{{ jdbc_truststore }}"
+      loop_control:
+        label: "{{ item }}"
+
+    - name: Create java keystore based on PKI certificate and key
+      openssl_pkcs12:
+        action: export
+        certificate_path: "{{ pki_certificate_crt_path }}"
+        privatekey_path: "{{ pki_certificate_key_path }}"
+        friendly_name: "{{ keycloak_keystore_cert_alias }}"
+        path: "{{ keycloak_keystore }}"
+        passphrase: "{{ vault.keycloak.keystore.pass }}"
+        mode: 0440
+        owner: root
+        group: "{{ keycloak_system_user }}"
+        state: present
+      notify: restart keycloak
+
+    - name: Add the keycloak configuration file
+      template:
+        src: standalone-ha.xml
+        dest: "{{ keycloak_conf_xml }}"
+        mode: 0440
+        owner: root
+        group: "{{ keycloak_system_user }}"
+      notify: restart keycloak
+
+
+- name: Configure keycloak service
+  become: yes
+  block:
+    - name: Add keycloak systemd service file
+      template:
+        src: keycloak.service
+        dest: "{{ systemd_service_dir }}/keycloak.service"
+        mode: 0644
+        owner: root
+        group: root
+      notify:
+        - systemd reload
+        - restart keycloak
+
+    - name: Make sure to leave server wait loop if server java process ended (fix startup script bug)
+      lineinfile:
+        path: "{{ keycloak_server_script }}"
+        line: '            kill -0 $JBOSS_PID 2>/dev/null || break'
+        regexp: 'kill -0 \$JBOSS_PID 2>/dev/null'
+        insertafter: 'JBossAS process \(\$JBOSS_PID\) received \$SIGNAL_NAME signal'
+        state: present
+      notify: restart keycloak
+
+
+- name: Configure keycloak users
+  become: yes
+  become_user: "{{ keycloak_system_user }}"
+  run_once: yes
+  block:
+    - name: Check if users created marker file exists
+      stat:
+        path: "{{ keycloak_add_user_marker_file }}"
+      register: add_user_marker_stat
+
+    - name: Create admin user
+      command:
+        argv: [ "{{ keycloak_add_user_cli }}", "-r", "master", "-u", "admin", "-p", "{{ vault.keycloak.user.admin.pass }}" ]
+      when: not add_user_marker_stat.stat.exists
+      register: create_user_out
+      failed_when: create_user_out.failed and not (create_user_out.stderr | regex_search( "User with username 'admin' already added to '" + keycloak_add_user_json + "'"))
+      notify:
+        - restart keycloak
+        - remove add_users_json
+  vars:
+    ansible_remote_tmp: "/tmp/${USER}/.ansible"
+
+
+- name: Restart keycloak if required, make sure it's started
+  become: yes
+  block:
+    - name: Force flush handlers to reload / restart keycloak service
+      meta: flush_handlers
+
+    - name: Make sure the keycloak service is running
+      systemd:
+        name: keycloak
+        state: started
+        enabled: yes
+
+
+- name: Make sure keycloak finishes booting on first host. Required on first boot
+  become: yes
+  when: not add_user_marker_stat.stat.exists # Should be a good indication of a first run
+  run_once: yes
+  import_tasks: wait_keycloak_started.yml
+
+
+- name: Mark keycloak for restart when infinispan was restarted
+  set_fact:
+    infinispan_restarted: True
+  when: keycloak_cluster_infinispan_servers | map("extract", hostvars) | selectattr("infinispan_restarted") | length > 0
+  changed_when: True
+  notify: restart keycloak
+
+
+- name: Mark keycloak service for restart if the PKI files have changed
+  debug:
+    msg: "Notify restart of keycloak service"
+  when: pki_changed
+  changed_when: True
+  notify: restart keycloak

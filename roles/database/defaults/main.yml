@@ -1,0 +1,31 @@
+database_use_unix_socket: True
+
+# Create a Galera cluster if more than one database nodes exist
+database_create_galera_cluster: "{{ (groups['database'] | length) > 1 }}"
+
+# File to create when the secure installation process is complete, so it is not attempted again
+database_secure_install_marker: /root/.my.cnf
+
+# Keycloak does not officially support utf8mb4 encoding currently
+database_keycloak_encoding: utf8mb3
+
+database_log_dir: /var/log/mariadb
+database_data_dir: /var/lib/mysql
+database_backups_dir: "{{ database_data_dir }}/_backups"
+
+database_systemd_override_dir: "{{ systemd_override_dir }}/mariadb.service.d"
+database_systemd_override_file: "{{ database_systemd_override_dir }}/limits.conf"
+
+database_unix_socket: "{{ database_data_dir }}/mysql.sock"
+database_galera_replication_port: 4567
+database_galera_ist_port: 4568
+database_galera_sst_port: 4444
+
+database_system_user: mysql
+
+database_cluster_name: database_cluster
+
+# The default version value, that will be used if Keycloak was not installed yet
+keycloak_not_installed_version: 0.0.0
+# The maximum version Keycloak installed version
+keycloak_max_version: "{{ keycloak_not_installed_version }}"
