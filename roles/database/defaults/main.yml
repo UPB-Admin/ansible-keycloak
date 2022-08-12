@@ -25,7 +25,7 @@ database_system_user: mysql
 
 database_cluster_name: database_cluster
 
-# The default version value, that will be used if Keycloak was not installed yet
+# The default version value; will be used if Keycloak was not installed yet
 keycloak_not_installed_version: 0.0.0
-# The maximum version Keycloak installed version
+# The maximum Keycloak installed version
 keycloak_max_version: "{{ keycloak_not_installed_version }}"
