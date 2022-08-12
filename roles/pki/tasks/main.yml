@@ -78,6 +78,7 @@
 - name: Create Diffie-Helman parameters on first host and slurp contents
   become: yes
   run_once: yes
+  when: not (pki_dhparams | default(""))
   block:
     - name: Create Diffie-Hellman parameters
       openssl_dhparam:
@@ -91,10 +92,15 @@
         src: "{{ pki_dhparams_path }}"
       register: dhparams
 
-- name: Copy Diffie-Hellman parameters to all other servers
+    - name: Decode Diffie-Hellman parameters
+      set_fact:
+        pki_dhparams: "{{ dhparams['content'] | b64decode }}"
+
+
+- name: Copy Diffie-Hellman parameters to all servers
   become: yes
   copy:
-    content: "{{ dhparams['content'] | b64decode }}"
+    content: "{{ pki_dhparams }}"
     dest: "{{ pki_dhparams_path }}"
     mode: "{{ pki_file_mode }}"
   notify: pki changed

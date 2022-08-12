@@ -133,6 +133,9 @@ You will need to set some of the following variables for your deployment
   - `pki_country_name`: Country name used in certificates;
   - `pki_organization_name`: Organization name used in certificates;
   - `pki_locality_name`: Locality name used in certificates;
+  - `pki_dhparams`: A predefined pair of Diffie-Hellman parameters to copy to
+    the servers, since DH parameter generation can take a long time (tens of
+    minutes, up to hours);
   - `service_hostname_dns`: List of DNS names that can be used to reach the load
     balancers. Values must be DNS names, as `DNS:` is prepended before each name
     as part of the Subject Alternative Name field during certificate generation);

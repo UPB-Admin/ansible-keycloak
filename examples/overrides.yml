@@ -1,6 +1,20 @@
 pki_country_name: XX
 pki_organization_name: Some-Organization
 pki_locality_name: Some-Locality
+pki_dhparams: |
+  -----BEGIN DH PARAMETERS-----
+  MIICCAKCAgEA0A+6bM6rruNsN8R7t2+ar0a1qApY2cU8c40aKqWkp/3CGg0IBqVE
+  1ogdlPZyOcN7J58cWjkfLgf7Yf+Y8i8ZB8cK/o6pDAHw1pHtQg3ciCduk/1ewDQ8
+  3L49cAjzKfXv5EEaQk+5aYvqSLONv6MnVjQ5bpEytgGL+k8kCDlWIQuFLfdGRyqF
+  Cn+8Xy1TeXdjJYSxeSYLQJyEC9JzhkNFtdYiIKzqP6aXOSm4MJIba1DjVggO2TQZ
+  0bbhVJsZ5BwyyZfGSXyai3lMBeuxBtwo4TivRzluwosWa6+fcm+oLbRiME2JohD3
+  QKWSuTIEvvQkSrA0Pgwv5Tvmf2iGRFdWLMFoREqgtNLqZxwOnA0Rkk3XuzoJpUmV
+  03aJ1qZdvDRy61exFuoVWRKkOY/LgV82rGV6j66X2WBx2L2ek/yarAqXtmw+RSkP
+  ugZe3TjycKU5Y/XsTQwg7VhvYAWsl2CJcirPiNJ73VVVFi8Yh74gLJlyA4mg/ytJ
+  pPOjkEKiq4UGLKIrAsm0Sg6o2r+IAhPpz4OH24w9dXCayJpSPq1ZeP7vAVAaH2Jt
+  yVLf8fQDi+Mt0Ub7hk0p/Ot8tT5D2ln1hDTzS1EHUArS9GE44yQ2QiAg1GLgU/R0
+  4aoip4r6IxTimpHzIp0sNWitXZGaEUzI4WVLvGjzrcWwAlWc/zsBFsMCAQI=
+  -----END DH PARAMETERS-----
 
 load_balancer_service: nginx # Can be a load balancer name - nginx or haproxy
 service_hostname_dns: login.example.com
