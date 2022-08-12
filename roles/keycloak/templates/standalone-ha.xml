@@ -216,7 +216,7 @@
                 <stateless>
                     <bean-instance-pool-ref pool-name="slsb-strict-max-pool"/>
                 </stateless>
-                <stateful default-access-timeout="5000" cache-ref="simple" passivation-disabled-cache-ref="simple"/>
+                <stateful default-access-timeout="5000" cache-ref="distributable" passivation-disabled-cache-ref="simple"/>
                 <singleton default-access-timeout="5000"/>
             </session-bean>
             <pools>
@@ -420,7 +420,7 @@
 {% if cache_name == 'actionTokens' %}
                     <heap-memory size="-1"/>
 {% endif %}
-                    <expiration {{ 'interval="300000"' if cache_name == 'actionTokens' else '' }} lifespan="999999999999" max-idle="-1"/>
+                    <expiration {{ 'interval="300000" max-idle="-1"' if cache_name == 'actionTokens' else '' }} lifespan="900000000000000000"/>
                 </{{cache_type}}-cache>
 {% endfor %}
             </cache-container>
@@ -571,8 +571,8 @@
                 <provider name="default" enabled="true">
                     <properties>
                         <property name="dataSource" value="java:jboss/datasources/KeycloakDS"/>
-                        <property name="initializeEmpty" value="{{ 'true' if inventory_hostname == groups['keycloak'][0] else 'false' }}"/>
-                        <property name="migrationStrategy" value="{{ 'update' if inventory_hostname == groups['keycloak'][0] else 'validate' }}"/>
+                        <property name="initializeEmpty" value="{{ 'true' if inventory_hostname == function_groups['keycloak'].master else 'false' }}"/>
+                        <property name="migrationStrategy" value="{{ 'update' if inventory_hostname == function_groups['keycloak'].master else 'validate' }}"/>
                         <property name="migrationExport" value="${jboss.home.dir}/keycloak-database-update.sql"/>
                         <!-- Use UTF-8 encoding; utf8mb4 is not supported -->
                         <property name="characterEncoding" value="UTF-8"/>
