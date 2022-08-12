@@ -9,8 +9,6 @@
 #               'systemctl start|enable infinispan'
 #
 # Based on the file from ${ISPN_HOME}/docs/systemd/infinispan.service
-#
-# File managed by ansible. Manual editing may be overwritten!
 
 [Unit]
 Description=Infinispan Server Service

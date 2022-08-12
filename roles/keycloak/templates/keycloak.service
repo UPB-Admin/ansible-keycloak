@@ -1,10 +1,12 @@
+##
+## This file is managed by ansible. Manual overrides may be overwritten
+##
+
 # This script allows you to run Keycloak Server as a systemd service.
 # Modify environment properties in this script as appropriate.
 # Copy this script to the following location: /etc/systemd/system
 # Activate with 'systemctl daemon-reload'
 #               'systemctl start|enable infinispan'
-#
-# File managed by ansible. Manual editing may be overwritten!
 
 [Unit]
 Description=Keycloak Server Service

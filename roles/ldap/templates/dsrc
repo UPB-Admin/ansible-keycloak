@@ -1,4 +1,10 @@
+##
+## This file is managed by ansible. Manual overrides may be overwritten
+##
+
 [{{ ldap_instance_name }}]
 uri = {{ ldap_server_uri | regex_replace('%', '%%') }}
 basedn = {{ ldap_root_suffix }}
 binddn = {{ vault.ldap.user.root.bind_dn }}
+
+# vim: ft=toml

@@ -1,3 +1,7 @@
+##
+## This file is managed by ansible. Manual overrides may be overwritten
+##
+
 [Unit]
 Description=HAProxy Exporter
 After=network-online.target

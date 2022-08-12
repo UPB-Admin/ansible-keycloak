@@ -1,3 +1,7 @@
+##
+## This file is managed by ansible. Manual overrides may be overwritten
+##
+
 [client]
 user={{ database_prometheus_user }}
 password={{ vault.database.user.exporter.pass }}
