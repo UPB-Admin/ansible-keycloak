@@ -224,7 +224,7 @@
       changed_when: False
       failed_when:
         - user_describe_keycloak.stderr_lines | length > 0
-        - user_describe_keycloak.stderr_lines[0] | regex_search("User `" + infinispan_keycloak_user + "` does not exist")
+        - not user_describe_keycloak.stderr_lines[0] | regex_search("User `" + infinispan_keycloak_user + "` does not exist")
 
     - name: Create infinispan {{ infinispan_keycloak_user }} user if it does not exist
       command:
