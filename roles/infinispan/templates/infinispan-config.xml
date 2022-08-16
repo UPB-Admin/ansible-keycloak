@@ -5,11 +5,11 @@
 <!-- Based on the default configuration ${ISPN_HOME}/server/conf/infinispan.xml -->
 
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:12.1 https://infinispan.org/schemas/infinispan-config-12.1.xsd
-                            urn:infinispan:server:12.1 https://infinispan.org/schemas/infinispan-server-12.1.xsd"
-        xmlns="urn:infinispan:config:12.1"
-        xmlns:server="urn:infinispan:server:12.1">
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
+                            urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
+      xmlns="urn:infinispan:config:13.0"
+      xmlns:server="urn:infinispan:server:13.0">
 
    <cache-container name="default" statistics="true">
       <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
@@ -18,7 +18,7 @@
       </security>
    </cache-container>
 
-   <server xmlns="urn:infinispan:server:12.1">
+   <server xmlns="urn:infinispan:server:13.0">
       <interfaces>
          <interface name="public">
             <inet-address value="${infinispan.bind.address:{{ interfaces_internal_ip }}}"/>
@@ -42,7 +42,7 @@
                      <!-- Configure the use of a keystore for SSL communication -->
                      <keystore path="server.jks"
                         relative-to="infinispan.server.config.path"
-                        keystore-password="{{ vault.infinispan.keystore.pass }}"
+                        password="{{ vault.infinispan.keystore.pass }}"
                         alias="{{ infinispan_keystore_cert_alias }}"/>
                   </ssl>
                </server-identities>
@@ -54,15 +54,7 @@
          </security-realms>
       </security>
 
-      <!-- Configure the use of the hotrod connector -->
-      <endpoints socket-binding="default" security-realm="default">
-         <hotrod-connector name="hotrod">
-            <authentication>
-               <sasl mechanisms="SCRAM-SHA-512" server-name="infinispan" />
-            </authentication>
-         </hotrod-connector>
-         <rest-connector name="rest"/>
-      </endpoints>
+      <endpoints socket-binding="default" security-realm="default"/>
    </server>
 
    <jgroups>

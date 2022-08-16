@@ -206,26 +206,32 @@
         argv: [ "{{ infinispan_cli }}", "user", "describe", "admin" ]
       register: user_describe_admin
       changed_when: False
+      failed_when:
+        - user_describe_admin.stderr_lines | length > 0
+        - not user_describe_admin.stderr_lines[0] | regex_search("User `admin` does not exist")
 
     - name: Create infinispan admin user if it does not exist
       command:
         argv: [ "{{ infinispan_cli }}", "user", "create", "admin", "-p", "{{ vault.infinispan.user.admin.pass }}" ]
-      when: user_describe_admin.stdout_lines[0] | regex_search("User `admin` does not exist")
+      when: user_describe_admin.stderr_lines | length > 0
       register: result
-      failed_when: '"Exception" in result.stdout'
+      failed_when: '"Exception" in result.stderr'
 
     - name: Check if infinispan {{ infinispan_keycloak_user }} user exists
       command:
         argv: [ "{{ infinispan_cli }}", "user", "describe", "{{ infinispan_keycloak_user }}" ]
       register: user_describe_keycloak
       changed_when: False
+      failed_when:
+        - user_describe_keycloak.stderr_lines | length > 0
+        - user_describe_keycloak.stderr_lines[0] | regex_search("User `" + infinispan_keycloak_user + "` does not exist")
 
     - name: Create infinispan {{ infinispan_keycloak_user }} user if it does not exist
       command:
         argv: [ "{{ infinispan_cli }}", "user", "create", "{{ infinispan_keycloak_user }}", "-p", "{{ vault.infinispan.user.keycloak.pass }}" ]
-      when: user_describe_keycloak.stdout_lines[0] | regex_search("User `" + infinispan_keycloak_user + "` does not exist")
+      when: user_describe_keycloak.stderr_lines | length > 0
       register: result
-      failed_when: '"Exception" in result.stdout'
+      failed_when: '"Exception" in result.stderr'
   vars:
     ansible_remote_tmp: "/tmp/${USER}/.ansible"
 
