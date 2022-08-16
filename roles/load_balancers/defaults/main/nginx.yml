@@ -28,7 +28,7 @@ nginx_resolver_validity: 300s
 nginx_resolver_timeout: 5s
 
 nginx_healthcheck_max_fails: 1
-nginx_healthcheck_fail_timeout: 30s
+nginx_healthcheck_fail_timeout: 3s
 
 nginx_proxy_buffers_count: 8
 nginx_proxy_buffers_size: 16k
