@@ -1,4 +1,4 @@
-keycloak_version: 15.1.1
+keycloak_version: 19.0.1
 
 # Interfaces, available to the server
 # In case there is more than one interface, the correct internal/external interfaces should be set
