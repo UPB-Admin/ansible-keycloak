@@ -47,7 +47,7 @@ keycloak_node_name: "{{ 'k_%d%d' % (cluster_number, keycloak_node_index|int + 1)
 keycloak_site_name: "c_{{ cluster_number }}"
 
 wildfly_statistics_enabled: "true"
-keycloak_debug_infinispan: "false"
+keycloak_debug_infinispan: False
 
 keycloak_keystore_cert_alias: server
 keycloak_system_user: keycloak
