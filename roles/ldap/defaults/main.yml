@@ -20,7 +20,7 @@ ldap_server_uri: "ldapi://{{ ldap_unix_socket | regex_replace('/', '%2f') }}"
 
 
 # Get the index of the node in the cluster; use this as an unique identifier for the node
-ldap_node_index: "{{ lookup('ansible.utils.index_of', groups['ldap'], 'eq', inventory_hostname, wantlist=True) | first }}"
+ldap_node_index: "{{ lookup('ansible.utils.index_of', groups[cluster_name] | intersect(groups['ldap']), 'eq', inventory_hostname, wantlist=True) | first }}"
 ldap_unique_index: "{{ (cluster_number|int * 100) + ldap_node_index|int + 1 }}"
 
 ldap_root_suffix: "dc=test,dc=keycloak,dc=local"  # the suffix of entries in the database

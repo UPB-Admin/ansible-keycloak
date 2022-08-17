@@ -40,7 +40,7 @@ keycloak_tcpping_server_list: "{{ groups[cluster_name] | intersect(groups['keycl
 keycloak_cluster_infinispan_servers: "{{ groups[cluster_name] | intersect(groups['infinispan']) }}"
 
 # Create an unique name for the node and cluster for the keycloak service
-keycloak_node_index: "{{ lookup('ansible.utils.index_of', groups['keycloak'], 'eq', inventory_hostname, wantlist=True) | first }}"
+keycloak_node_index: "{{ lookup('ansible.utils.index_of', groups[cluster_name] | intersect(groups['keycloak']), 'eq', inventory_hostname, wantlist=True) | first }}"
 keycloak_node_name: "{{ 'k_%d%d' % (cluster_number, keycloak_node_index|int + 1) }}"
 keycloak_site_name: "c_{{ cluster_number }}"
 
