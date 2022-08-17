@@ -25,8 +25,6 @@ keycloak_startup_marker_file: "{{ keycloak_sa_tmp_subdir }}/startup-marker"
 keycloak_add_user_cli: "{{ keycloak_bin_subdir }}/add-user-keycloak.sh"
 keycloak_server_script: "{{ keycloak_bin_subdir }}/standalone.sh"
 keycloak_exec_params_conf: "{{ keycloak_bin_subdir }}/standalone.conf"
-keycloak_jboss_cli: "{{ keycloak_bin_subdir }}/jboss-cli.sh"
-keycloak_migrate_cli: "{{ keycloak_bin_subdir }}/migrate-standalone-ha.cli"
 
 database_trusted_certificate_path: "{{ pki_trusted_dir }}/database.crt"
 infinispan_trusted_certificate_path: "{{ pki_trusted_dir }}/infinispan.crt"
