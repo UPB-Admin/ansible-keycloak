@@ -595,7 +595,7 @@
                 <provider name="default" enabled="true">
                     <properties>
                         <!-- Use the service's hostname as the frontend URL when connecting -->
-                        <property name="frontendUrl" value="${keycloak.frontendUrl:https://{{ service_hostname_dns }}/auth}"/>
+                        <property name="frontendUrl" value="${keycloak.frontendUrl:https://{{ service_hostname_dns }}/auth/}"/>
                         <!-- Allow services that can reach the servers through the backend to do so -->
                         <property name="forceBackendUrlToFrontendUrl" value="{{ keycloak_backend_to_frontend_url }}"/>
                     </properties>
