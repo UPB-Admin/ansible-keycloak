@@ -156,7 +156,7 @@
         owner: root
         group: root
         
-    - name: Git fetch the custom theme repo
+    - name: Clone the git repository for the custom theme
       git:
         repo: "{{ keycloak_custom_theme.url }}"
         dest: "{{ keycloak_custom_theme_repo_dir }}"
