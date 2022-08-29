@@ -1,6 +1,8 @@
 function_group: infinispan
 pki_service_name: infinispan
 
+java_version: 1.8.0
+
 infinispan_restarted: False
 
 # vim: ft=yaml

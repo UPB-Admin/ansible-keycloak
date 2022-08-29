@@ -1,4 +1,6 @@
 function_group: keycloak
 pki_service_name: keycloak
 
+java_version: 11
+
 # vim: ft=yaml
