@@ -14,7 +14,7 @@
         system: yes
 
 
-- name: Install and configure {{ item }} exporter
+- name: Install and configure exporters
   include_tasks: "install_exporter.yml"
   when:
     - exporter.key in prometheus_exporters_to_install
