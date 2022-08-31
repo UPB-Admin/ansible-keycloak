@@ -63,7 +63,7 @@
 - name: Build custom module {{ keycloak_custom_module.name }}
   run_once: yes
   block:
-    - name: Build {{ keycloak_custom_module.name }} using maven
+    - name: Build and install {{ keycloak_custom_module.name }} using maven
       become_user: "{{ keycloak_system_user }}"
       command:
         chdir: "{{ keycloak_custom_module_repo_dir }}"
