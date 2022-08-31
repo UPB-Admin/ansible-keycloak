@@ -164,6 +164,19 @@ You will need to set some of the following variables for your deployment
       directory, and the `custom` name is specified as the parameter above,
       the files inside the repository's `theme` directory will be copied to
       Keycloak's `themes/custom` directory);
+  - `keycloak_custom_modules`: A list of custom modules to compile and install
+    in Keycloak. The modules are compiled using `maven` and the resulting `jar`
+    artifact is copied in the `deployments` directory in Keycloak. For each
+    custom module you must specify the following paramters:
+    - `name`: Name of the custom module; this name will be used to create a
+      directory to clone to repository into, so we recommend using dashes
+      between words (e.g. `custom-module`);
+    - `url`: URL to the git repository that hosts the custom module;
+    - `version`: Version the repository should be set to (e.g. `HEAD`, a branch
+      name, a tag name);
+    - `maven_extra_params`: A list of command line arguments to pass to maven;
+      this parameter is optional; if not set, the package is built using
+      `maven package`.
   - `load_balancer_service`: The type of load balancer to install - either
     `nginx` or `haproxy` can be specified.
 

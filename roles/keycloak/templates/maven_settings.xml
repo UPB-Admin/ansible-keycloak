@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<!--
+     This file is managed by ansible. Manual overrides may be overwritten
+-->
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <localRepository>{{ keycloak_maven_repo_dir }}</localRepository>
+    <interactiveMode>false</interactiveMode>
+</settings>
+
+<!-- vi: ft=xml expandtab sw=4 sts=4 ts=4
+-->

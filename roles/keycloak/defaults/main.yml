@@ -78,3 +78,7 @@ jdbc_mariadb_module_xml: "{{ jdbc_mariadb_module_dir }}/module.xml"
 
 jdbc_truststore: "{{ jdbc_mariadb_module_dir }}/truststore.jks"
 jdbc_truststore_pass: "{{ vault.keycloak.truststore.pass }}"
+
+keycloak_custom_modules_repo_root_dir: "/opt/keycloak-custom-modules"
+keycloak_maven_settings_xml: "{{ keycloak_custom_modules_repo_root_dir }}/settings.xml"
+keycloak_maven_repo_dir: "{{ keycloak_custom_modules_repo_root_dir }}/.m2/repository"
