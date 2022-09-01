@@ -3,6 +3,7 @@
   package:
     name:
       - "{{ 'java-%s-openjdk' % java_version }}"
+      - "{{ 'java-%s-openjdk-devel' % java_version }}"
     state: latest
   register: install_out
 
@@ -18,23 +19,19 @@
       set_fact:
         java_package: "{{ ansible_facts.packages['java-%s-openjdk' % java_version][0] }}"
 
-    - name: Check possible java binary locations
-      stat:
-        path: "{{ item }}"
+    - name: Set up {{ java_version }} binary (in bin directory) as alternative
+      alternatives:
+        name: "{{ item }}"
+        link: "/usr/bin/{{ item }}"
+        path: "/usr/lib/jvm/java-{{ java_version }}-openjdk-{{ java_package.version }}-{{ java_package.release }}.{{ java_package.arch }}/bin/{{ item }}"
       with_items:
-        - "/usr/lib/jvm/java-{{ java_version }}-openjdk-{{ java_package.version }}-{{ java_package.release }}.{{ java_package.arch }}/bin/java"
-        - "/usr/lib/jvm/java-{{ java_version }}-openjdk-{{ java_package.version }}-{{ java_package.release }}.{{ java_package.arch }}/jre/bin/java"
-      register: java_bin_stat
-
-    - name: Fail if the java binary was not found in any location
-      fail:
-        msg: "Could not find java binary for version {{ java_version }}"
-      when: java_bin_stat.results | selectattr("stat.exists") | length < 1
+        - java
+        - javac
 
     - name: Use latest openjdk {{ java_version }} as java alternative
       command:
-        argv: [ "update-alternatives", "--set", "java", "{{ item.stat.path }}" ]
-      with_items: "{{ java_bin_stat.results | selectattr('stat.exists') }}"
-      loop_control:
-        label: "{{ item.stat.path }}"
+        argv: [ "update-alternatives", "--set", "{{ item }}", "/usr/lib/jvm/java-{{ java_version }}-openjdk-{{ java_package.version }}-{{ java_package.release }}.{{ java_package.arch }}/bin/{{ item }}" ]
       notify: restart java service
+      with_items:
+        - java
+        - javac

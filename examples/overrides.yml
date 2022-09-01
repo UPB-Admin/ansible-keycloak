@@ -32,3 +32,9 @@ keycloak_custom_theme:
   version: HEAD
   name: custom
   path: themes/custom
+
+keycloak_custom_modules:
+  - name: example-custom-module
+    url: https://github.com/someone/example-custom-module.git
+    version: HEAD
+    maven_extra_params: "-Dkeycloak.version={{ keycloak_version }}"

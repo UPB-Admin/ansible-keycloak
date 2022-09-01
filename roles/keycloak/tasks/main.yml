@@ -23,6 +23,14 @@
         seuser: system_u
         setype: cert_t
 
+    - name: Install required packages
+      package:
+        name:
+          - git
+          - maven
+          - python3-lxml
+        state: latest
+
 
 - name: Create keycloak server directory and install code
   become: yes
@@ -143,11 +151,6 @@
   become: yes
   when: keycloak_custom_theme
   block:
-    - name: Install git
-      package:
-        name: git
-        state: latest
-
     - name: Make sure custom theme git directory exists
       file:
         path: "{{ keycloak_custom_theme_repo_dir }}"
@@ -156,7 +159,7 @@
         owner: root
         group: root
         
-    - name: Git fetch the custom theme repo
+    - name: Clone the git repository for the custom theme
       git:
         repo: "{{ keycloak_custom_theme.url }}"
         dest: "{{ keycloak_custom_theme_repo_dir }}"
@@ -364,6 +367,45 @@
         owner: root
         group: "{{ keycloak_system_user }}"
       notify: restart keycloak
+
+
+- name: Install Keycloak custom modules
+  become: yes
+  when: keycloak_custom_modules | default(False)
+  block:
+    - name: Prepare common files
+      run_once: yes
+      block:
+        - name: Prepare custom modules repositories directory
+          file:
+            path: "{{ keycloak_custom_modules_repo_root_dir }}"
+            state: directory
+            mode: 0750
+            owner: root
+            group: "{{ keycloak_system_user }}"
+
+        - name: Create maven settings XML file
+          template:
+            src: maven_settings.xml
+            dest: "{{ keycloak_maven_settings_xml }}"
+            mode: 0640
+            owner: root
+            group: "{{ keycloak_system_user }}"
+
+        - name: Create maven repository directory
+          file:
+            path: "{{ keycloak_maven_repo_dir }}"
+            state: directory
+            mode: 0770
+            owner: root
+            group: "{{ keycloak_system_user }}"
+
+    - name: Install custom modules
+      include_tasks: install_custom_module.yml
+      with_items: "{{ keycloak_custom_modules }}"
+      loop_control:
+        loop_var: keycloak_custom_module
+        label: "{{ keycloak_custom_module.name }}"
 
 
 - name: Configure keycloak service

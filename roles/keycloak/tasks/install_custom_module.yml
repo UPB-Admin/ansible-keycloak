@@ -1,0 +1,110 @@
+- name: Set common custom module variables
+  set_fact:
+    keycloak_custom_module_repo_dir: "{{ keycloak_custom_modules_repo_root_dir }}/{{ keycloak_custom_module.name }}"
+
+- name: Clone the {{ keycloak_custom_module.name }} repository
+  run_once: yes
+  block:
+    - name: Make sure custom module repository directory exists
+      file:
+        path: "{{ keycloak_custom_module_repo_dir }}"
+        state: directory
+        recurse: no
+        mode: 0750
+        owner: root
+        group: "{{ keycloak_system_user }}"
+
+    - name: Set default file ACLs on custom module repository directory
+      acl:
+        path: "{{ keycloak_custom_module_repo_dir }}"
+        default: yes
+        etype: other
+        permissions: 0
+        recursive: yes
+        state: present
+
+    - name: Clone the custom module git repository
+      git:
+        repo: "{{ keycloak_custom_module.url }}"
+        dest: "{{ keycloak_custom_module_repo_dir }}"
+        clone: yes
+        update: yes
+        version: "{{ keycloak_custom_module.version }}"
+
+    - name: Get list of files in the repository excluding the target subdirectory
+      find:
+        paths: "{{ keycloak_custom_module_repo_dir }}"
+        file_type: any
+        excludes: target
+        hidden: no
+      register: repository_files
+
+    - name: Set permissions on repository files excluding the target subdirectory
+      file:
+        path: "{{ item.path }}"
+        state: "{{ 'directory' if item.isdir else 'file' }}"
+        recurse: "{{ 'yes' if item.isdir else 'no' }}"
+        mode: u=rwX,g=rX,o=-
+        owner: root
+        group: "{{ keycloak_system_user }}"
+      with_items: "{{ repository_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Give write permissions on target subdirectory to {{ keycloak_system_user }} group
+      file:
+        path: "{{ keycloak_custom_module_repo_dir }}/target"
+        state: directory
+        mode: 0770
+        owner: "{{ keycloak_system_user }}"
+        group: "{{ keycloak_system_user }}"
+
+
+- name: Build custom module {{ keycloak_custom_module.name }}
+  run_once: yes
+  block:
+    - name: Build and install {{ keycloak_custom_module.name }} using maven
+      become_user: "{{ keycloak_system_user }}"
+      command:
+        chdir: "{{ keycloak_custom_module_repo_dir }}"
+        cmd: "mvn package -s '{{ keycloak_maven_settings_xml }}' {{ keycloak_custom_module.maven_extra_params | default('') }}"
+      register: maven_build_output
+      changed_when: not maven_build_output.stdout | regex_search("Nothing to compile - all classes are up to date")
+      environment:
+        JAVA_HOME: /etc/alternatives/java_sdk
+      vars:
+        ansible_remote_tmp: "/tmp/${USER}/.ansible"
+
+    - name: Get custom module's build IDs and version from module POM
+      xml:
+        path: "{{ keycloak_custom_module_repo_dir }}/pom.xml"
+        xpath: "/pom400:project/pom400:{{ item }}"
+        content: text
+        namespaces:
+          pom400: http://maven.apache.org/POM/4.0.0
+      with_items:
+        -  groupId
+        -  artifactId
+        -  version
+      register: keycloak_custom_module_pom
+
+    - name: Set custom module attributes variables
+      set_fact:
+        keycloak_custom_module_attrs: "{{ keycloak_custom_module_attrs | default({}) | combine({ item.item: item.matches[0].values() | first }) }}"
+      with_items: "{{ keycloak_custom_module_pom.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Slurp custom module jar from build server
+      slurp:
+        path: "{{ keycloak_custom_module_repo_dir }}/target/{{ keycloak_custom_module_attrs.artifactId }}-{{ keycloak_custom_module_attrs.version }}.jar"
+      register: keycloak_custom_module_jar_content
+
+    - name: Copy custom module jar to all servers
+      run_once: no
+      copy:
+        content: "{{ keycloak_custom_module_jar_content['content'] | b64decode }}"
+        dest:  "{{ keycloak_sa_deployments_subdir }}/{{ keycloak_custom_module_attrs.artifactId }}.jar"
+        mode: 0640
+        owner: root
+        group: "{{ keycloak_system_user }}"
