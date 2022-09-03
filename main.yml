@@ -8,10 +8,8 @@
 - hosts: all
   tags: always
   roles:
-    - role: common
-      public: yes
-    - role: pki
-      public: yes
+    - common
+    - pki
 
 - hosts: load_balancers
   tags: load_balancers
