@@ -6,7 +6,7 @@
         file: group_vars/vault
 
 - hosts: all
-  tags: common
+  tags: always
   roles:
     - role: common
       public: yes
