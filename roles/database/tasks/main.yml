@@ -275,7 +275,6 @@
 
 - name: Check database to verify if keycloak is being upgraded
   run_once: yes
-  become: yes
   block:
     - name: Check if the MIGRATION_MODEL table exists
       community.mysql.mysql_query:
@@ -293,13 +292,14 @@
             login_user: root
             login_password: "{{ vault.database.user.root.pass }}"
             login_unix_socket: "{{ database_unix_socket }}"
-            query: "SELECT VERSION from {{ database_keycloak_database }}.MIGRATION_MODEL ORDER BY UPDATE_TIME LIMIT 1;"
+            query: "SELECT VERSION from {{ database_keycloak_database }}.MIGRATION_MODEL;"
           register: keycloak_versions
 
-        - name: Set the latest installed keycloak version as a fact
+        - name: Determine the latest installed version of Keycloak
           set_fact:
-            keycloak_max_version: "{{ keycloak_versions.query_result[0][0].VERSION }}"
-          when: keycloak_versions.rowcount[0] > 0
+            keycloak_max_version: "{{ item.VERSION }}"
+          when: item.VERSION is version(keycloak_max_version, '>')
+          with_items: "{{ keycloak_versions.query_result[0] }}"
 
         - name: Fail if keycloak would be downgraded
           fail:
