@@ -342,13 +342,18 @@
             msg: "Cannot downgrade Keycloak!"
           when: keycloak_version is version(keycloak_max_version, "<")
 
+        - name: Set Keycloak upgrading fact
+          when:
+            - keycloak_max_version != keycloak_not_installed_version
+            - keycloak_version is version(keycloak_max_version, ">")
+          set_fact:
+            keycloak_upgrading: True
+
 
 - name: Backup database if keycloak is being upgraded
   run_once: yes
   become: yes
-  when:
-    - keycloak_max_version != keycloak_not_installed_version
-    - keycloak_version is version(keycloak_max_version, ">")
+  when: keycloak_upgrading | default(False)
   block:
     - name: Make sure backup directory exists
       file:

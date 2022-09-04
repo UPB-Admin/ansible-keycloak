@@ -366,6 +366,25 @@
   notify: restart keycloak
 
 
+- name: When upgrading restart Keycloak on the first server only to migrate the database
+  become: yes
+  when: hostvars[function_groups['database'].master]['keycloak_upgrading'] | default(False)
+  run_once: yes
+  block:
+    - name: Restart Keycloak immediately
+      systemd:
+        name: keycloak
+        state: restarted
+
+    - name: Wait until the keycloak service finishes booting
+      wait_for:
+        port: "{{ keycloak_https_port }}"
+        host: "{{ inventory_hostname }}"
+        timeout: "{{ service_start_timeout }}"
+        msg: "Keycloak did not start after {{ service_start_timeout }} seconds"
+        state: started
+
+
 - name: Restart keycloak if required, make sure it's started
   become: yes
   block:
