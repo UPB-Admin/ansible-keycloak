@@ -123,3 +123,8 @@
         name: chronyd
         state: started
         enabled: yes
+
+
+- name: Clean Keycloak path prefix variable (ensure it has a leading slash)
+  set_fact:
+    keycloak_path_prefix: "/{{ keycloak_path_prefix | regex_replace('/+', '/') | regex_replace('^/|/$', '') }}"

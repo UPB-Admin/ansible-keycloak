@@ -41,6 +41,7 @@
           dest: "{{ infinispan_tmp_file }}"
           http_agent: wget
           checksum: "{{ infinispan_archive_checksum }}"
+          timeout: 30
           mode: 0400
           owner: root
           group: root

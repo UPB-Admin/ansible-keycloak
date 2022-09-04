@@ -79,6 +79,14 @@
    <!-- Configure the clustering transport to use the xsite stack -->
    <cache-container name="default" statistics="true">
       <transport cluster="${infinispan.cluster.name:cluster}" stack="xsite"/>
+      <security>
+         <authorization>
+            <identity-role-mapper/>
+            <roles>
+               <role name="{{ infinispan_keycloak_user }}" permissions="ALL_READ ALL_WRITE EXEC LISTEN"/>
+            </roles>
+         </authorization>
+      </security>
 
       <replicated-cache-configuration name="sessions-cfg" mode="{{ infinispan_backup_strategy }}">
          <locking acquire-timeout="0" />
@@ -89,15 +97,14 @@
             </backup>
 {% endfor %}
          </backups>
-         <encoding>
-            <key media-type="application/x-jboss-marshalling"/>
-            <value media-type="application/x-jboss-marshalling"/>
-         </encoding>
          <persistence>
             <rocksdb-store xmlns="urn:infinispan:config:store:rocksdb:12.1" path="rocksdb/keycloak/data" shared="false" preload="true" fetch-state="true" segmented="false">
                <expiration path="rocksdb/keycloak/expired"/>
             </rocksdb-store>
          </persistence>
+         <security>
+            <authorization enabled="true" roles="admin {{ infinispan_keycloak_user }}"/>
+         </security>
       </replicated-cache-configuration>
 
 {% for cache_name, _ in infinispan_caches.items() %}

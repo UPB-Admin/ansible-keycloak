@@ -1,4 +1,4 @@
-keycloak_version: 15.1.1
+keycloak_version: 19.0.1
 
 # Interfaces, available to the server
 # In case there is more than one interface, the correct internal/external interfaces should be set
@@ -45,6 +45,13 @@ pki_changed: False
 
 # Type of load balancer to use. Can be either nginx or HAProxy
 load_balancer_service: nginx
+
+# Prefix added to all Keycloak paths
+keycloak_path_prefix: /auth
+
+# Public HTTP connection ports
+load_balancer_http_port: 80
+load_balancer_https_port: 443
 
 # Ports Keycloak listens on. Must be the same between Keycloak (server) and the
 # load balancers (clients)
