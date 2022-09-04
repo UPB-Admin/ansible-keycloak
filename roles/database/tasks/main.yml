@@ -82,9 +82,20 @@
           - "ALTER USER 'mysql'@'localhost' IDENTIFIED BY '{{ vault.database.user.mysql.pass }}';"
 
 
-- name: Create database for keycloak
+- name: Check if the {{ database_keycloak_database }} exists
+  run_once: yes
+  community.mysql.mysql_query:
+    login_user: root
+    login_password: "{{ vault.database.user.root.pass }}"
+    login_unix_socket: "{{ database_unix_socket }}"
+    query: "SELECT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_keycloak_database }}';"
+  register: database_exists
+
+
+- name: Create database for Keycloak if it does not exist
   become: yes
-  when: not marker_stat.stat.exists
+  run_once: yes
+  when: database_exists.rowcount[0] == 0
   block:
     - name: Create {{ database_keycloak_database }} database
       community.mysql.mysql_db:
