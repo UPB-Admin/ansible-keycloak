@@ -85,7 +85,7 @@ function_groups:
   keycloak:
     master: "{{ groups['keycloak'][0] }}"
   ldap:
-    master: "{{ groups['ldap'][0] }}"
+    master: "{{ (groups['ldap'] | default(['']))[0] }}"
   load_balancers:
     master: "{{ groups['load_balancers'][0] }}"
 
