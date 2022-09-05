@@ -478,7 +478,7 @@
 - name: Mark keycloak for restart when infinispan was restarted
   set_fact:
     infinispan_restarted: True
-  when: keycloak_cluster_infinispan_servers | map("extract", hostvars) | selectattr("infinispan_restarted") | length > 0
+  when: keycloak_cluster_infinispan_servers | map("extract", hostvars) | selectattr("infinispan_restarted") | list | length > 0
   changed_when: True
   notify: restart keycloak
 
