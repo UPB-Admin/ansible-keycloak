@@ -5,9 +5,3 @@
     state: restarted
     enabled: yes
   listen: restart java service
-
-- name: delete theme cache
-  become: yes
-  file:
-    path: "{{ keycloak_tmp_subdir }}/kc-gzip-cache"
-    state: absent

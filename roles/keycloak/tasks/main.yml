@@ -132,15 +132,25 @@
         clone: yes
         update: yes
         version: "{{ keycloak_custom_theme.version }}"
+      register: theme_clone
+
+    # Removing the theme directory is required due to a bug in Ansible that
+    # prevents it from updating all files in a remote source recursive copy.
+    - name: Remove theme directory and cache if theme is updated
+      file:
+        path: "{{ item }}"
+        state: absent
+      when: theme_clone.changed
+      with_items:
+        - "{{ keycloak_tmp_subdir }}/kc-gzip-cache"
+        - "{{ keycloak_custom_theme_dir }}"
 
     - name: Copy the custom theme to the keycloak directory
       copy:
         src: "{{ keycloak_custom_theme_src_dir }}/" # The trailing slash is important here, recursive copy
         dest: "{{ keycloak_custom_theme_dir }}"
         remote_src: yes
-      notify:
-        - delete theme cache
-        - restart keycloak
+      notify: restart keycloak
 
     - name: Set permissions on themes directory
       file:
