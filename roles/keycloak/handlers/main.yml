@@ -5,12 +5,3 @@
     state: restarted
     enabled: yes
   listen: restart java service
-
-- name: remove add_users_json
-  include_tasks: remove_add_user_json.yml
-
-- name: delete theme cache
-  become: yes
-  file:
-    path: "{{ keycloak_sa_tmp_subdir }}/kc-gzip-cache"
-    state: absent

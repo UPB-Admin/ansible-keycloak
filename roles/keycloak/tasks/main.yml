@@ -43,6 +43,17 @@
     - name: Download and extract keycloak
       when: not keycloak_dir_stat.stat.exists
       block:
+      - name: Download keycloak server tar archive
+        get_url:
+          url: "{{ keycloak_archive_url }}"
+          dest: "{{ keycloak_tmp_file }}"
+          http_agent: "wget"
+          checksum: "{{ keycloak_archive_checksum }}"
+          timeout: 30
+          mode: 0400
+          owner: root
+          group: root
+
       - name: Create keycloak directory if it does not exist
         file:
           path: "{{ keycloak_install_dir }}"
@@ -50,16 +61,6 @@
           mode: 0550
           owner: root
           group: "{{ keycloak_system_user }}"
-
-      - name: Download keycloak server tar archive
-        get_url:
-          url: "{{ keycloak_archive_url }}"
-          dest: "{{ keycloak_tmp_file }}"
-          http_agent: "wget"
-          checksum: "{{ keycloak_archive_checksum }}"
-          mode: 0400
-          owner: root
-          group: root
 
       - name: Unarchive keycloak
         unarchive:
@@ -75,63 +76,28 @@
           path: "{{ keycloak_install_dir }}"
           state: directory
           recurse: yes
-          mode: u=rX,g=rX
+          mode: u=rX,g=rX,o-rwx
 
       - name: Create keycloak server data subdirectory if it does not exist
         file:
-          path: "{{ keycloak_sa_data_subdir }}"
+          path: "{{ keycloak_data_subdir }}"
           state: directory
           mode: 0770
 
       - name: Create keycloak server log subdirectory if it does not exist
         file:
-          path: "{{ keycloak_sa_log_subdir }}"
+          path: "{{ keycloak_log_subdir }}"
           state: directory
           mode: 0770
 
-      - name: Create keycloak server tmp subdirectory if it does not exist
-        file:
-          path: "{{ keycloak_sa_tmp_subdir }}"
-          state: directory
-          mode: 0770
-
-      - name: Create keycloak server deployments subdirectory if it does not exist
-        file:
-          path: "{{ keycloak_sa_deployments_subdir }}"
-          state: directory
-          mode: 0770
-
-      - name: Create keycloak standalone xml history directory if it does not exist
-        file:
-          path: "{{ keycloak_sa_conf_subdir }}/standalone_xml_history"
-          state: directory
-          mode: 0770
-
-      - name: Give keycloak write access on users property files
-        file:
-          path: "{{ keycloak_sa_conf_subdir }}/application-users.properties"
-          state: file
-          mode: 0660
-
-      - name: Give keycloak write access on roles property files
-        file:
-          path: "{{ keycloak_sa_conf_subdir }}/application-roles.properties"
-          state: file
-          mode: 0660
-
-      - name: Give keycloak write access on logging properties files
-        file:
-          path: "{{ keycloak_sa_conf_subdir }}/logging.properties"
-          state: file
-          mode: 0660
-
-      - name: Create add users JSON file if it does not exist
-        run_once: yes
-        copy:
-          content: "[]"
-          dest: "{{ keycloak_add_user_json }}"
-          force: no
-          mode: 0660
+      - name: Grant Keycloak write permissions on bytecode file(s)
+        become: yes
+        block:
+          - name: Allow keycloak to write in quarkus lib directory
+            file:
+              path: "{{ keycloak_quarkus_lib_subdir }}"
+              state: directory
+              mode: 0770
 
       - name: Recursively set owner / group on keycloak directory
         file:
@@ -149,7 +115,7 @@
 
 - name: Add custom theme files
   become: yes
-  when: keycloak_custom_theme
+  when: keycloak_custom_theme | default(False)
   block:
     - name: Make sure custom theme git directory exists
       file:
@@ -158,7 +124,7 @@
         mode: 0700
         owner: root
         group: root
-        
+
     - name: Clone the git repository for the custom theme
       git:
         repo: "{{ keycloak_custom_theme.url }}"
@@ -166,15 +132,25 @@
         clone: yes
         update: yes
         version: "{{ keycloak_custom_theme.version }}"
+      register: theme_clone
+
+    # Removing the theme directory is required due to a bug in Ansible that
+    # prevents it from updating all files in a remote source recursive copy.
+    - name: Remove theme directory and cache if theme is updated
+      file:
+        path: "{{ item }}"
+        state: absent
+      when: theme_clone.changed
+      with_items:
+        - "{{ keycloak_tmp_subdir }}/kc-gzip-cache"
+        - "{{ keycloak_custom_theme_dir }}"
 
     - name: Copy the custom theme to the keycloak directory
       copy:
         src: "{{ keycloak_custom_theme_src_dir }}/" # The trailing slash is important here, recursive copy
         dest: "{{ keycloak_custom_theme_dir }}"
         remote_src: yes
-      notify:
-        - delete theme cache
-        - restart keycloak
+      notify: restart keycloak
 
     - name: Set permissions on themes directory
       file:
@@ -185,48 +161,6 @@
         owner: root
         group: "{{ keycloak_system_user }}"
 
-
-- name: Download and install MariaDB JDBC Driver
-  become: yes
-  block:
-    - name: Create module driver directory
-      file:
-        path: "{{ jdbc_mariadb_module_dir }}"
-        state: directory
-        mode: 0550
-        owner: root
-        group: "{{ keycloak_system_user }}"
-
-    - name: Download MariaDB JDBC connector
-      get_url:
-        url: "{{ jdbc_mariadb_download_url }}"
-        dest: "{{ jdbc_mariadb_module_jar }}"
-        http_agent: "wget"
-        checksum: "{{ jdbc_mariadb_checksum }}"
-        mode: 0440
-        owner: root
-        group: "{{ keycloak_system_user }}"
-
-    - name: Add MariaDB JDBC module xml
-      template:
-        src: mariadb-module.xml
-        dest: "{{ jdbc_mariadb_module_xml }}"
-        mode: 0440
-        owner: root
-        group: "{{ keycloak_system_user }}"
-      notify: restart keycloak
-
-
-- name: Configure other keycloak modules
-  become: yes
-  block:
-    - name: Update keycloak infinispan model module dependencies
-      lineinfile:
-        path: "{{ keycloak_infinispan_model_module_xml }}"
-        regexp: 'name="org.keycloak.keycloak-services"'
-        insertafter: '^    <dependencies>'
-        line: '        <module name="org.keycloak.keycloak-services"/>'
-      notify: restart keycloak
 
 
 - name: Set file ACLs on keycloak server files
@@ -248,31 +182,12 @@
         permissions: 0
         recursive: yes
         state: present
+      changed_when: False # Ignore; the files generated when the server is built always have permissions set for "other"
 
 
 - name: Open firewall ports for keycloak
   become: yes
   block:
-    - name: Allow connections to keycloak TCP clustering port from keycloak servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ keycloak_jgroup_tcp_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups['keycloak'] }}"
-
-    - name: Allow connections to keycloak TCP FD_ALL socket from keycloak servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ keycloak_jgroup_tcp_fd_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups['keycloak'] }}"
-
     - name: Allow connections to keycloak HTTP port from load balancer servers
       firewalld:
         zone: "{{ firewalld_internal_zone }}"
@@ -294,56 +209,43 @@
         - "{{ groups['load_balancers'] }}"
 
 
-- name: Configure keycloak for cross DC function
+- name: Configure keycloak for cross DC operation
   become: yes
   block:
-    - name: Add the certificate used by the remote servers
+    - name: Copy the certificate used by the infinispan servers
       copy:
-        content: "{{ hostvars[function_groups[item.group].master]['pki_certificate'] }}"
-        dest: "{{ item.path }}"
+        content: "{{ hostvars[function_groups['infinispan'].master]['pki_certificate'] }}"
+        dest: "{{ infinispan_trusted_certificate_file }}"
         mode: 0400
-        owner: root
-        group: root
-      with_items:
-        - { group: "infinispan", path: "{{ infinispan_trusted_certificate_path }}" }
-        - { group: "database", path: "{{ database_trusted_certificate_path }}" }
-      loop_control:
-        label: "Group certificate for {{ item.group }} saved in {{ item.path }}"
+        owner: "{{ pki_file_owner }}"
+        group: "{{ pki_file_group }}"
 
     - name: Create java truststore with infinispan certificate
       java_cert:
-        cert_path: "{{ infinispan_trusted_certificate_path }}"
+        cert_path: "{{ infinispan_trusted_certificate_file }}"
         cert_alias: infinispan
-        keystore_path: "{{ keycloak_truststore }}"
+        keystore_path: "{{ keycloak_truststore_file }}"
         keystore_pass: "{{ vault.keycloak.truststore.pass }}"
         keystore_create: yes
-        keystore_type: "JKS"
+        keystore_type: JKS
         state: present
       notify: restart keycloak
 
-    - name: Create java truststore with database certificate
-      java_cert:
-        cert_path: "{{ database_trusted_certificate_path }}"
-        cert_alias: database
-        keystore_path: "{{ jdbc_truststore }}"
-        keystore_pass: "{{ jdbc_truststore_pass }}"
-        keystore_create: yes
-        keystore_type: "JKS"
-        state: present
-      notify: restart keycloak
-
-    - name: Set file permissions on java truststores
+    - name: Set file permissions on truststore file
       file:
-        path: "{{ item }}"
+        path: "{{ keycloak_truststore_file }}"
         state: file
         mode: 0440
         owner: root
         group: "{{ keycloak_system_user }}"
-      with_items:
-        - "{{ keycloak_truststore }}"
-        - "{{ jdbc_truststore }}"
-      loop_control:
-        label: "{{ item }}"
+
+    - name: Copy the certificate used by the database servers
+      copy:
+        content: "{{ hostvars[function_groups['database'].master]['pki_certificate'] }}"
+        dest: "{{ database_trusted_certificate_file }}"
+        mode: 0440
+        owner: "{{ pki_file_owner }}"
+        group: "{{ keycloak_system_user }}"
 
     - name: Create java keystore based on PKI certificate and key
       openssl_pkcs12:
@@ -351,7 +253,7 @@
         certificate_path: "{{ pki_certificate_crt_path }}"
         privatekey_path: "{{ pki_certificate_key_path }}"
         friendly_name: "{{ keycloak_keystore_cert_alias }}"
-        path: "{{ keycloak_keystore }}"
+        path: "{{ keycloak_keystore_file }}"
         passphrase: "{{ vault.keycloak.keystore.pass }}"
         mode: 0440
         owner: root
@@ -361,8 +263,17 @@
 
     - name: Add the keycloak configuration file
       template:
-        src: standalone-ha.xml
-        dest: "{{ keycloak_conf_xml }}"
+        src: keycloak.conf
+        dest: "{{ keycloak_conf_file }}"
+        mode: 0440
+        owner: root
+        group: "{{ keycloak_system_user }}"
+      notify: restart keycloak
+
+    - name: Add the infinispan clustering configuration file
+      template:
+        src: cache-ispn.xml
+        dest: "{{ keycloak_infinispan_conf_file }}"
         mode: 0440
         owner: root
         group: "{{ keycloak_system_user }}"
@@ -415,44 +326,83 @@
       template:
         src: keycloak.service
         dest: "{{ systemd_service_dir }}/keycloak.service"
-        mode: 0644
+        mode: 0640
         owner: root
         group: root
       notify:
         - systemd reload
         - restart keycloak
 
-    - name: Make sure to leave server wait loop if server java process ended (fix startup script bug)
-      lineinfile:
-        path: "{{ keycloak_server_script }}"
-        line: '            kill -0 $JBOSS_PID 2>/dev/null || break'
-        regexp: 'kill -0 \$JBOSS_PID 2>/dev/null'
-        insertafter: 'JBossAS process \(\$JBOSS_PID\) received \$SIGNAL_NAME signal'
-        state: present
-      notify: restart keycloak
 
-
-- name: Configure keycloak users
+- name: Build the Keycloak server image
   become: yes
   become_user: "{{ keycloak_system_user }}"
-  run_once: yes
-  block:
-    - name: Check if users created marker file exists
-      stat:
-        path: "{{ keycloak_add_user_marker_file }}"
-      register: add_user_marker_stat
-
-    - name: Create admin user
-      command:
-        argv: [ "{{ keycloak_add_user_cli }}", "-r", "master", "-u", "admin", "-p", "{{ vault.keycloak.user.admin.pass }}" ]
-      when: not add_user_marker_stat.stat.exists
-      register: create_user_out
-      failed_when: create_user_out.failed and not (create_user_out.stderr | regex_search( "User with username 'admin' already added to '" + keycloak_add_user_json + "'"))
-      notify:
-        - restart keycloak
-        - remove add_users_json
+  command:
+    argv: [ "{{ keycloak_server_script_file }}", "build" ]
   vars:
     ansible_remote_tmp: "/tmp/${USER}/.ansible"
+  changed_when: False # Ignore; there is no way to tell if the script actually changes files without keeping track of them individually
+
+
+- name: Start Keycloak for a limited time to create the admin user if it does not exist
+  become: yes
+  become_user: "{{ keycloak_system_user }}"
+  when: not (hostvars[function_groups['database'].master]['keycloak_admin_exists'] | default(True))
+  run_once: yes
+  command:
+    argv: [ "/usr/bin/timeout", "-k30s", "{{ keycloak_admin_create_timeout }}", "{{ keycloak_server_script_file }}", "-Djboss.site.name='{{ keycloak_site_name }}'", "start", "--optimized" ]
+  environment:
+    KEYCLOAK_ADMIN: admin
+    KEYCLOAK_ADMIN_PASSWORD: "{{ vault.keycloak.user.admin.pass }}"
+  register: first_boot
+  failed_when: first_boot.rc != 124
+  vars:
+    ansible_remote_tmp: "/tmp/${USER}/.ansible"
+
+
+- name: Mark Keycloak for restart when Infinispan was restarted
+  debug:
+    msg: "Notify restart of keycloak service"
+  when: keycloak_cluster_infinispan_servers | map("extract", hostvars) | selectattr("infinispan_restarted") | list | length > 0
+  changed_when: True
+  notify: restart keycloak
+
+
+- name: Mark Keycloak service for restart if the PKI files have changed
+  when: pki_changed
+  debug:
+    msg: "Notify restart of keycloak service"
+  changed_when: True
+  notify: restart keycloak
+
+
+- name: When upgrading restart Keycloak on the first server only to migrate the database
+  become: yes
+  when: hostvars[function_groups['database'].master]['keycloak_upgrading'] | default(False)
+  block:
+    - name: Stop Keycloak on all servers
+      systemd:
+        name: keycloak
+        state: stopped
+
+    - run_once: yes
+      block:
+        - name: Reload systemd configuration
+          systemd:
+            daemon_reload: yes
+
+        - name: Start the Keycloak service
+          systemd:
+            name: keycloak
+            state: started
+
+        - name: Wait until the Keycloak service finishes booting
+          wait_for:
+            port: "{{ keycloak_https_port }}"
+            host: "{{ inventory_hostname }}"
+            timeout: "{{ service_start_timeout }}"
+            msg: "Keycloak did not start after {{ service_start_timeout }} seconds"
+            state: started
 
 
 - name: Restart keycloak if required, make sure it's started
@@ -467,25 +417,10 @@
         state: started
         enabled: yes
 
-
-- name: Make sure keycloak finishes booting on first host. Required on first boot
-  become: yes
-  when: not add_user_marker_stat.stat.exists # Should be a good indication of a first run
-  run_once: yes
-  import_tasks: wait_keycloak_started.yml
-
-
-- name: Mark keycloak for restart when infinispan was restarted
-  set_fact:
-    infinispan_restarted: True
-  when: keycloak_cluster_infinispan_servers | map("extract", hostvars) | selectattr("infinispan_restarted") | list | length > 0
-  changed_when: True
-  notify: restart keycloak
-
-
-- name: Mark keycloak service for restart if the PKI files have changed
-  debug:
-    msg: "Notify restart of keycloak service"
-  when: pki_changed
-  changed_when: True
-  notify: restart keycloak
+    - name: Wait until the keycloak service finishes booting
+      wait_for:
+        port: "{{ keycloak_https_port }}"
+        host: "{{ inventory_hostname }}"
+        timeout: "{{ service_start_timeout }}"
+        msg: "Keycloak did not start after {{ service_start_timeout }} seconds"
+        state: started

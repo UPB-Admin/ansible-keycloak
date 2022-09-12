@@ -284,6 +284,31 @@
   meta: flush_handlers
 
 
+- name: Check if the Keycloak admin user exists and set a variable accordingly
+  run_once: yes
+  block:
+    - name: Check if the USER_ENTITY table exists
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_keycloak_database }}' AND TABLE_NAME = 'USER_ENTITY';"
+      register: table_exists
+
+    - name: Check if the Keycloak admin user exists in the database
+      when: table_exists.rowcount[0] > 0
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "SELECT USER.USERNAME FROM {{ database_keycloak_database }}.USER_ENTITY AS USER JOIN {{ database_keycloak_database }}.REALM AS REALM ON USER.REALM_ID = REALM.ID WHERE REALM.NAME='master' AND USER.USERNAME='admin';"
+      register: admin_user
+
+    - name: Set Keycloak admin user exists variable
+      set_fact:
+        keycloak_admin_exists: "{{ (admin_user.rowcount[0] | default(0)) > 0 }}"
+
+
 - name: Check database to verify if keycloak is being upgraded
   run_once: yes
   block:
@@ -317,13 +342,18 @@
             msg: "Cannot downgrade Keycloak!"
           when: keycloak_version is version(keycloak_max_version, "<")
 
+        - name: Set Keycloak upgrading fact
+          when:
+            - keycloak_max_version != keycloak_not_installed_version
+            - keycloak_version is version(keycloak_max_version, ">")
+          set_fact:
+            keycloak_upgrading: True
+
 
 - name: Backup database if keycloak is being upgraded
   run_once: yes
   become: yes
-  when:
-    - keycloak_max_version != keycloak_not_installed_version
-    - keycloak_version is version(keycloak_max_version, ">")
+  when: keycloak_upgrading | default(False)
   block:
     - name: Make sure backup directory exists
       file:

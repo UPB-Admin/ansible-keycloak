@@ -130,6 +130,8 @@ problems with special characters in some scripts.
 
 You will need to set some of the following variables for your deployment
 (depending on your needs, but not limited to these):
+  - `keycloak_path_prefix`: Prefix added to Keycloak paths on the web interface.
+    The default value is `/auth`;
   - `pki_country_name`: Country name used in certificates;
   - `pki_organization_name`: Organization name used in certificates;
   - `pki_locality_name`: Locality name used in certificates;
@@ -147,6 +149,10 @@ You will need to set some of the following variables for your deployment
     The values must be IPs since the load balancer may not resolve names.
     Note that the realm names are not verified at all, and the values
     are simply added in the load balancer's;
+  - `access_health_allowed_sources`: List of IPs that can access the `health`
+    endpoint. Defaults to `acess_admin_allowed_sources`;
+  - `access_metrics_allowed_sources`: List of IPs that can access the `metrics`
+    endpoint. Defaults to `prometheus_servers`;
   - `prometheus_servers`: List of IPs of Prometheus scraper servers (the
     firewall on each node is configured to allow connections from these IPs to
     the Prometheus exporter services). The exporters are only installed if at

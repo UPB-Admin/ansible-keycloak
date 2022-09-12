@@ -104,7 +104,7 @@
       run_once: no
       copy:
         content: "{{ keycloak_custom_module_jar_content['content'] | b64decode }}"
-        dest:  "{{ keycloak_sa_deployments_subdir }}/{{ keycloak_custom_module_attrs.artifactId }}.jar"
+        dest:  "{{ keycloak_providers_subdir }}/{{ keycloak_custom_module_attrs.artifactId }}.jar"
         mode: 0640
         owner: root
         group: "{{ keycloak_system_user }}"
