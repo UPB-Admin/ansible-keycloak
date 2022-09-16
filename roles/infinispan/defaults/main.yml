@@ -19,6 +19,7 @@ infinispan_backup_strategy: SYNC              # synchronous backups have better 
 infinispan_backup_timeout: 10000              # 10s
 infinispan_backup_failures_till_offline: 6    # take site offline after 6 failures
 infinispan_backup_wait_till_offline: 30000    # wait min 30s before taking taking site offline
+infinispan_locking_acquire_timeout: 500       # maximum amount of time a cache lock can be held - in milliseconds
 infinispan_tcpping_port: 7800                 # port 7800 is used by default for cluster communication (tcpping)
 
 infinispan_tcpping_server_list: "{{ groups['infinispan'] | product(['[%d]' % infinispan_tcpping_port]) | map('join') | join(',') }}"

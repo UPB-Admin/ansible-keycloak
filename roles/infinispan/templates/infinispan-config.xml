@@ -89,7 +89,7 @@
       </security>
 
       <replicated-cache-configuration name="sessions-cfg" mode="{{ infinispan_backup_strategy }}">
-         <locking acquire-timeout="0" />
+         <locking acquire-timeout="{{ infinispan_locking_acquire_timeout }}" />
          <backups>
 {% for cluster in (node_clusters | difference(cluster_name)) %}
             <backup site="{{ cluster }}" strategy="{{ infinispan_backup_strategy }}" timeout="{{ infinispan_backup_timeout }}">
