@@ -38,3 +38,6 @@ keycloak_custom_modules:
     url: https://github.com/someone/example-custom-module.git
     version: HEAD
     maven_extra_params: "-Dkeycloak.version={{ keycloak_version }}"
+
+keycloak_enabled_features:
+  - scripts
