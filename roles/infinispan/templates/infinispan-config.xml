@@ -88,7 +88,7 @@
          </authorization>
       </security>
 
-      <replicated-cache-configuration name="sessions-cfg" mode="{{ infinispan_backup_strategy }}">
+      <replicated-cache-configuration name="cache-cfg" mode="{{ infinispan_backup_strategy }}">
          <locking acquire-timeout="{{ infinispan_locking_acquire_timeout }}" />
          <backups>
 {% for cluster in (node_clusters | difference(cluster_name)) %}
@@ -108,7 +108,7 @@
       </replicated-cache-configuration>
 
 {% for cache_name, _ in infinispan_caches.items() %}
-      <replicated-cache name="{{ cache_name }}" configuration="sessions-cfg"/>
+      <replicated-cache name="{{ cache_name }}" configuration="cache-cfg"/>
 {% endfor %}
    </cache-container>
 </infinispan>
