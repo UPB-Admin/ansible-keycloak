@@ -9,6 +9,7 @@
     - name: Install 389 directory service
       dnf:
         name: "@389-directory-server:stable/default"
+        enablerepo: epel-modular
         state: installed
 
     - name: Set owner / group on PKI files
