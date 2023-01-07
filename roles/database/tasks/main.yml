@@ -151,9 +151,9 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['keycloak'] }}"
-        - "{{ groups['infinispan'] }}"
-        - "{{ groups['database'] }}"
+        - "{{ groups.keycloak }}"
+        - "{{ groups.infinispan }}"
+        - "{{ groups.database }}"
 
 
 - name: Configure Galera Cluster
@@ -176,7 +176,7 @@
 
     - name: Copy galera config file (master)
       template:
-        src: "{{ 'master_galera.cnf' if inventory_hostname == function_groups['database'].master else 'slave_galera.cnf' }}"
+        src: "{{ 'master_galera.cnf' if inventory_hostname == function_groups.database.master else 'slave_galera.cnf' }}"
         dest: /etc/my.cnf.d/galera.cnf
       notify: restart database
 
@@ -188,7 +188,7 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['database'] }}"
+        - "{{ groups.database }}"
 
     - name: Allow connections to Galera Cluster replication UDP port from database servers
       firewalld:
@@ -198,7 +198,7 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['database'] }}"
+        - "{{ groups.database }}"
 
     - name: Allow connections to Incremental State Transfer (IST) port from database servers
       firewalld:
@@ -208,7 +208,7 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['database'] }}"
+        - "{{ groups.database }}"
 
     - name: Allow connections to State Snapshot Transfer (SST) traffic TCP port from database servers
       firewalld:
@@ -218,7 +218,7 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['database'] }}"
+        - "{{ groups.database }}"
 
     - name: Allow connections to State Snapshot Transfer (SST) traffic UDP port from database servers
       firewalld:
@@ -228,7 +228,7 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['database'] }}"
+        - "{{ groups.database }}"
 
 
 - name: Mark database service for restart if the PKI files have changed

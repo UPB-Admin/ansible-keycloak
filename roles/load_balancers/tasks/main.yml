@@ -52,7 +52,7 @@
     - name: Add the certificate used by the keycloak servers
       become: yes
       copy:
-        content: "{{ hostvars[function_groups['keycloak'].master]['pki_certificate'] }}"
+        content: "{{ hostvars[function_groups.keycloak.master].pki_certificate }}"
         dest: "{{ keycloak_trusted_certificate_path }}"
         mode: "{{ pki_file_mode }}"
         seuser: system_u

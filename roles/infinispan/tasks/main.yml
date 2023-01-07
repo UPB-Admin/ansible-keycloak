@@ -102,7 +102,7 @@
   block:
     - name: Copy the certificate used by the database servers
       copy:
-        content: "{{ hostvars[function_groups['database'].master]['pki_certificate'] }}"
+        content: "{{ hostvars[function_groups.database.master].pki_certificate }}"
         dest: "{{ database_trusted_certificate_file }}"
         mode: 0440
         owner: "{{ pki_file_owner }}"
@@ -202,7 +202,7 @@
 - name: Restart just the first server to populate the JDBC database if required
   run_once: yes
   become: yes
-  when: (hostvars[function_groups['database'].master]['infinispan_num_tables'] | default(0) | int) == 0
+  when: (hostvars[function_groups.database.master].infinispan_num_tables | default(0) | int) == 0
   block:
     - name: Restart infinispan
       systemd:
@@ -290,7 +290,7 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['infinispan'] }}"
+        - "{{ groups.infinispan }}"
 
     - name: Allow connections to infinispan inter-cluster clustering port from infinispan servers
       firewalld:
@@ -300,7 +300,7 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['infinispan'] }}"
+        - "{{ groups.infinispan }}"
 
     - name: Allow connections to infinispan hot rod port from infinispan and keycloak servers
       firewalld:
@@ -310,5 +310,5 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['keycloak'] }}"
-        - "{{ groups['infinispan'] }}"
+        - "{{ groups.keycloak }}"
+        - "{{ groups.infinispan }}"

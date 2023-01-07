@@ -22,7 +22,7 @@ infinispan_backup_wait_till_offline: 30000    # wait min 30s before taking takin
 infinispan_locking_acquire_timeout: 500       # maximum amount of time a cache lock can be held - in milliseconds
 infinispan_tcpping_port: 7800                 # port 7800 is used by default for cluster communication (tcpping)
 
-infinispan_tcpping_server_list: "{{ groups['infinispan'] | product(['[%d]' % infinispan_tcpping_port]) | map('join') | join(',') }}"
+infinispan_tcpping_server_list: "{{ groups.infinispan | product(['[%d]' % infinispan_tcpping_port]) | map('join') | join(',') }}"
 infinispan_keystore_cert_alias: server
 
 infinispan_system_user: infinispan
@@ -37,7 +37,7 @@ jdbc_mariadb_module_jar: "{{ jdbc_mariadb_module_dir }}/mariadb-{{ jdbc_mariadb_
 
 database_trusted_certificate_file: "{{ infinispan_server_conf_subdir }}/database.crt"
 
-jdbc_mariadb_servers: "{{ groups[cluster_name] | intersect(groups['database']) | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
+jdbc_mariadb_servers: "{{ groups[cluster_name] | intersect(groups.database) | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
 jdbc_mariadb_conn_url: "jdbc:mariadb://{{ jdbc_mariadb_servers }}/{{ database_config.infinispan.dbname }}"
 jdbc_mariadb_conn_params:
   sslMode: verify-full

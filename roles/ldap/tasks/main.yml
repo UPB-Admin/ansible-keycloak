@@ -73,8 +73,8 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['ldap'] }}"
-        - "{{ groups['keycloak'] }}"
+        - "{{ groups.ldap }}"
+        - "{{ groups.keycloak }}"
 
     - name: Allow connections to the LDAP secure port from keycloak and LDAP servers
       firewalld:
@@ -84,8 +84,8 @@
         permanent: yes
         immediate: yes
       with_items:
-        - "{{ groups['ldap'] }}"
-        - "{{ groups['keycloak'] }}"
+        - "{{ groups.ldap }}"
+        - "{{ groups.keycloak }}"
 
 
 - name: Configure LDAP and start server
@@ -182,7 +182,7 @@
           nsds5replicatedattributelisttotal: "(objectClass=*) $ EXCLUDE accountUnlockTime"
           nsds5replicacredentials: "{{ vault.ldap.user.replication.pass }}"
           nsds5beginreplicarefresh: "start"
-      with_items: "{{ groups['ldap'] | difference([inventory_hostname]) }}"
+      with_items: "{{ groups.ldap | difference([inventory_hostname]) }}"
 
 
 - name: Create LDAP entries

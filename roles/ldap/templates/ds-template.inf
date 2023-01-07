@@ -83,7 +83,7 @@ self_sign_cert_valid_months = {{ ldap_self_sign_cert_validity_months }}
 # create_suffix_entry (bool)
 # Description: Set this parameter to "True" to create a generic root node entry for the suffix in the database.
 # Default value: False
-create_suffix_entry = {{ "True" if inventory_hostname == function_groups['ldap'].master else "False" }}
+create_suffix_entry = {{ "True" if inventory_hostname == function_groups.ldap.master else "False" }}
 
 # require_index (bool)
 # Description: Set this parameter to "True" to refuse unindexed searches in this database.

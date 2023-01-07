@@ -94,7 +94,7 @@
 
     - name: Decode Diffie-Hellman parameters
       set_fact:
-        pki_dhparams: "{{ dhparams['content'] | b64decode }}"
+        pki_dhparams: "{{ dhparams.content | b64decode }}"
 
 
 - name: Copy Diffie-Hellman parameters to all servers

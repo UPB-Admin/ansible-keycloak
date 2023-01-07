@@ -6,23 +6,23 @@
         name: mariadb
         state: stopped
         enabled: yes
-      when: inventory_hostname != function_groups['database'].master
+      when: inventory_hostname != function_groups.database.master
 
     - name: Stop first node
       systemd:
         name: mariadb
         state: stopped
         enabled: yes
-      when: inventory_hostname == function_groups['database'].master
+      when: inventory_hostname == function_groups.database.master
 
     - name: Start first node
       shell:
         galera_new_cluster
-      when: inventory_hostname == function_groups['database'].master
+      when: inventory_hostname == function_groups.database.master
 
     - name: Start slave nodes
       systemd:
         name: mariadb
         state: started
         enabled: yes
-      when: inventory_hostname != function_groups['database'].master
+      when: inventory_hostname != function_groups.database.master
