@@ -97,6 +97,28 @@
           state: absent
 
 
+- name: Download and setup JDBC
+  become: yes
+  block:
+    - name: Copy the certificate used by the database servers
+      copy:
+        content: "{{ hostvars[function_groups['database'].master]['pki_certificate'] }}"
+        dest: "{{ database_trusted_certificate_file }}"
+        mode: 0440
+        owner: "{{ pki_file_owner }}"
+        group: "{{ infinispan_system_user }}"
+
+    - name: Download JDBC connector
+      get_url:
+        url: "{{ jdbc_mariadb_download_url }}"
+        dest: "{{ jdbc_mariadb_module_jar }}"
+        http_agent: wget
+        checksum: "{{ jdbc_mariadb_checksum }}"
+        mode: 0440
+        owner: root
+        group: "{{ infinispan_system_user }}"
+
+
 - name: Configure infinispan service
   become: yes
   block:
@@ -175,6 +197,26 @@
         owner: root
         group: "{{ infinispan_system_user }}"
       notify: restart infinispan
+
+
+- name: Restart just the first server to populate the JDBC database if required
+  run_once: yes
+  become: yes
+  when: (hostvars[function_groups['database'].master]['infinispan_num_tables'] | default(0) | int) == 0
+  block:
+    - name: Restart infinispan
+      systemd:
+        name: infinispan
+        state: restarted
+        enabled: yes
+
+    - name: Wait until infinispan starts and opens the hotrod port
+      wait_for:
+        port: "{{ infinispan_hotrod_port }}"
+        host: "{{ inventory_hostname }}"
+        timeout: "{{ service_start_timeout }}"
+        msg: "Infinispan did not start after {{ service_start_timeout }} seconds"
+        state: started
 
 
 - name: Restart infinispan if required, make sure it finishes starting

@@ -28,3 +28,27 @@ infinispan_keystore_cert_alias: server
 infinispan_system_user: infinispan
 
 infinispan_java_opts: "{{ java_common_mem_opts}} -server -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true"
+
+jdbc_mariadb_version: 3.1.0
+jdbc_mariadb_checksum: sha1:4510549f3fe01b8ab634186f5c314f663d91eada
+jdbc_mariadb_download_url: "https://dlm.mariadb.com/Connectors/java/connector-java-{{ jdbc_mariadb_version }}/mariadb-java-client-{{ jdbc_mariadb_version }}.jar"
+jdbc_mariadb_module_dir: "{{ infinispan_server_lib_subdir }}"
+jdbc_mariadb_module_jar: "{{ jdbc_mariadb_module_dir }}/mariadb-{{ jdbc_mariadb_version }}.jar"
+
+database_trusted_certificate_file: "{{ infinispan_server_conf_subdir }}/database.crt"
+
+jdbc_mariadb_servers: "{{ groups[cluster_name] | intersect(groups['database']) | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
+jdbc_mariadb_conn_url: "jdbc:mariadb://{{ jdbc_mariadb_servers }}/{{ database_config.infinispan.dbname }}"
+jdbc_mariadb_conn_params:
+  sslMode: verify-full
+  serverSslCert: "{{ database_trusted_certificate_file }}"
+  enabledSslProtocolSuites: TLSv1.3
+  enabledSslCipherSuites: TLS_AES_256_GCM_SHA384
+
+jdbc_connection_pool_params:
+  min_size: 3
+  max_size: 20
+  background_validation: 1000
+  idle_removal: 1
+  blocking_timeout: 1000
+  leak_detection: 10000

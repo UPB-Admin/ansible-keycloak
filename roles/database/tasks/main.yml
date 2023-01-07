@@ -82,56 +82,14 @@
           - "ALTER USER 'mysql'@'localhost' IDENTIFIED BY '{{ vault.database.user.mysql.pass }}';"
 
 
-- name: Check if the {{ database_keycloak_database }} exists
+- name: Create and setup databases for Keycloak and Infinispan
   run_once: yes
-  community.mysql.mysql_query:
-    login_user: root
-    login_password: "{{ vault.database.user.root.pass }}"
-    login_unix_socket: "{{ database_unix_socket }}"
-    query: "SELECT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_keycloak_database }}';"
-  register: database_exists
-
-
-- name: Create database for Keycloak if it does not exist
-  become: yes
-  run_once: yes
-  when: database_exists.rowcount[0] == 0
-  block:
-    - name: Create {{ database_keycloak_database }} database
-      community.mysql.mysql_db:
-        login_user: root
-        login_password: "{{ vault.database.user.root.pass }}"
-        login_unix_socket: "{{ database_unix_socket }}"
-        name: "{{ database_keycloak_database }}"
-        state: present
-        encoding: "{{ database_keycloak_encoding }}"
-
-    - name: Create {{ database_keycloak_user }} user for all hosts in the keycloak group
-      community.mysql.mysql_user:
-        login_user: root
-        login_password: "{{ vault.database.user.root.pass }}"
-        login_unix_socket: "{{ database_unix_socket }}"
-        name: "{{ database_keycloak_user }}"
-        host: "{{ item }}"
-        password: "{{ vault.database.user.keycloak.pass }}"
-        update_password: always
-        state: present
-      with_items: "{{ groups['keycloak'] }}"
-
-    - name: Grant permissions for {{ database_keycloak_user }} user on {{ database_keycloak_database }} database
-      community.mysql.mysql_query:
-        login_user: root
-        login_password: "{{ vault.database.user.root.pass }}"
-        login_unix_socket: "{{ database_unix_socket }}"
-        query: "GRANT ALL ON {{ database_keycloak_database }}.* to '{{ database_keycloak_user }}'@'{{ item }}' IDENTIFIED BY '{{ vault.database.user.keycloak.pass }}' WITH GRANT OPTION;"
-      with_items: "{{ groups['keycloak'] }}"
-
-    - name: Reload privilage table
-      community.mysql.mysql_query:
-        login_user: root
-        login_password: "{{ vault.database.user.root.pass }}"
-        login_unix_socket: "{{ database_unix_socket }}"
-        query: "FLUSH PRIVILEGES;"
+  include_tasks: setup_database.yml
+  with_items:
+    - keycloak
+    - infinispan
+  loop_control:
+    loop_var: service
 
 
 - name: Create marker file if it does not exist
@@ -185,7 +143,7 @@
         - systemd reload
         - restart database
 
-    - name: Allow connections to database port from keycloak and database servers
+    - name: Allow connections to database port from client services
       firewalld:
         zone: "{{ firewalld_internal_zone }}"
         rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_listen_port }}' protocol='tcp' accept"
@@ -194,6 +152,7 @@
         immediate: yes
       with_items:
         - "{{ groups['keycloak'] }}"
+        - "{{ groups['infinispan'] }}"
         - "{{ groups['database'] }}"
 
 
@@ -292,7 +251,7 @@
         login_user: root
         login_password: "{{ vault.database.user.root.pass }}"
         login_unix_socket: "{{ database_unix_socket }}"
-        query: "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_keycloak_database }}' AND TABLE_NAME = 'USER_ENTITY';"
+        query: "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_config.keycloak.dbname }}' AND TABLE_NAME = 'USER_ENTITY';"
       register: table_exists
 
     - name: Check if the Keycloak admin user exists in the database
@@ -301,7 +260,7 @@
         login_user: root
         login_password: "{{ vault.database.user.root.pass }}"
         login_unix_socket: "{{ database_unix_socket }}"
-        query: "SELECT USER.USERNAME FROM {{ database_keycloak_database }}.USER_ENTITY AS USER JOIN {{ database_keycloak_database }}.REALM AS REALM ON USER.REALM_ID = REALM.ID WHERE REALM.NAME='master' AND USER.USERNAME='admin';"
+        query: "SELECT USER.USERNAME FROM {{ database_config.keycloak.dbname }}.USER_ENTITY AS USER JOIN {{ database_config.keycloak.dbname }}.REALM AS REALM ON USER.REALM_ID = REALM.ID WHERE REALM.NAME='master' AND USER.USERNAME='admin';"
       register: admin_user
 
     - name: Set Keycloak admin user exists variable
@@ -317,7 +276,7 @@
         login_user: root
         login_password: "{{ vault.database.user.root.pass }}"
         login_unix_socket: "{{ database_unix_socket }}"
-        query: "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_keycloak_database }}' AND TABLE_NAME = 'MIGRATION_MODEL';"
+        query: "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_config.keycloak.dbname }}' AND TABLE_NAME = 'MIGRATION_MODEL';"
       register: table_exists
 
     - name: Check if keycloak is upgrading
@@ -328,7 +287,7 @@
             login_user: root
             login_password: "{{ vault.database.user.root.pass }}"
             login_unix_socket: "{{ database_unix_socket }}"
-            query: "SELECT VERSION from {{ database_keycloak_database }}.MIGRATION_MODEL;"
+            query: "SELECT VERSION from {{ database_config.keycloak.dbname }}.MIGRATION_MODEL;"
           register: keycloak_versions
 
         - name: Determine the latest installed version of Keycloak
@@ -350,6 +309,22 @@
             keycloak_upgrading: True
 
 
+- name: Register the number of tables in the infinispan database as a fact
+  run_once: yes
+  block:
+    - name: Fetch the list of tables
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_config.infinispan.dbname }}';"
+      register: table_list
+
+    - name: Register the number of tables as a fact
+      set_fact:
+        infinispan_num_tables: "{{ table_list.rowcount[0] }}"
+
+
 - name: Backup database if keycloak is being upgraded
   run_once: yes
   become: yes
@@ -368,8 +343,8 @@
         login_user: root
         login_password: "{{ vault.database.user.root.pass }}"
         login_unix_socket: "{{ database_unix_socket }}"
-        name: "{{ database_keycloak_database }}"
-        encoding: "{{ database_keycloak_encoding }}"
+        name: "{{ database_config.keycloak.dbname }}"
+        encoding: "{{ database_config.keycloak.encoding }}"
         state: dump
         target: "{{ database_backups_dir }}/keycloak-{{ keycloak_max_version }}.sql"
         single_transaction: yes
