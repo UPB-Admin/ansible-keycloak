@@ -62,9 +62,17 @@ keycloak_https_port: 8443
 # Infinispan (server) and Keycloak (client)
 infinispan_hotrod_port: 11222
 
-# User and database used for keycloak
-database_keycloak_database: keycloak
-database_keycloak_user: keycloak
+# Keycloak does not officially support utf8mb4 encoding currently
+database_config:
+  keycloak:
+    dbname: keycloak
+    username: keycloak
+    encoding: utf8mb3
+  infinispan:
+    dbname: infinispan
+    username: infinispan
+    encoding: utf8mb4
+
 database_listen_port: 3306
 database_unix_socket: /var/lib/mysql/mysql.sock
 

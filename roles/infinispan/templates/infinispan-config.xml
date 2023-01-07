@@ -25,6 +25,20 @@
          </interface>
       </interfaces>
 
+      <data-sources>
+         <data-source name="jdbcDS" jndi-name="java:jdbc/DS" statistics="true">
+            <connection-factory driver="org.mariadb.jdbc.Driver" url="{{ jdbc_mariadb_conn_url }}"
+               username="{{ database_config.infinispan.username }}" password="{{ vault.database.user.infinispan.pass }}">
+{% for key, value in jdbc_mariadb_conn_params.items() %}
+              <connection-property name="{{ key }}">{{ value }}</connection-property>
+{% endfor %}
+            </connection-factory>
+            <connection-pool initial-size="1" min-size="{{ jdbc_connection_pool_params.min_size }}" max-size="{{ jdbc_connection_pool_params.max_size }}"
+               background-validation="{{ jdbc_connection_pool_params.background_validation }}" idle-removal="{{ jdbc_connection_pool_params.idle_removal }}"
+               blocking-timeout="{{ jdbc_connection_pool_params.blocking_timeout }}" leak-detection="{{ jdbc_connection_pool_params.leak_detection }}"/>
+         </data-source>
+      </data-sources>
+
       <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
          <socket-binding name="default" port="${infinispan.bind.port:{{ infinispan_hotrod_port }}}"/>
       </socket-bindings>
@@ -97,10 +111,16 @@
             </backup>
 {% endfor %}
          </backups>
-         <persistence>
-            <rocksdb-store xmlns="urn:infinispan:config:store:rocksdb:12.1" path="rocksdb/keycloak/data" shared="false" preload="true" fetch-state="true" segmented="false">
-               <expiration path="rocksdb/keycloak/expired"/>
-            </rocksdb-store>
+         <persistence passivation="false">
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:13.0" dialect="MARIA_DB" shared="true">
+               <data-source jndi-url="java:jdbc/DS"/>
+               <string-keyed-table create-on-start="true" prefix="KC_ISPN">
+                  <id-column name="id" type="VARCHAR(255)"/>
+                  <data-column name="data" type="BLOB"/>
+                  <timestamp-column name="timestamp" type="BIGINT"/>
+                  <segment-column name="segnum" type="BIGINT"/>
+               </string-keyed-table>
+            </string-keyed-jdbc-store>
          </persistence>
          <security>
             <authorization enabled="true" roles="admin {{ infinispan_keycloak_user }}"/>

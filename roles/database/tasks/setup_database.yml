@@ -1,0 +1,44 @@
+- name: Check if the database for {{ service }} exists
+  community.mysql.mysql_query:
+    login_user: root
+    login_password: "{{ vault.database.user.root.pass }}"
+    login_unix_socket: "{{ database_unix_socket }}"
+    query: "SELECT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_config[service].dbname }}';"
+  register: database_exists
+
+- name: Create {{ database_config[service].dbname }} database if it does not exist
+  when: database_exists.rowcount[0] == 0
+  community.mysql.mysql_db:
+    login_user: root
+    login_password: "{{ vault.database.user.root.pass }}"
+    login_unix_socket: "{{ database_unix_socket }}"
+    name: "{{ database_config[service].dbname }}"
+    state: present
+    encoding: "{{ database_config[service].encoding }}"
+
+- name: Create {{ database_config[service].username }} user for all hosts in the {{ service }} group
+  community.mysql.mysql_user:
+    login_user: root
+    login_password: "{{ vault.database.user.root.pass }}"
+    login_unix_socket: "{{ database_unix_socket }}"
+    name: "{{ database_config[service].username }}"
+    host: "{{ item }}"
+    password: "{{ vault.database.user[service].pass }}"
+    update_password: always
+    state: present
+  with_items: "{{ groups[service] }}"
+
+- name: Grant permissions for {{ database_config[service].username }} user on {{ database_config[service].dbname }} database
+  community.mysql.mysql_query:
+    login_user: root
+    login_password: "{{ vault.database.user.root.pass }}"
+    login_unix_socket: "{{ database_unix_socket }}"
+    query: "GRANT ALL ON {{ database_config[service].dbname }}.* to '{{ database_config[service].username }}'@'{{ item }}' IDENTIFIED BY '{{ vault.database.user[service].pass }}' WITH GRANT OPTION;"
+  with_items: "{{ groups[service] }}"
+
+- name: Reload privilage table
+  community.mysql.mysql_query:
+    login_user: root
+    login_password: "{{ vault.database.user.root.pass }}"
+    login_unix_socket: "{{ database_unix_socket }}"
+    query: "FLUSH PRIVILEGES;"
