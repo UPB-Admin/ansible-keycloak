@@ -8,7 +8,7 @@
 - name: Copy {{ item }} to remote servers
   become: yes
   copy:
-    content: "{{ slurped_contents['content'] | b64decode }}"
+    content: "{{ slurped_contents.content | b64decode }}"
     dest: "{{ item }}"
     mode: "{{ pki_file_mode }}"
     owner: "{{ pki_file_owner }}"

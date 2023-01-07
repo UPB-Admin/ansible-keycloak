@@ -94,15 +94,15 @@ infinispan_keycloak_user: keycloak
 # Function groups - group of nodes that perform operations
 function_groups:
   database:
-    master: "{{ groups['database'][0] }}"
+    master: "{{ groups.database[0] }}"
   infinispan:
-    master: "{{ groups['infinispan'][0] }}"
+    master: "{{ groups.infinispan[0] }}"
   keycloak:
-    master: "{{ groups['keycloak'][0] }}"
+    master: "{{ groups.keycloak[0] }}"
   ldap:
-    master: "{{ (groups['ldap'] | default(['']))[0] }}"
+    master: "{{ (groups.ldap | default(['']))[0] }}"
   load_balancers:
-    master: "{{ groups['load_balancers'][0] }}"
+    master: "{{ groups.load_balancers[0] }}"
 
 # List of node clusters. They MUST be named "cluster_*" - e.g. "cluster_1", "cluster_2"
 node_clusters: "{{ groups | select('match', 'cluster_*') | list }}"

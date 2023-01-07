@@ -8,12 +8,12 @@
 - name: Copy {{ item.path }} to server
   become: yes
   copy:
-    content: "{{ file_content['content'] | b64decode }}"
+    content: "{{ file_content.content | b64decode }}"
     dest: "{{ item.path }}"
     mode: "{{ pki_file_mode }}"
   notify: pki changed
 
 - name: Remember certificate file as fact
   set_fact:
-    "{{ item.fact_key }}": "{{ file_content['content'] | b64decode }}"
+    "{{ item.fact_key }}": "{{ file_content.content | b64decode }}"
   when: item.fact_key is defined

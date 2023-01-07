@@ -1,7 +1,7 @@
 database_use_unix_socket: True
 
 # Create a Galera cluster if more than one database nodes exist
-database_create_galera_cluster: "{{ (groups['database'] | length) > 1 }}"
+database_create_galera_cluster: "{{ (groups.database | length) > 1 }}"
 
 # File to create when the secure installation process is complete, so it is not attempted again
 database_secure_install_marker: /root/.my.cnf

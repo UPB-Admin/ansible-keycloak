@@ -26,7 +26,7 @@
         line: "{{ item.ip }} {{ item.name }}"
       loop_control:
         label: "{{ item.name }} -> {{ item.ip }}"
-      with_items: "{{ groups['all'] | map('extract', hostvars) | list | json_query('[*].{ name: inventory_hostname, ip: interfaces_internal_ip }') }}"
+      with_items: "{{ groups.all | map('extract', hostvars) | list | json_query('[*].{ name: inventory_hostname, ip: interfaces_internal_ip }') }}"
 
 
 - name: Firewalld common configurations
