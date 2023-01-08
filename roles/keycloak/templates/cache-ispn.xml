@@ -33,7 +33,7 @@
                           marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
 
 {% for server in keycloak_cluster_infinispan_servers %}
-                <remote-server host="{{ server }}" port="{{ infinispan_hotrod_port }}"/>
+                <remote-server host="{{ hostvars[server].interfaces_internal_ip }}" port="{{ infinispan_hotrod_port }}"/>
 {% endfor %}
 
                 <security>
