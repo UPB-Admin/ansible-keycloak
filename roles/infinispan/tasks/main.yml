@@ -282,11 +282,11 @@
 - name: Open firewall ports for infinispan
   become: yes
   block:
-    - name: Allow connections to infinispan intra-cluster clustering port from infinispan servers
+    - name: Disallow connections to infinispan intra-cluster clustering port from infinispan servers
       firewalld:
         zone: "{{ firewalld_internal_zone }}"
         rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ infinispan_tcpping_port }}' protocol='udp' accept"
-        state: enabled
+        state: disabled
         permanent: yes
         immediate: yes
       with_items:
