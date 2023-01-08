@@ -75,6 +75,7 @@
       <!-- Create a cluster of hosts with all members listening on a specific port
            The MPING protocol is replaced with TCPPING -->
       <stack name="global-cluster" extends="tcp">
+         <TCP bind_port="{{ infinispan_tcpping_port }}"/>
          <TCPPING initial_hosts="{{ infinispan_tcpping_server_list }}" stack.combine="REPLACE" stack.position="MPING"/>
       </stack>
 
