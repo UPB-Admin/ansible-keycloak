@@ -199,15 +199,28 @@
       notify: restart infinispan
 
 
-- name: Restart just the first server to populate the JDBC database if required
+- name: Stop Infinispan and Keycloak servers, restart just the first server to populate the JDBC database if required
   run_once: yes
   become: yes
   when: (hostvars[function_groups.database.master].infinispan_num_tables | default(0) | int) == 0
   block:
+    - name: Stop all keycloak servers
+      delegate_to: "{{ item }}"
+      become: yes
+      systemd:
+        name: keycloak
+        state: stopped
+      with_items: "{{ groups.keycloak }}"
+
+    - name: Stop all infinispan servers
+      systemd:
+        name: infinispan
+        state: stopped
+
     - name: Restart infinispan
       systemd:
         name: infinispan
-        state: restarted
+        state: started
         enabled: yes
 
     - name: Wait until infinispan starts and opens the hotrod port
