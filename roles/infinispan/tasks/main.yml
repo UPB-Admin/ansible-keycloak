@@ -222,6 +222,7 @@
         name: infinispan
         state: started
         enabled: yes
+        daemon_reload: yes
 
     - name: Wait until infinispan starts and opens the hotrod port
       wait_for:
