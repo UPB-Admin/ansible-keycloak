@@ -1,5 +1,5 @@
-infinispan_version: 13.0.10.Final
-infinispan_archive_checksum: sha1:8d8afe43b03a96ffccac17315618dd445806e21a
+infinispan_version: 13.0.13.Final
+infinispan_archive_checksum: sha1:efd2b677b326f1cfe967c9d2be85b1eaea528d34
 infinispan_archive_url: "https://downloads.jboss.org/infinispan/{{ infinispan_version }}/infinispan-server-{{ infinispan_version }}.zip"
 infinispan_install_base_dir: /opt           # the archive already has a top-level directory in it
 infinispan_install_dir: "{{ infinispan_install_base_dir }}/infinispan-server-{{ infinispan_version }}"
