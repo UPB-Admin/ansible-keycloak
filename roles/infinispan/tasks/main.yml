@@ -213,6 +213,7 @@
       with_items: "{{ groups.keycloak }}"
 
     - name: Stop all infinispan servers
+      run_once: no
       systemd:
         name: infinispan
         state: stopped
