@@ -201,6 +201,14 @@ ansible-playbook -i inventory.yml main.yml --ask-vault-pass -e '@overrides.yml'
 ```
 
 
+### Changelog
+
+A changelog describing the most important changes starting December 2022 is
+available in the [CHANGELOG](CHANGELOG.md) file. Note that the changelog does
+not cover every single change (i.e., it does not include bug fixes), but broader
+changes that may alter system and service behaviour.
+
+
 ### Credits
 
 This repository is a rewrite of an older private repository. Parts of the
