@@ -211,6 +211,10 @@
         name: keycloak
         state: stopped
       with_items: "{{ groups.keycloak }}"
+      register: keycloak_status
+      failed_when:
+        - keycloak_status.failed
+        - '"Could not find the requested service" not in keycloak_status.msg'
 
     - name: Stop all infinispan servers
       run_once: no
