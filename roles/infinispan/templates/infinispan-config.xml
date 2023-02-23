@@ -115,7 +115,7 @@
          <persistence passivation="false">
             <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:13.0" dialect="MARIA_DB" shared="true">
                <data-source jndi-url="java:jdbc/DS"/>
-               <string-keyed-table create-on-start="true" prefix="KC_ISPN">
+               <string-keyed-table create-on-start="true" prefix="KC_ISPN{{ '_' + (cluster_name | upper) if cluster_name != (node_clusters | first) else '' }}">
                   <id-column name="id" type="VARCHAR(512)"/>
                   <data-column name="data" type="BLOB"/>
                   <timestamp-column name="timestamp" type="BIGINT"/>
