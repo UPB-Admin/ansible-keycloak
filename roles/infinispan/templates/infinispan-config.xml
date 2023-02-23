@@ -33,7 +33,7 @@
               <connection-property name="{{ key }}">{{ value }}</connection-property>
 {% endfor %}
             </connection-factory>
-            <connection-pool initial-size="1" min-size="{{ jdbc_connection_pool_params.min_size }}" max-size="{{ jdbc_connection_pool_params.max_size }}"
+            <connection-pool initial-size="{{ jdbc_connection_pool_params.min_size }}" min-size="{{ jdbc_connection_pool_params.min_size }}" max-size="{{ jdbc_connection_pool_params.max_size }}"
                background-validation="{{ jdbc_connection_pool_params.background_validation }}" idle-removal="{{ jdbc_connection_pool_params.idle_removal }}"
                blocking-timeout="{{ jdbc_connection_pool_params.blocking_timeout }}" leak-detection="{{ jdbc_connection_pool_params.leak_detection }}"/>
          </data-source>

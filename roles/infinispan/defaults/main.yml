@@ -46,9 +46,9 @@ jdbc_mariadb_conn_params:
   enabledSslCipherSuites: TLS_AES_256_GCM_SHA384
 
 jdbc_connection_pool_params:
-  min_size: 3
-  max_size: 20
+  min_size: 5
+  max_size: 400
   background_validation: 1000
   idle_removal: 1
-  blocking_timeout: 1000
+  blocking_timeout: 2000
   leak_detection: 10000
