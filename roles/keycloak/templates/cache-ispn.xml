@@ -11,7 +11,7 @@
         xmlns="urn:infinispan:config:13.0">
 
     <cache-container name="keycloak">
-        <transport lock-timeout="60000"/>
+        <transport lock-timeout="60000" node-name="{{ keycloak_node_name }}"/>
         <local-cache name="realms">
             <encoding>
                 <key media-type="application/x-java-object"/>
