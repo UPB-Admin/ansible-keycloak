@@ -27,6 +27,10 @@ infinispan_keystore_cert_alias: server
 
 infinispan_system_user: infinispan
 
+infinispan_users:
+  - admin
+  - "{{ infinispan_keycloak_user }}"
+
 infinispan_java_opts: "{{ java_common_mem_opts}} -server -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true"
 
 jdbc_mariadb_version: 3.1.0
