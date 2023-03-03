@@ -12,3 +12,13 @@
   listen:
     - restart infinispan
     - restart java service
+
+- name: restart metrics proxy
+  become: yes
+  systemd:
+    name: nginx
+    state: restarted
+    enabled: yes
+  listen:
+    - restart infinispan
+    - restart java service

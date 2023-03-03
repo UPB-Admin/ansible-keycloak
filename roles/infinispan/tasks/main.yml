@@ -320,3 +320,38 @@
       with_items:
         - "{{ groups.keycloak }}"
         - "{{ groups.infinispan }}"
+
+
+- name: Configure metrics proxy (nginx)
+  become: yes
+  block:
+    - name: Install nginx
+      package:
+        name: nginx
+        state: latest
+
+    - name: Setup main nginx.conf configuration file
+      template:
+        src: nginx.conf
+        dest: /etc/nginx/nginx.conf
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: httpd_config_t
+      notify: restart metrics proxy
+
+    - name: Allow nginx to connect to the infinispan service
+      seboolean:
+        name: httpd_can_network_connect
+        state: yes
+        persistent: yes
+
+    - name: Allow connections to metrics proxy from the Prometheus servers
+      firewalld:
+        zone: "{{ firewalld_internal_zone }}"
+        rich_rule: "rule family='ipv4' source address='{{ item }}' port port='{{ infinispan_metrics_proxy_port }}' protocol='tcp' accept"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items: "{{ prometheus_servers }}"

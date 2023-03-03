@@ -29,6 +29,7 @@ infinispan_system_user: infinispan
 
 infinispan_users:
   - admin
+  - monitor
   - "{{ infinispan_keycloak_user }}"
 
 infinispan_java_opts: "{{ java_common_mem_opts}} -server -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true"
@@ -56,3 +57,7 @@ jdbc_connection_pool_params:
   idle_removal: 1
   blocking_timeout: 2000
   leak_detection: 10000
+
+# This must be a valid httpd_port_t value for SELinux
+# Alternately nginx will fail to start, as binding would be blocked by SELinux
+infinispan_metrics_proxy_port: 9000
