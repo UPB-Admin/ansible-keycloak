@@ -17,8 +17,8 @@ infinispan_keystore: "{{ infinispan_server_conf_subdir }}/server.jks"
 
 infinispan_backup_strategy: SYNC              # synchronous backups have better consistency
 infinispan_backup_timeout: 10000              # 10s
-infinispan_backup_failures_till_offline: 6    # take site offline after 6 failures
-infinispan_backup_wait_till_offline: 30000    # wait min 30s before taking taking site offline
+infinispan_backup_failures_till_offline: 10   # take site offline after 10 failures
+infinispan_backup_wait_till_offline: 60000    # wait min 60s before taking taking site offline
 infinispan_locking_acquire_timeout: 500       # maximum amount of time a cache lock can be held - in milliseconds
 infinispan_tcpping_port: 7800                 # port 7800 is used by default for cluster communication (tcpping)
 
