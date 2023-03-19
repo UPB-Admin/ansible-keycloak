@@ -6,10 +6,10 @@
 
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
-                            urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
-      xmlns="urn:infinispan:config:13.0"
-      xmlns:server="urn:infinispan:server:13.0">
+      xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-14.0.xsd
+                            urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
+      xmlns="urn:infinispan:config:14.0"
+      xmlns:server="urn:infinispan:server:14.0">
 
    <cache-container name="default" statistics="true">
       <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
@@ -18,7 +18,7 @@
       </security>
    </cache-container>
 
-   <server xmlns="urn:infinispan:server:13.0">
+   <server xmlns="urn:infinispan:server:14.0">
       <interfaces>
          <interface name="public">
             <inet-address value="${infinispan.bind.address:{{ interfaces_internal_ip }}}"/>
@@ -113,7 +113,7 @@
 {% endfor %}
          </backups>
          <persistence passivation="false">
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:13.0" dialect="MARIA_DB" shared="true">
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:14.0" dialect="MARIA_DB" shared="true">
                <data-source jndi-url="java:jdbc/DS"/>
                <string-keyed-table create-on-start="true" prefix="KC_ISPN{{ '_' + (cluster_name | upper) if cluster_name != (node_clusters | first) else '' }}">
                   <id-column name="id" type="VARCHAR(512)"/>
