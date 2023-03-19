@@ -20,6 +20,7 @@ Environment=JAVA_OPTS="{{ infinispan_java_opts }}"
 ExecStart=/bin/bash "{{ infinispan_server_script }}"
 Type=simple
 User={{ infinispan_system_user }}
+SyslogIdentifier=infinispan
 
 [Install]
 WantedBy=multi-user.target
