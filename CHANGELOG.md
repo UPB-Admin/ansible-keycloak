@@ -1,6 +1,21 @@
 ## Changelog
 
 
+### March 2023
+  - Set a proper name for Infinispan and Keycloak services in syslog.
+  - Keycloak was updated to version 21.0.1.
+  - Infinispan was updated to version 14.0.7.
+  - Infinispan cross-datacenter timeout parameters were changed to allow more
+    leeway in high contention scenarios and short network interrupts.
+  - Added access to Infinispan metrics endpoint for Prometheus servers.
+  - Set proper names for Keycloak nodes for session stickyness.
+  - Updated nginx load balancing based on `AUTH_SESSION_ID` cookie, instead of
+    just the source IP address.
+  - Tweaked Galera configuration.
+  - Moved Infinispan persistence to a different database, based on cluster
+    names. Note that this will increase the database usage.
+
+
 ### January 2023
   - Keycloak was updated to version 20.0.3.
   - Infinispan was updated to version 13.0.13.
