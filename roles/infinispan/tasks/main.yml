@@ -1,6 +1,12 @@
 - name: Infinispan server initial configurations
   become: yes
   block:
+    - name: Install required packages
+      package:
+        name:
+          - nginx
+        state: latest
+
     - name: Create infinispan user
       user:
         name: "{{ infinispan_system_user }}"
@@ -325,11 +331,6 @@
 - name: Configure metrics proxy (nginx)
   become: yes
   block:
-    - name: Install nginx
-      package:
-        name: nginx
-        state: latest
-
     - name: Setup main nginx.conf configuration file
       template:
         src: nginx.conf
