@@ -7,6 +7,8 @@
   - Database error logs have been moved to the journal, instead of the
     `/var/log` directory. This aligns the logging mechanism with the rest of the
     services.
+  - Added the rsyslog role that allows sending logs to remote log servers. The
+    logs can be sent as either plain-text data or encrypted using TLS.
 
 ### June 2023
   - Keycloak was upgraded to version 21.1.2.

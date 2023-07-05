@@ -7,4 +7,6 @@ pki_subject_alt_names:
   - "{{ service_hostname_dns }}"
 pki_common_name: "{{ pki_subject_alt_names[0] }}"
 
+rsyslog_service_regex: "{{ load_balancer_service }}"
+
 # vim: ft=yaml

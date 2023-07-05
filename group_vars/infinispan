@@ -5,4 +5,6 @@ java_version: 11
 
 infinispan_restarted: False
 
+rsyslog_service_regex: infinispan
+
 # vim: ft=yaml

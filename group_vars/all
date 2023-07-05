@@ -121,4 +121,12 @@ prometheus_monitor: "{{ prometheus_servers | length > 0 }}"
 # Exporters to install on the nodes
 prometheus_exporters_to_install: [ "node" ]
 
+# rsyslog remote servers
+rsyslog_log_servers: []
+# CA certificate for rsyslog log servers
+rsyslog_log_server_ca_certificate: ""
+
+# Whether set up rsyslog
+rsyslog_configure: "{{ rsyslog_log_servers | length > 0 }}"
+
 # vim: ft=yaml

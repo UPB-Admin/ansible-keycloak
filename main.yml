@@ -11,6 +11,14 @@
     - common
     - pki
 
+- hosts: all
+  tags: rsyslog
+  tasks:
+    - name: Include rsyslog role
+      include_role:
+        name: rsyslog
+      when: rsyslog_configure
+
 - hosts: load_balancers
   tags: load_balancers
   roles:

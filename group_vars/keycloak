@@ -3,4 +3,6 @@ pki_service_name: keycloak
 
 java_version: 11
 
+rsyslog_service_regex: keycloak
+
 # vim: ft=yaml

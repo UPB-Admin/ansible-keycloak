@@ -1,0 +1,65 @@
+- name: Install rsyslog packages
+  become: yes
+  package:
+    name:
+      - rsyslog
+      - rsyslog-openssl
+    state: latest
+
+
+- name: Add the server port/protocol pairs to the rsyslog SELinux context
+  become: yes
+  seport:
+    ports: "{{ item.port | default(rsyslog_default_port) }}"
+    proto: "{{ item.proto | default(rsyslog_default_proto) }}"
+    setype: syslogd_port_t
+    state: present
+
+
+- name: Set up rsyslog server CA certificate if configured
+  become: yes
+  when: rsyslog_log_server_ca_certificate
+  block:
+    - name: Register using TLS as fact
+      set_fact:
+        rsyslog_use_tls: True
+
+    - name: Create rsyslog PKI directory
+      file:
+        path: "{{ rsyslog_cert_dir }}"
+        state: directory
+        mode: "{{ pki_dir_mode }}"
+        seuser: system_u
+        setype: cert_t
+
+    - name: Copy rsyslog CA certificate to server
+      copy:
+        content: "{{ rsyslog_log_server_ca_certificate }}"
+        dest: "{{ rsyslog_server_ca_crt_path }}"
+        mode: "{{ pki_file_mode }}"
+        owner: root
+        group: root
+        seuser: system_u
+        setype: cert_t
+      notify: restart rsyslog
+
+
+- name: Configure rsyslog to send logs to the log servers
+  become: yes
+  template:
+    src: rsyslog-remotelog.conf
+    dest: "{{ rsyslog_config_file_path }}"
+    mode: 0640
+    owner: root
+    group: root
+    seuser: system_u
+    setype: syslog_conf_t
+  notify: restart rsyslog
+
+
+- name: Ensure rsyslog is running
+  become: yes
+  service:
+    name: rsyslog
+    state: started
+    enabled: yes

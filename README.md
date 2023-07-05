@@ -187,6 +187,17 @@ You will need to set some of the following variables for your deployment
   - `keycloak_disabled_features`: A list of keycloak features to disable;
   - `load_balancer_service`: The type of load balancer to install - either
     `nginx` or `haproxy` can be specified.
+  - `rsyslog_log_servers`: A list of rsyslog log servers that can receive log
+    data. Each entry in the array must have the following fields:
+    - `address`: the address to connect to (IP address recommended);
+    - `proto`: protocol to use for communication - accepted values are either
+      `tcp` or `udp`. Defaults to `udp`;
+    - `port`: port to use when connecting to the log server. Defaults to 514;
+    - `cert_cn`: server's common name, if TLS communication is used.
+  - `rsyslog_log_server_ca_certificate`: The certificate of the certification
+    authority used to sign the log servers' certificates, in PEM format.
+    Note: This variable is used to determine if TLS should be enabled -
+    TLS cannot be used if unset.
 
 The override variables can be specified inside a YAML file that you will include
 when running the playbooks. An example of an overrides file can be found in the

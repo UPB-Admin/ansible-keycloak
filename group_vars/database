@@ -3,4 +3,6 @@ prometheus_exporters_to_install: ["node", "database"]
 pki_service_name: mariadb
 pki_file_group: "{{ database_system_user }}"
 
+rsyslog_service_regex: "mariadb|stunnel"
+
 # vim: ft=yaml
