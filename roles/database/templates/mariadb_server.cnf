@@ -38,8 +38,6 @@ innodb_log_file_size = {{ (ansible_memtotal_mb / 8)|int }}M
 performance_schema = ON
 table_open_cache = 1000
 
-log-error = "{{ database_log_dir }}/mariadb.log"
-
 slow_query_log = 1
 slow_query_log_file = "{{ database_log_dir }}/mariadb-slow-queries.log"
 

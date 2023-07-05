@@ -4,6 +4,9 @@
   - The database (MariaDB) systemd overrides file has been renamed to
     `overrides.conf` to reflect that more than just file number limit can be
     changed.
+  - Database error logs have been moved to the journal, instead of the
+    `/var/log` directory. This aligns the logging mechanism with the rest of the
+    services.
 
 ### June 2023
   - Keycloak was upgraded to version 21.1.2.
