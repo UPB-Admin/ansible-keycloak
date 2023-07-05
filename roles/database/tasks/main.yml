@@ -132,7 +132,7 @@
 
     - name: Modify settings for database service
       template:
-        src: limits.conf
+        src: overrides.conf
         dest: "{{ database_systemd_override_file }}"
         mode: 0644
         owner: root

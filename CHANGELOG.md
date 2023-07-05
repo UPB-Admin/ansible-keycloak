@@ -1,5 +1,12 @@
 ## Changelog
 
+### July 2023
+  - The database (MariaDB) systemd overrides file has been renamed to
+    `overrides.conf` to reflect that more than just file number limit can be
+    changed.
+
+### June 2023
+  - Keycloak was upgraded to version 21.1.2.
 
 ### March 2023
   - Set a proper name for Infinispan and Keycloak services in syslog.

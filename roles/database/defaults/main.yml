@@ -11,7 +11,7 @@ database_data_dir: /var/lib/mysql
 database_backups_dir: "{{ database_data_dir }}/_backups"
 
 database_systemd_override_dir: "{{ systemd_override_dir }}/mariadb.service.d"
-database_systemd_override_file: "{{ database_systemd_override_dir }}/limits.conf"
+database_systemd_override_file: "{{ database_systemd_override_dir }}/overrides.conf"
 
 database_unix_socket: "{{ database_data_dir }}/mysql.sock"
 database_galera_replication_port: 4567
