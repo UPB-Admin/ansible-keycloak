@@ -48,7 +48,9 @@
       changed_when: False
 
     - name: Create LDAP directory server instance if it does not exist (dsrc not set yet)
-      when: ldap_instance_status.stdout | regex_search("No such instance \'" + ldap_instance_name + "\'")
+      when: >
+        ldap_instance_status.stdout | regex_search("No such instance \'" + ldap_instance_name + "\'")
+        or ldap_instance_status.stderr | regex_search("No such instance \'" + ldap_instance_name + "\'")
       block:
         - name: Copy directory server template to the server
           template:
