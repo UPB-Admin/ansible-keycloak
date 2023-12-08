@@ -1,7 +1,7 @@
 [mariadb]
 name=MariaDB
-baseurl=http://yum.mariadb.org/10.6/centos8-amd64
-gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+baseurl=https://rpm.mariadb.org/10.6/centos/$releasever/$basearch
+gpgkey=https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
 gpgcheck=1
 enabled=1
 module_hotfixes=1
