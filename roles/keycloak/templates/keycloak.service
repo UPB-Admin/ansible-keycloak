@@ -18,7 +18,7 @@ ExecStart=/bin/bash "{{ keycloak_server_script_file }}" -Djboss.site.name="{{ ke
 Type=simple
 User={{ keycloak_system_user }}
 LimitNOFILE=102642
-PIDFile=/var/run/keycloak/keycloak.pid
+PIDFile=/run/keycloak/keycloak.pid
 SyslogIdentifier=keycloak
 
 [Install]
