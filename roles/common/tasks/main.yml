@@ -130,6 +130,17 @@
         enabled: yes
 
 
+- name: Set system journal persistency to persistent
+  become: yes
+  ini_file:
+    path: /etc/systemd/journald.conf
+    section: Journal
+    option: Storage
+    value: persistent
+    state: present
+  notify: restart systemd-journald
+
+
 - name: Clean Keycloak path prefix variable (ensure it has a leading slash)
   set_fact:
     keycloak_path_prefix: "/{{ keycloak_path_prefix | regex_replace('/+', '/') | regex_replace('^/|/$', '') }}"

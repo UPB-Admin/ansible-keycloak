@@ -4,3 +4,10 @@
     name: chronyd
     state: restarted
     enabled: yes
+
+- name: restart systemd-journald
+  become: yes
+  service:
+    name: systemd-journald
+    state: restarted
+    enabled: yes
