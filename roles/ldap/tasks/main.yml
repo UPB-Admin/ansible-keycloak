@@ -1,11 +1,6 @@
 - name: LDAP server initial setup
   become: yes
   block:
-    - name: Install EPEL Release repository
-      package:
-        name: epel-release
-        state: latest
-
     - name: Install 389 directory service
       dnf:
         name: "@389-directory-server:stable/default"

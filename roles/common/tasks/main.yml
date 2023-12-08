@@ -1,6 +1,11 @@
 - name: Install packages and set up host entries
   become: yes
   block:
+    - name: Install EPEL Release package repository
+      package:
+        name: epel-release
+        state: latest
+
     - name: Install common system packages
       package:
         name:
