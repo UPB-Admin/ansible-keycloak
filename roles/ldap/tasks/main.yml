@@ -6,6 +6,17 @@
         name: "@389-directory-server:stable/default"
         enablerepo: epel-modular
         state: installed
+      when:
+        - ansible_facts.distribution == "CentOS"
+        - ansible_facts.distribution_major_version == "8"
+
+    - name: Install 389 directory service
+      dnf:
+        name: 389-ds-base
+        state: installed
+      when:
+        - ansible_facts.distribution == "CentOS"
+        - ansible_facts.distribution_major_version == "9"
 
     - name: Set owner / group on PKI files
       file:
