@@ -3,6 +3,7 @@
 ### December 2023
   - Update the playbook files to work with Centos 9 (and newer package versions
     available on Centos 9).
+  - Update node and mysqld exporter versions.
 
 ### July 2023
   - The database (MariaDB) systemd overrides file has been renamed to

@@ -1,20 +1,20 @@
 prometheus_system_user: prometheus
 
-prometheus_node_exporter_version: 1.2.2
-prometheus_database_exporter_version: 0.13.0
+prometheus_node_exporter_version: 1.7.0
+prometheus_database_exporter_version: 0.15.0
 prometheus_haproxy_exporter_version: 0.12.0
 
 prometheus_exporters:
   node:
     archive: "https://github.com/prometheus/node_exporter/releases/download/v{{ prometheus_node_exporter_version }}/node_exporter-{{ prometheus_node_exporter_version }}.linux-amd64.tar.gz"
-    checksum: sha256:344bd4c0bbd66ff78f14486ec48b89c248139cdd485e992583ea30e89e0e5390
+    checksum: sha256:a550cd5c05f760b7934a2d0afad66d2e92e681482f5f57a917465b1fba3b02a6
     tmp_file: "/tmp/prometheus-node_exporter-{{ prometheus_node_exporter_version }}.tar.gz"
     install_dir: "/opt/prometheus/node_exporter-{{ prometheus_node_exporter_version }}"
     port: 9100
 
   database:
     archive: "https://github.com/prometheus/mysqld_exporter/releases/download/v{{ prometheus_database_exporter_version }}/mysqld_exporter-{{ prometheus_database_exporter_version }}.linux-amd64.tar.gz"
-    checksum: sha256:626584c5d1c0cf09982302763e69db24fabe5dc736e7b694a3f8fdfee3d8d9a2
+    checksum: sha256:3973db1c46b0323a957a43916b759ee71ddab9096958ce78401fdff894b0dc51
     tmp_file: "/tmp/prometheus-database_exporter-{{ prometheus_database_exporter_version }}.tar.gz"
     install_dir: "/opt/prometheus/database_exporter-{{ prometheus_database_exporter_version }}"
     port: 9104
