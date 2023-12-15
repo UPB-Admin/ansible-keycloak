@@ -4,3 +4,5 @@ ntp_bind_cmd_address:
   - 127.0.0.1
   - ::1
 
+sysconfig_network_scripts_dir: "/etc/sysconfig/network-scripts"
+sysconfig_interface_file_prefix: "{{ sysconfig_network_scripts_dir }}/ifcfg-"

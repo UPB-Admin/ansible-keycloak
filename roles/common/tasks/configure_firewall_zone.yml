@@ -1,0 +1,50 @@
+- name: Make sure {{ zone.name }} firewalld zone exists
+  firewalld:
+    zone: "{{ zone.name }}"
+    state: present
+    permanent: yes
+  register: zone_created
+
+- name: Reload firewalld if {{ zone.name }} zone was created
+  command:
+    argv: [ "firewall-cmd", "--reload" ]
+  when: zone_created.changed
+
+- name: Move interfaces to the {{ zone.name }} zone
+  firewalld:
+    zone: "{{ zone.name }}"
+    interface: "{{ item }}"
+    state: enabled
+    permanent: yes
+    immediate: yes
+  with_items: "{{ zone.interfaces }}"
+
+- name: Check if sysconfig file for each interface exists
+  stat:
+    path: "{{ sysconfig_interface_file_prefix }}{{ item }}"
+  with_items: "{{ zone.interfaces }}"
+  register: sysconfig_file_exists
+
+- name: Add zone configuration to sysconfig file
+  lineinfile:
+    path: "{{ file.stat.path }}"
+    state: present
+    regexp: ZONE=
+    line: "ZONE={{ zone.name }}"
+  when: file.stat.exists
+  with_items: "{{ sysconfig_file_exists.results }}"
+  loop_control:
+    loop_var: file
+    label: "{{ file.item }}"
+
+- name: Change service allow list in {{ zone.name }}
+  firewalld:
+    zone: "{{ firewalld_internal_zone }}"
+    service: "{{ service.name }}"
+    state: "{{ 'enabled' if service.enabled else 'disabled' }}"
+    permanent: yes
+    immediate: yes
+  with_items: "{{ zone.services }}"
+  loop_control:
+    loop_var: service
+    label: "{{ 'Allowing' if service.enabled else 'Blocking' }} service {{ service.name }}"

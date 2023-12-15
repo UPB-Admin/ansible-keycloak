@@ -43,64 +43,26 @@
         state: started
         enabled: yes
 
-    - name: Make sure {{ firewalld_internal_zone }} firewalld zone (internal) exists
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        state: present
-        permanent: yes
-      register: zone_created
+    - name: Configure internal interface firewall zone
+      include_tasks: configure_firewall_zone.yml
+      with_items:
+        - name: "{{ firewalld_internal_zone }}"
+          interfaces: [ "{{ interfaces_internal_name }}" ]
+          services:
+            - { name: ssh, enabled: yes }
+      loop_control:
+        loop_var: zone
 
-    - name: Reload firewalld if {{ firewalld_internal_zone }} zone was created
-      command:
-        argv: [ "firewall-cmd", "--reload" ]
-      when: zone_created.changed
-
-    - name: Move internal interface to {{ firewalld_internal_zone }} zone
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        interface: "{{ interfaces_internal_name }}"
-        state: enabled
-        permanent: yes
-        immediate: yes
-
-    - name: Allow ssh connections in {{ firewalld_internal_zone }} zone
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        service: ssh
-        state: enabled
-        permanent: yes
-        immediate: yes
-
-    - name: Configure {{ firewall_dmz_zone }} if server has distinct external interface
+    - name: Configure external interface firewall zone (if different from internal interface)
       when: firewalld_has_external
-      block:
-        - name: Make sure {{ firewalld_dmz_zone }} firewalld zone (external) exists
-          firewalld:
-            zone: "{{ firewalld_dmz_zone }}"
-            state: present
-            permanent: yes
-          register: zone_created
-
-        - name: Reload firewalld if {{ firewalld_dmz_zone }} zone was created
-          command:
-            argv: [ "firewall-cmd", "--reload" ]
-          when: zone_created.changed
-
-        - name: Add external interface (if distinct from internal) to {{ firewalld_dmz_zone }} firewalld zone
-          firewalld:
-            zone: "{{ firewalld_dmz_zone }}"
-            interface: "{{ interfaces_external_name }}"
-            state: enabled
-            permanent: yes
-            immediate: yes
-
-        - name: Block new SSH connections on {{ firewalld_dmz_zone }} firewalld zone
-          firewalld:
-            zone: "{{ firewalld_dmz_zone }}"
-            service: ssh
-            state: disabled
-            permanent: yes
-            immediate: yes
+      include_tasks: configure_firewall_zone.yml
+      with_items:
+        - name: "{{ firewalld_dmz_zone }}"
+          interfaces: [ "{{ interfaces_external_name }}" ]
+          services:
+            - { name: ssh, enabled: no }
+      loop_control:
+        loop_var: zone
 
     - name: Move loopback interface to trusted chain
       firewalld:
