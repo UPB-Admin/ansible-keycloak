@@ -1,0 +1,36 @@
+- name: Parse port configurations for {{ zone.key }}
+  set_fact:
+    firewall_runtime_port_rules: >-
+      {{
+        firewall_runtime_port_rules +
+        [{
+          "zone": zone.key,
+          "port": port.0 | int,
+          "protocol": port.1,
+          "state": "enabled",
+        }]
+      }}
+  with_list: "{{ zone.value.ports }}"
+  loop_control:
+    loop_var: port
+    label: "Port {{ port.0 }}/{{ port.1 }}"
+
+
+- name: Parse rich rule configurations for {{ zone.key }}
+  set_fact:
+    firewall_runtime_rich_rules: >-
+      {{
+        firewall_runtime_rich_rules
+        + [{
+          "zone": zone.key,
+          "port": rule | regex_replace('.*port port="([^"]+)".*', '\1') | int,
+          "protocol": rule | regex_replace('.*protocol="([^"]+)".*', '\1'),
+          "family": rule | regex_replace('.*family="([^"]+)".*', '\1'),
+          "action": rule | regex_replace('.*(accept|reject|drop|mark)$', '\1'),
+          "state": "enabled",
+          "source_ip": rule | regex_replace('.*source address="([^"]+)".*', '\1'),
+        }]
+      }}
+  with_items: "{{ zone.value.rich_rules }}"
+  loop_control:
+    loop_var: rule

@@ -9,6 +9,7 @@
   tags: always
   roles:
     - common
+    - firewall
     - pki
 
 - hosts: all

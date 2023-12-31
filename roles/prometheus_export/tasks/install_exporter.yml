@@ -59,13 +59,3 @@
       notify:
         - systemd reload
         - restart {{ exporter.key }} exporter
-
-    - name: Open firewall port for {{ exporter.key }} exporter
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ item }}' port port='{{ exporter.value.port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{  prometheus_servers }}"

@@ -78,26 +78,6 @@
   notify: restart load balancer
 
 
-- name: Open firewall ports for load balancer
-  become: yes
-  block:
-    - name: Allow incoming connections on port {{ load_balancer_http_port }}
-      firewalld:
-        zone: "{{ firewalld_external_zone }}"
-        port: "{{ load_balancer_http_port }}/tcp"
-        state: enabled
-        permanent: yes
-        immediate: yes
-
-    - name: Allow incoming connections on port {{ load_balancer_https_port }}
-      firewalld:
-        zone: "{{ firewalld_external_zone }}"
-        port: "{{ load_balancer_https_port }}/tcp"
-        state: enabled
-        permanent: yes
-        immediate: yes
-
-
 - name: Ensure load balancer is started
   become: yes
   service:

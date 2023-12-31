@@ -198,6 +198,16 @@ You will need to set some of the following variables for your deployment
     authority used to sign the log servers' certificates, in PEM format.
     Note: This variable is used to determine if TLS should be enabled -
     TLS cannot be used if unset.
+  - `firewall_custom_port_rules` and `firewall_custom_rich_rules`: Add
+    "non-standard" configurations for allowed ports and rich rules. If you
+    intend to permanently enable ports or add rich rules, use these variables to
+    add them since the firewall role removes unexpected ports and rich rules.
+    Refer to the `firewall_port_rules` and `firewall_rich_rules` variables in
+    `roles/firewall/defaults/main.yml` for examples. Both variables are
+    dictionaries, where the keys are **group names** (the names must match a
+    group name from the `group_names` special variable of a host, or `"all"`),
+    and the values are lists containing the configurations for hosts in the
+    group.
 
 The override variables can be specified inside a YAML file that you will include
 when running the playbooks. An example of an overrides file can be found in the

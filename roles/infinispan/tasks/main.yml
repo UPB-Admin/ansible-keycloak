@@ -293,41 +293,6 @@
     ansible_remote_tmp: "/tmp/${USER}/.ansible"
 
 
-- name: Open firewall ports for infinispan
-  become: yes
-  block:
-    - name: Disallow connections to infinispan intra-cluster clustering port from infinispan servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ infinispan_tcpping_port }}' protocol='udp' accept"
-        state: disabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.infinispan }}"
-
-    - name: Allow connections to infinispan inter-cluster clustering port from infinispan servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ infinispan_tcpping_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.infinispan }}"
-
-    - name: Allow connections to infinispan hot rod port from infinispan and keycloak servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ infinispan_hotrod_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.keycloak }}"
-        - "{{ groups.infinispan }}"
-
-
 - name: Configure metrics proxy (nginx)
   become: yes
   block:
@@ -347,12 +312,3 @@
         name: httpd_can_network_connect
         state: yes
         persistent: yes
-
-    - name: Allow connections to metrics proxy from the Prometheus servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ item }}' port port='{{ infinispan_metrics_proxy_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items: "{{ prometheus_servers }}"

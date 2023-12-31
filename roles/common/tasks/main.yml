@@ -11,7 +11,6 @@
         name:
           - acl
           - chrony
-          - firewalld
           - gzip
           - python3
           - python3-libsemanage
@@ -32,45 +31,6 @@
       loop_control:
         label: "{{ item.name }} -> {{ item.ip }}"
       with_items: "{{ groups.all | map('extract', hostvars) | list | json_query('[*].{ name: inventory_hostname, ip: interfaces_internal_ip }') }}"
-
-
-- name: Firewalld common configurations
-  become: yes
-  block:
-    - name: Ensure firewalld is started and enabled
-      systemd:
-        name: firewalld
-        state: started
-        enabled: yes
-
-    - name: Configure internal interface firewall zone
-      include_tasks: configure_firewall_zone.yml
-      with_items:
-        - name: "{{ firewalld_internal_zone }}"
-          interfaces: [ "{{ interfaces_internal_name }}" ]
-          services:
-            - { name: ssh, enabled: yes }
-      loop_control:
-        loop_var: zone
-
-    - name: Configure external interface firewall zone (if different from internal interface)
-      when: firewalld_has_external
-      include_tasks: configure_firewall_zone.yml
-      with_items:
-        - name: "{{ firewalld_dmz_zone }}"
-          interfaces: [ "{{ interfaces_external_name }}" ]
-          services:
-            - { name: ssh, enabled: no }
-      loop_control:
-        loop_var: zone
-
-    - name: Move loopback interface to trusted chain
-      firewalld:
-        zone: trusted
-        interface: lo
-        permanent: yes
-        immediate: yes
-        state: enabled
 
 
 - name: Configure service for NTP synchronization

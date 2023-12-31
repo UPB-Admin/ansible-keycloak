@@ -1,32 +1,3 @@
 prometheus_system_user: prometheus
 
-prometheus_node_exporter_version: 1.7.0
-prometheus_database_exporter_version: 0.15.0
-prometheus_haproxy_exporter_version: 0.12.0
-
-prometheus_exporters:
-  node:
-    archive: "https://github.com/prometheus/node_exporter/releases/download/v{{ prometheus_node_exporter_version }}/node_exporter-{{ prometheus_node_exporter_version }}.linux-amd64.tar.gz"
-    checksum: sha256:a550cd5c05f760b7934a2d0afad66d2e92e681482f5f57a917465b1fba3b02a6
-    tmp_file: "/tmp/prometheus-node_exporter-{{ prometheus_node_exporter_version }}.tar.gz"
-    install_dir: "/opt/prometheus/node_exporter-{{ prometheus_node_exporter_version }}"
-    port: 9100
-
-  database:
-    archive: "https://github.com/prometheus/mysqld_exporter/releases/download/v{{ prometheus_database_exporter_version }}/mysqld_exporter-{{ prometheus_database_exporter_version }}.linux-amd64.tar.gz"
-    checksum: sha256:3973db1c46b0323a957a43916b759ee71ddab9096958ce78401fdff894b0dc51
-    tmp_file: "/tmp/prometheus-database_exporter-{{ prometheus_database_exporter_version }}.tar.gz"
-    install_dir: "/opt/prometheus/database_exporter-{{ prometheus_database_exporter_version }}"
-    port: 9104
-    conf_file: /etc/.mysqld_exporter.cnf
-    prereq_tasks: setup_database_exporter.yml
-
-  haproxy:
-    archive: "https://github.com/prometheus/haproxy_exporter/releases/download/v{{ prometheus_haproxy_exporter_version }}/haproxy_exporter-{{ prometheus_haproxy_exporter_version }}.linux-amd64.tar.gz"
-    checksum: sha256:41d797bc7d54023ea0ea23e58be5795a0947289d3d33beab3372c52e4fcbb298
-    tmp_file: "/tmp/prometheus-haproxy_exporter-{{ prometheus_haproxy_exporter_version }}.tar.gz"
-    install_dir: "/opt/prometheus/haproxy_exporter-{{ prometheus_haproxy_exporter_version }}"
-    port: 9101
-    extra_cond: "{{ load_balancer_service == 'haproxy' }}"
-
 database_prometheus_user: exporter

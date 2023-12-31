@@ -14,9 +14,6 @@ database_systemd_override_dir: "{{ systemd_override_dir }}/mariadb.service.d"
 database_systemd_override_file: "{{ database_systemd_override_dir }}/overrides.conf"
 
 database_unix_socket: "{{ database_data_dir }}/mysql.sock"
-database_galera_replication_port: 4567
-database_galera_ist_port: 4568
-database_galera_sst_port: 4444
 
 database_system_user: mysql
 

@@ -1,0 +1,198 @@
+- name: Install firewall package
+  become: yes
+  package:
+    name:
+      - firewalld
+      - python3-firewall
+
+- name: Firewalld common configurations
+  become: yes
+  block:
+    - name: Ensure firewalld is started and enabled
+      systemd:
+        name: firewalld
+        state: started
+        enabled: yes
+
+    - name: Configure internal interface firewall zone
+      include_tasks: configure_firewall_zone.yml
+      with_items:
+        - name: "{{ firewalld_internal_zone }}"
+          interfaces: [ "{{ interfaces_internal_name }}" ]
+          services:
+            - { name: ssh, enabled: yes }
+      loop_control:
+        loop_var: zone
+
+    - name: Configure external interface firewall zone (if different from internal interface)
+      when: firewalld_has_external
+      include_tasks: configure_firewall_zone.yml
+      with_items:
+        - name: "{{ firewalld_dmz_zone }}"
+          interfaces: [ "{{ interfaces_external_name }}" ]
+          services:
+            - { name: ssh, enabled: no }
+      loop_control:
+        loop_var: zone
+
+    - name: Move loopback interface to trusted chain
+      firewalld:
+        zone: trusted
+        interface: lo
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+
+- name: Add rich rules for Prometheus exporters (if needed)
+  set_fact:
+    firewall_rich_rules: >-
+      {{
+        firewall_rich_rules | combine({"all": [{
+          "zone": firewalld_internal_zone,
+          "port": exporter.value.port,
+          "protocol": "tcp",
+          "source_ips": prometheus_servers,
+        }]}, list_merge="append_rp")
+      }}
+  when:
+    - prometheus_monitor
+    - exporter.key in prometheus_exporters_to_install
+    - exporter.value.extra_cond | default(True)
+  with_dict: "{{ prometheus_exporters }}"
+  loop_control:
+    loop_var: exporter
+    label: "{{ exporter.key }}"
+
+
+- name: Consider the "all" group explicitly for host
+  set_fact:
+    firewall_host_groups: "{{ group_names + ['all'] }}"
+
+- name: Create a default empty ruleset for each host group
+  set_fact:
+    firewall_empty_ruleset: "{{ dict(firewall_host_groups | zip_longest([], fillvalue=[])) }}"
+
+- name: Extract firewall rules relevant for current host
+  set_fact:
+    firewall_applicable_port_rules: "{{ firewall_empty_ruleset | combine(firewall_port_rules | combine(firewall_custom_port_rules, list_merge='append_rp')) }}"
+    firewall_applicable_rich_rules: "{{ firewall_empty_ruleset | combine(firewall_rich_rules | combine(firewall_custom_rich_rules, list_merge='append_rp')) }}"
+
+- name: Set empty arrays of rules
+  set_fact:
+    firewall_expected_port_rules: []
+    firewall_expected_rich_rules: []
+    firewall_runtime_port_rules: []
+    firewall_runtime_rich_rules: []
+
+
+- name: Evaluate port rules (set defaults for parameters) and set as fact
+  set_fact:
+    firewall_expected_port_rules: >-
+      {{
+        firewall_expected_port_rules
+        + [{
+          "zone": rule.zone,
+          "port": rule.port | int,
+          "protocol": rule.protocol,
+          "state": rule.state | default("enabled"),
+        }]
+      }}
+  with_items: "{{ firewall_host_groups | map('extract', firewall_applicable_port_rules) | flatten | unique }}"
+  loop_control:
+    loop_var: rule
+
+- name: Debug firewall port rules (for verbosity 2 or higher)
+  debug:
+    var: firewall_expected_port_rules
+    verbosity: 2
+
+
+- name: Evaluate rich rules (set defaults for parameters and unroll source IPs in individual rules) and set as fact
+  set_fact:
+    firewall_expected_rich_rules: >-
+      {{
+        firewall_expected_rich_rules
+        + [{
+          "zone": rule.0.zone,
+          "port": rule.0.port | int,
+          "protocol": rule.0.protocol,
+          "family": rule.0.family | default("ipv4"),
+          "action": rule.0.action | default("accept"),
+          "state": rule.0.state | default("enabled"),
+          "source_ip": rule.1,
+        }]
+      }}
+  with_subelements:
+    - "{{ firewall_host_groups | map('extract', firewall_applicable_rich_rules) | flatten | unique }}"
+    - source_ips
+  loop_control:
+    loop_var: rule
+
+- name: Debug firewall rich rules (for verbosity 2 or higher)
+  debug:
+    var: firewall_expected_rich_rules
+    verbosity: 2
+
+
+- name: Gather runtime firewall configurations
+  become: yes
+  ansible.posix.firewalld_info:
+    zones:
+      - "{{ firewalld_internal_zone }}"
+      - "{{ firewalld_external_zone }}"
+  register: firewall_runtime_configurations
+
+
+- name: Parse runtime zone configurations
+  include_tasks: parse_zone_config.yml
+  with_dict: "{{ firewall_runtime_configurations.firewalld_info.zones }}"
+  loop_control:
+    loop_var: zone
+    label: "{{ zone.key }}"
+
+
+- name: Add disabling actions for unexpected rules
+  block:
+    - name: Set facts for unexpected rules
+      set_fact:
+        firewall_unexpected_port_rules: "{{ firewall_runtime_port_rules | difference(firewall_expected_port_rules) | unique }}"
+        firewall_unexpected_rich_rules: "{{ firewall_runtime_rich_rules | difference(firewall_expected_rich_rules) | unique }}"
+
+    - name: Add disabling actions for port rules unexpected rules from runtime configuration
+      set_fact:
+        firewall_expected_port_rules: "{{ firewall_expected_port_rules + [item | combine({'state': 'disabled'})] }}"
+      with_items: "{{ firewall_unexpected_port_rules }}"
+
+    - name: Add disabling actions for rich rules unexpected rules from runtime configuration
+      set_fact:
+        firewall_expected_rich_rules: "{{ firewall_expected_rich_rules + [item | combine({'state': 'disabled'})] }}"
+      with_items: "{{ firewall_unexpected_rich_rules }}"
+
+
+- name: Configure firewall ports and rich rules
+  become: yes
+  block:
+    - name: Configure firewall ports
+      firewalld:
+        zone: "{{ rule.zone }}"
+        port: "{{ rule.port }}/{{ rule.protocol }}"
+        state: "{{ rule.state }}"
+        permanent: yes
+        immediate: yes
+      with_items: "{{ firewall_expected_port_rules }}"
+      loop_control:
+        loop_var: rule
+        label: "({{ rule.state }}, zone {{ rule.zone }}): {{ rule.port }}/{{ rule.protocol }}"
+
+    - name: Configure firewall rich rules
+      firewalld:
+        zone: "{{ rule.zone }}"
+        rich_rule: "rule family='{{ rule.family }}' source address='{{ rule.source_ip }}' port port='{{ rule.port }}' protocol='{{ rule.protocol }}' {{ rule.action }}"
+        state: "{{ rule.state }}"
+        permanent: yes
+        immediate: yes
+      with_items: "{{ firewall_expected_rich_rules }}"
+      loop_control:
+        loop_var: rule
+        label: "({{ rule.state }}, zone: {{ rule.zone }}): rule family='{{ rule.family }}' source address='{{ rule.source_ip }}' port port='{{ rule.port }}' protocol='{{ rule.protocol }}' {{ rule.action }}"

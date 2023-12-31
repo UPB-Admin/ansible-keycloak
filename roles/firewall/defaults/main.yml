@@ -1,0 +1,101 @@
+firewall_port_rules:
+  load_balancers:
+    # Allow connections to HTTP and HTTPS ports
+    - zone: "{{ firewalld_external_zone }}"
+      port: "{{ load_balancer_http_port }}"
+      protocol: tcp
+
+    - zone: "{{ firewalld_external_zone }}"
+      port: "{{ load_balancer_https_port }}"
+      protocol: tcp
+
+# Custom firewall port rules
+firewall_custom_port_rules: {}
+
+
+firewall_rich_rules:
+  keycloak:
+    # Allow connections from the load balancers to the HTTP port
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ keycloak_http_port }}"
+      protocol: tcp
+      source_ips: "{{ groups.load_balancers | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections from the load balancers to the HTTPS port
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ keycloak_https_port }}"
+      protocol: tcp
+      source_ips: "{{ groups.load_balancers | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+  infinispan:
+    # Allow connections to infinispan inter-cluster clustering port from infinispan servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ infinispan_tcpping_port }}"
+      protocol: tcp
+      source_ips: "{{ groups.infinispan | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections to infinispan hot rod port from infinispan and keycloak servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ infinispan_hotrod_port }}"
+      protocol: tcp
+      source_ips: "{{ (groups.keycloak + groups.infinispan) | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections to metrics proxy from the Prometheus servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ infinispan_metrics_proxy_port }}"
+      protocol: tcp
+      source_ips: "{{ prometheus_servers }}"
+
+  database:
+    # Allow connections to database port from client services
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ database_listen_port }}"
+      protocol: tcp
+      source_ips: "{{ (groups.keycloak + groups.infinispan + groups.database) | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections to Galera Cluster replication TCP port from database servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ database_galera_replication_port }}"
+      protocol: tcp
+      source_ips: "{{ groups.database | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections to Galera Cluster replication UDP port from database servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ database_galera_replication_port }}"
+      protocol: udp
+      source_ips: "{{ groups.database | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections to Incremental State Transfer (IST) port from database servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ database_galera_ist_port }}"
+      protocol: tcp
+      source_ips: "{{ groups.database | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections to State Snapshot Transfer (SST) traffic TCP port from database servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ database_galera_sst_port }}"
+      protocol: tcp
+      source_ips: "{{ groups.database | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections to State Snapshot Transfer (SST) traffic UDP port from database servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ database_galera_sst_port }}"
+      protocol: udp
+      source_ips: "{{ groups.database | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+  ldap:
+    # Allow connections to the LDAP non-secure port from keycloak and LDAP servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ ldap_listen_port }}"
+      protocol: tcp
+      source_ips: "{{ (groups.keycloak + groups.ldap) | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+    # Allow connections to the LDAP secure port from keycloak and LDAP servers
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ ldap_secure_listen_port }}"
+      protocol: tcp
+      source_ips: "{{ (groups.keycloak + groups.ldap) | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
+
+# Custom firewall rich rules
+firewall_custom_rich_rules: {}

@@ -61,6 +61,17 @@ keycloak_https_port: 8443
 # port 11222 is used by default for the hot rod protocol. Is common for
 # Infinispan (server) and Keycloak (client)
 infinispan_hotrod_port: 11222
+# port 7800 is used by default for cluster communication (tcpping)
+infinispan_tcpping_port: 7800
+
+# Metrics port for infinispan status - is proxied through an nginx reverse proxy
+# This must be a valid httpd_port_t value for SELinux
+# Alternately nginx will fail to start, as binding would be blocked by SELinux
+infinispan_metrics_proxy_port: 9000
+
+# Ports LDAP servers listen on
+ldap_listen_port: 389        # server port for non-secure connections
+ldap_secure_listen_port: 636 # server port for secure connections
 
 # Keycloak does not officially support utf8mb4 encoding currently
 database_config:
@@ -75,6 +86,10 @@ database_config:
 
 database_listen_port: 3306
 database_unix_socket: /var/lib/mysql/mysql.sock
+# Ports used by MariaDB + Galera for database replication
+database_galera_replication_port: 4567
+database_galera_ist_port: 4568
+database_galera_sst_port: 4444
 
 # Caches with their respective cache types (from keycloak's point of view;
 # infinispan creates all caches as replicated caches)
@@ -120,6 +135,35 @@ prometheus_servers: []
 prometheus_monitor: "{{ prometheus_servers | length > 0 }}"
 # Exporters to install on the nodes
 prometheus_exporters_to_install: [ "node" ]
+
+prometheus_node_exporter_version: 1.7.0
+prometheus_database_exporter_version: 0.15.0
+prometheus_haproxy_exporter_version: 0.12.0
+
+prometheus_exporters:
+  node:
+    archive: "https://github.com/prometheus/node_exporter/releases/download/v{{ prometheus_node_exporter_version }}/node_exporter-{{ prometheus_node_exporter_version }}.linux-amd64.tar.gz"
+    checksum: sha256:a550cd5c05f760b7934a2d0afad66d2e92e681482f5f57a917465b1fba3b02a6
+    tmp_file: "/tmp/prometheus-node_exporter-{{ prometheus_node_exporter_version }}.tar.gz"
+    install_dir: "/opt/prometheus/node_exporter-{{ prometheus_node_exporter_version }}"
+    port: 9100
+
+  database:
+    archive: "https://github.com/prometheus/mysqld_exporter/releases/download/v{{ prometheus_database_exporter_version }}/mysqld_exporter-{{ prometheus_database_exporter_version }}.linux-amd64.tar.gz"
+    checksum: sha256:3973db1c46b0323a957a43916b759ee71ddab9096958ce78401fdff894b0dc51
+    tmp_file: "/tmp/prometheus-database_exporter-{{ prometheus_database_exporter_version }}.tar.gz"
+    install_dir: "/opt/prometheus/database_exporter-{{ prometheus_database_exporter_version }}"
+    port: 9104
+    conf_file: /etc/.mysqld_exporter.cnf
+    prereq_tasks: setup_database_exporter.yml
+
+  haproxy:
+    archive: "https://github.com/prometheus/haproxy_exporter/releases/download/v{{ prometheus_haproxy_exporter_version }}/haproxy_exporter-{{ prometheus_haproxy_exporter_version }}.linux-amd64.tar.gz"
+    checksum: sha256:41d797bc7d54023ea0ea23e58be5795a0947289d3d33beab3372c52e4fcbb298
+    tmp_file: "/tmp/prometheus-haproxy_exporter-{{ prometheus_haproxy_exporter_version }}.tar.gz"
+    install_dir: "/opt/prometheus/haproxy_exporter-{{ prometheus_haproxy_exporter_version }}"
+    port: 9101
+    extra_cond: "{{ load_balancer_service == 'haproxy' }}"
 
 # rsyslog remote servers
 rsyslog_log_servers: []

@@ -185,30 +185,6 @@
       changed_when: False # Ignore; the files generated when the server is built always have permissions set for "other"
 
 
-- name: Open firewall ports for keycloak
-  become: yes
-  block:
-    - name: Allow connections to keycloak HTTP port from load balancer servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ keycloak_http_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.load_balancers }}"
-
-    - name: Allow connections to keycloak HTTPS port from load balancer servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ keycloak_https_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.load_balancers }}"
-
-
 - name: Configure keycloak for cross DC operation
   become: yes
   block:

@@ -148,18 +148,6 @@
         - systemd reload
         - restart database
 
-    - name: Allow connections to database port from client services
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_listen_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.keycloak }}"
-        - "{{ groups.infinispan }}"
-        - "{{ groups.database }}"
-
 
 - name: Configure Galera Cluster
   become: yes
@@ -184,56 +172,6 @@
         src: "{{ 'master_galera.cnf' if inventory_hostname == function_groups.database.master else 'slave_galera.cnf' }}"
         dest: /etc/my.cnf.d/galera.cnf
       notify: restart database
-
-    - name: Allow connections to Galera Cluster replication TCP port from database servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_replication_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.database }}"
-
-    - name: Allow connections to Galera Cluster replication UDP port from database servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_replication_port }}' protocol='udp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.database }}"
-
-    - name: Allow connections to Incremental State Transfer (IST) port from database servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_ist_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.database }}"
-
-    - name: Allow connections to State Snapshot Transfer (SST) traffic TCP port from database servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_sst_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.database }}"
-
-    - name: Allow connections to State Snapshot Transfer (SST) traffic UDP port from database servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ database_galera_sst_port }}' protocol='udp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.database }}"
 
 
 - name: Mark database service for restart if the PKI files have changed

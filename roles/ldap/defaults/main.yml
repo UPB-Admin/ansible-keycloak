@@ -6,9 +6,6 @@ ldap_instance_name: keycloak_ldap               # the LDAP instance name
 ldap_instance_config_dir: "/etc/dirsrv/slapd-{{ ldap_instance_name }}"
 ldap_instance_dse_file: "{{ ldap_instance_config_dir }}/dse.ldif"
 
-ldap_listen_port: 389                             # server port for non-secure connections
-ldap_secure_listen_port: 636                      # server port for secure connections
-
 ldap_use_self_sign_cert: "True"                   # whether to create a self-signed certificate. If false, a certificate must be specified otherwise
 ldap_self_sign_cert_validity_months: 60           # validity period of self-signed certificate, in months
 

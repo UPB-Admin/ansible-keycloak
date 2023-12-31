@@ -70,32 +70,6 @@
             state: absent
 
 
-- name: Open firewall ports for LDAP
-  become: yes
-  block:
-    - name: Allow connections to the LDAP non-secure port from keycloak and LDAP servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ ldap_listen_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.ldap }}"
-        - "{{ groups.keycloak }}"
-
-    - name: Allow connections to the LDAP secure port from keycloak and LDAP servers
-      firewalld:
-        zone: "{{ firewalld_internal_zone }}"
-        rich_rule: "rule family='ipv4' source address='{{ hostvars[item].interfaces_internal_ip }}' port port='{{ ldap_secure_listen_port }}' protocol='tcp' accept"
-        state: enabled
-        permanent: yes
-        immediate: yes
-      with_items:
-        - "{{ groups.ldap }}"
-        - "{{ groups.keycloak }}"
-
-
 - name: Configure LDAP and start server
   become: yes
   block:
