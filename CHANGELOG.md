@@ -1,5 +1,12 @@
 ## Changelog
 
+### January 2024
+  - Change Keycloak embedded Infinispan JGroups stack to use a non default TCP
+    port. This should allow hosting a dedicated Infinispan instance on the same
+    node as Keycloak. Also changed the discovery mechanism to TCPPING
+    (without initial hosts, functionally disabled), MPING could also conflict
+    with the Infinispan service.
+
 ### December 2023
   - Update the playbook files to work with Centos 9 (and newer package versions
     available on Centos 9).

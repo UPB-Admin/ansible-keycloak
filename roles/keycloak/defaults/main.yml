@@ -39,6 +39,10 @@ keycloak_database_conn_params: "useSsl=true&serverSslCert={{ database_trusted_ce
 keycloak_database_servers: "{{ groups[cluster_name] | intersect(groups.database) | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
 keycloak_database_conn_url: "jdbc:mariadb://{{ keycloak_database_servers }}/{{ database_config.keycloak.dbname }}?{{ keycloak_database_conn_params }}"
 
+# Use a different port than the standalone Infinispan service to not conflict
+# with a dedicated Infinispan service is hosted on the same node as Keycloak
+keycloak_infinispan_tcpping_port: "{{ infinispan_tcpping_port + 10 }}"
+
 keycloak_system_user: keycloak
 
 keycloak_random_source: /dev/urandom

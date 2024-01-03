@@ -10,8 +10,15 @@
         xsi:schemaLocation="urn:infinispan:config:13.0 http://www.infinispan.org/schemas/infinispan-config-13.0.xsd"
         xmlns="urn:infinispan:config:13.0">
 
+   <jgroups>
+       <stack name="local" extends="tcp">
+           <TCP bind_port="{{ keycloak_infinispan_tcpping_port }}"/>
+           <TCPPING initial_hosts="" stack.combine="REPLACE" stack.position="MPING"/>
+       </stack>
+   </jgroups>
+
     <cache-container name="keycloak">
-        <transport lock-timeout="60000" node-name="{{ keycloak_node_name }}"/>
+        <transport lock-timeout="60000" node-name="{{ keycloak_node_name }}" stack="local"/>
         <local-cache name="realms">
             <encoding>
                 <key media-type="application/x-java-object"/>
