@@ -7,8 +7,8 @@
 
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:13.0 http://www.infinispan.org/schemas/infinispan-config-13.0.xsd"
-        xmlns="urn:infinispan:config:13.0">
+        xsi:schemaLocation="urn:infinispan:config:14.0 http://www.infinispan.org/schemas/infinispan-config-14.0.xsd"
+        xmlns="urn:infinispan:config:14.0">
 
    <jgroups>
        <stack name="local" extends="tcp">
@@ -35,19 +35,19 @@
         </local-cache>
 {% for cache_name, cache_type in infinispan_caches.items() %}
         <{{ cache_type }}-cache name="{{ cache_name }}" {{ '' if cache_type == "replicated" else 'owners="2"' }}>
-            <remote-store xmlns="urn:infinispan:config:store:remote:13.0" cache="{{ cache_name }}"
-                          fetch-state="false" purge="false" preload="false" shared="true" segmented="false" raw-values="true"
+            <remote-store xmlns="urn:infinispan:config:store:remote:14.0" cache="{{ cache_name }}"
+                          purge="false" preload="false" shared="true" segmented="false" raw-values="true"
                           marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
 
 {% for server in keycloak_cluster_infinispan_servers %}
-                <remote-server host="{{ hostvars[server].interfaces_internal_ip }}" port="{{ infinispan_hotrod_port }}"/>
+                <remote-server host="{{ server }}" port="{{ infinispan_hotrod_port }}"/>
 {% endfor %}
 
                 <security>
                     <authentication server-name="infinispan">
                         <digest username="{{ infinispan_keycloak_user }}" password="{{ vault.infinispan.user.keycloak.pass }}" realm="default"/>
                     </authentication>
-                    <encryption>
+                    <encryption protocol="TLSv1.3" sni-hostname="{{ keycloak_cluster_infinispan_servers | first }}">
                         <truststore filename="{{ keycloak_truststore_file }}" password="{{ vault.keycloak.truststore.pass }}" type="JKS"/>
                     </encryption>
                 </security>

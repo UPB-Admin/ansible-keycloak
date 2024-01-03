@@ -1,4 +1,4 @@
-keycloak_archive_checksum: sha1:83441bea0cea4bfb0f30cadfed73f886b9739ea9
+keycloak_archive_checksum: sha1:3b0e002df2a778d98fcaeb8dbeed837331ab4412
 keycloak_archive_url: "https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz"
 keycloak_install_dir: "/opt/keycloak-{{ keycloak_version }}"
 keycloak_tmp_file: "/tmp/keycloak-{{ keycloak_version }}.tar.gz"
@@ -35,7 +35,7 @@ keycloak_maven_settings_xml: "{{ keycloak_custom_modules_repo_root_dir }}/settin
 keycloak_maven_repo_dir: "{{ keycloak_custom_modules_repo_root_dir }}/.m2/repository"
 
 keycloak_database_pool_size: 100
-keycloak_database_conn_params: "useSsl=true&serverSslCert={{ database_trusted_certificate_file | urlencode }}&enabledSslProtocolSuites=TLSv1.3&enabledSslCipherSuites=TLS_AES_256_GCM_SHA384"
+keycloak_database_conn_params: "sslMode=verify-full&serverSslCert={{ database_trusted_certificate_file | urlencode }}&enabledSslProtocolSuites=TLSv1.3&enabledSslCipherSuites=TLS_AES_256_GCM_SHA384"
 keycloak_database_servers: "{{ groups[cluster_name] | intersect(groups.database) | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
 keycloak_database_conn_url: "jdbc:mariadb://{{ keycloak_database_servers }}/{{ database_config.keycloak.dbname }}?{{ keycloak_database_conn_params }}"
 
