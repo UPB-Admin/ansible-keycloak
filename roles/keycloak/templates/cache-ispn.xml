@@ -39,7 +39,7 @@
                           purge="false" preload="false" shared="true" segmented="false" raw-values="true"
                           marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
 
-{% for server in keycloak_cluster_infinispan_servers %}
+{% for server in cluster_servers.infinispan %}
                 <remote-server host="{{ server }}" port="{{ infinispan_hotrod_port }}"/>
 {% endfor %}
 
@@ -47,7 +47,7 @@
                     <authentication server-name="infinispan">
                         <digest username="{{ infinispan_keycloak_user }}" password="{{ vault.infinispan.user.keycloak.pass }}" realm="default"/>
                     </authentication>
-                    <encryption protocol="TLSv1.3" sni-hostname="{{ keycloak_cluster_infinispan_servers | first }}">
+                    <encryption protocol="TLSv1.3" sni-hostname="{{ cluster_servers.infinispan | first }}">
                         <truststore filename="{{ keycloak_truststore_file }}" password="{{ vault.keycloak.truststore.pass }}" type="JKS"/>
                     </encryption>
                 </security>

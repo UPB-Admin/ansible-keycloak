@@ -7,6 +7,8 @@
     (without initial hosts, functionally disabled), MPING could also conflict
     with the Infinispan service.
   - Bump Keycloak version to 23.0.3.
+  - Add utility `cluster_servers` dictionary variable with lists of nodes that
+    with each type of service in the cluster.
 
 ### December 2023
   - Update the playbook files to work with Centos 9 (and newer package versions

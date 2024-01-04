@@ -41,7 +41,7 @@ jdbc_mariadb_module_jar: "{{ jdbc_mariadb_module_dir }}/mariadb-{{ jdbc_mariadb_
 
 database_trusted_certificate_file: "{{ infinispan_server_conf_subdir }}/database.crt"
 
-jdbc_mariadb_servers: "{{ groups[cluster_name] | intersect(groups.database) | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
+jdbc_mariadb_servers: "{{ cluster_servers.database | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
 jdbc_mariadb_conn_url: "jdbc:mariadb://{{ jdbc_mariadb_servers }}/{{ database_config.infinispan.dbname }}"
 jdbc_mariadb_conn_params:
   sslMode: verify-full
