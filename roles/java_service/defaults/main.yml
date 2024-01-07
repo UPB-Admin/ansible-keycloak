@@ -13,3 +13,5 @@ java_max_metaspace_size: "{{ (java_max_heap_size|int / 2)|int }}"
 java_metaspace_size: "{{ (java_max_metaspace_size|int / 2)|int }}"
 
 java_common_mem_opts: "-Xms{{ java_min_heap_size }}m -Xmx{{ java_max_heap_size }}m -XX:MetaspaceSize={{ java_metaspace_size }}m -XX:MaxMetaspaceSize={{ java_max_metaspace_size }}m -XX:+UseG1GC"
+
+java_version: 17

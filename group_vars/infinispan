@@ -1,8 +1,6 @@
 function_group: infinispan
 pki_service_name: infinispan
 
-java_version: 11
-
 infinispan_restarted: False
 
 rsyslog_service_regex: infinispan

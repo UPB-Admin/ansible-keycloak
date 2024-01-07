@@ -1,8 +1,6 @@
 function_group: keycloak
 pki_service_name: keycloak
 
-java_version: 17
-
 rsyslog_service_regex: keycloak
 
 # vim: ft=yaml

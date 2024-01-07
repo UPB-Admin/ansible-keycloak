@@ -9,6 +9,10 @@
   - Bump Keycloak version to 23.0.3.
   - Add utility `cluster_servers` dictionary variable with lists of nodes that
     with each type of service in the cluster.
+  - Use same version of Java for both Infinispan and Keycloak. If multiple
+    versions of Java would be used, it would cause the Ansible playbooks to
+    override the alternatives when both Infinispan and Keycloak are hosted on
+    the same node. This change also upgrades Infinispan to Java 17.
 
 ### December 2023
   - Update the playbook files to work with Centos 9 (and newer package versions
