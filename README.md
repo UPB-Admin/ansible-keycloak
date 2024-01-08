@@ -138,9 +138,10 @@ You will need to set some of the following variables for your deployment
   - `pki_dhparams`: A predefined pair of Diffie-Hellman parameters to copy to
     the servers, since DH parameter generation can take a long time (tens of
     minutes, up to hours);
-  - `service_hostname_dns`: List of DNS names that can be used to reach the load
-    balancers. Values must be DNS names, as `DNS:` is prepended before each name
-    as part of the Subject Alternative Name field during certificate generation);
+  - `service_hostname_dns`: DNS name that can be used to reach the load
+    balancers. Value must be a valid DNS name, as `DNS:` is prepended before
+    the name as part of the Subject Alternative Name field during certificate
+    generation);
   - `access_admin_allowed_sources`: List of IPs that the admin console can be
     reached from. The values must be IPs since the load balancer may not
     resolve names;
