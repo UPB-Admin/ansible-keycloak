@@ -15,6 +15,8 @@
     the same node. This change also upgrades Infinispan to Java 17.
   - Update PKI generation to correctly create PKI files for all services running
     on a single node.
+  - Update rsyslog configurations to catch the logs sent to syslog by all
+    services installed by the playbook.
 
 ### December 2023
   - Update the playbook files to work with Centos 9 (and newer package versions

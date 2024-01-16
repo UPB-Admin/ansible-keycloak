@@ -5,3 +5,12 @@ rsyslog_cert_dir: /etc/pki/rsyslog
 rsyslog_server_ca_crt_path: "{{ rsyslog_cert_dir }}/server-ca.crt"
 
 rsyslog_config_file_path: /etc/rsyslog.d/remotelog.conf
+
+rsyslog_service_regexes:
+  database: "mariadb|stunnel"
+  infinispan: infinispan
+  keycloak: keycloak
+  ldap: ns-slapd
+  load_balancers: "{{ load_balancer_service }}"
+
+rsyslog_service_regex: "{{ rsyslog_service_regexes | dict2items | selectattr('key', 'in', group_names) | map(attribute='value') | list | join('|') }}"
