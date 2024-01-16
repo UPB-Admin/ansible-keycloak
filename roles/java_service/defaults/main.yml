@@ -1,16 +1,27 @@
 # Use 256 as the multiplier for heap memory allocation (all allocations will be
 # a multiple of 256MB)
 java_heap_mem_mul: 256
-java_system_reserved_mem: 512
-# Maximum heap size. Round down to the nearest multiple of java_heap_mem_mul. Use around 2/3 of the available memory
-# Leave at least java_system_reserved_mem for other system applications
-java_max_heap_size: "{{ ((ansible_memtotal_mb - java_system_reserved_mem) * (2/3) / java_heap_mem_mul)|int * java_heap_mem_mul }}"
+
+# Reserve memory for non-Java services. Reserve more memory if a database is
+# expected to run on the server. At least 1/3 of the memory should be reserved regardless
+java_system_reserved_mem: "{{ [('database' in group_names) | ternary(1536, 512), (1/3) * ansible_memtotal_mb] | max }}"
+
+# Number of Java services on the server - will have to split resources
+java_num_services: "{{ ['infinispan', 'keycloak'] | intersect(group_names) | length }}"
+
+# Maximum heap size. Round down to the nearest multiple of java_heap_mem_mul.
+# Reserve at least java_system_reserved_mem for other system applications
+java_max_heap_size: "{{ ((ansible_memtotal_mb - java_system_reserved_mem|int) / java_heap_mem_mul / java_num_services|int) | int * java_heap_mem_mul }}"
+
 # Minimum heap size. Use the same value as the max to avoid dynamic allocations
 java_min_heap_size: "{{ java_max_heap_size }}"
 # Maximum size of metaspace
 java_max_metaspace_size: "{{ (java_max_heap_size|int / 2)|int }}"
 # Metaspace size when a GC will be triggered
 java_metaspace_size: "{{ (java_max_metaspace_size|int / 2)|int }}"
+
+# Minimum amount of memory in megabytes we expect a Java service should have to run without issues
+java_min_mem: 1024
 
 java_common_mem_opts: "-Xms{{ java_min_heap_size }}m -Xmx{{ java_max_heap_size }}m -XX:MetaspaceSize={{ java_metaspace_size }}m -XX:MaxMetaspaceSize={{ java_max_metaspace_size }}m -XX:+UseG1GC"
 

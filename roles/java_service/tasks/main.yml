@@ -1,3 +1,8 @@
+- name: Fail if Java services would not have enough resources to run
+  fail:
+    msg: "The service cannot run with just {{ java_max_heap_size }} heap memory"
+  when: java_max_heap_size|int < java_min_mem|int
+
 - name: Install openjdk {{ java_version }}
   become: yes
   package:

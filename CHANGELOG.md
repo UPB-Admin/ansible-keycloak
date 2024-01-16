@@ -17,6 +17,8 @@
     on a single node.
   - Update rsyslog configurations to catch the logs sent to syslog by all
     services installed by the playbook.
+  - Update memory allocation for Java services if multiple services run on the
+    same system.
 
 ### December 2023
   - Update the playbook files to work with Centos 9 (and newer package versions
