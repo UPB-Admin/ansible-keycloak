@@ -1,0 +1,46 @@
+- become: yes
+  block:
+    - name: Check if OpenSSL private keys exists
+      stat:
+        path: "{{ item.value.certificate_key_path }}"
+      register: pki_private_key_stat
+
+    - name: Create OpenSSL private key
+      openssl_privatekey:
+        path: "{{ item.value.certificate_key_path }}"
+        type: "{{ item.value.key_type }}"
+        size: "{{ item.value.key_size }}"
+        mode: "{{ item.value.file_mode }}"
+      when: not pki_private_key_stat.stat.exists
+      notify: pki changed
+
+    - name: Create certificate sign request
+      openssl_csr:
+        path: "{{ item.value.certificate_csr_path }}"
+        privatekey_path: "{{ item.value.certificate_key_path }}"
+        common_name: "{{ item.value.common_name }}"
+        country_name: "{{ item.value.country_name }}"
+        organization_name: "{{ item.value.organization_name }}"
+        locality_name: "{{ item.value.locality_name }}"
+        subject_alt_name: "{{ item.value.subject_alt_names }}"
+        mode: "{{ item.value.file_mode }}"
+      notify: pki changed
+
+    - name: Check if certificate contains the correct subject alt names and common name
+      openssl_certificate_info:
+        path: "{{ item.value.certificate_crt_path }}"
+      ignore_errors: True
+      register: pki_certificate_check
+
+    - name: Create OpenSSL certificate
+      openssl_certificate:
+        path: "{{ item.value.certificate_crt_path }}"
+        privatekey_path: "{{ item.value.certificate_key_path }}"
+        csr_path: "{{ item.value.certificate_csr_path }}"
+        provider: selfsigned
+        mode: "{{ item.value.file_mode }}"
+      when: >
+        pki_certificate_check.failed
+        or pki_certificate_check.subject.commonName | default('') != item.value.common_name
+        or pki_certificate_check.subject_alt_name   | symmetric_difference(item.value.subject_alt_names)
+      notify: pki changed

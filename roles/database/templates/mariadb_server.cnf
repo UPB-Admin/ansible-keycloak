@@ -16,8 +16,8 @@
 # https://ssl-config.mozilla.org/#server=mysql&version=8.0.19&config=modern&openssl=1.1.1d&guideline=5.6
 [mysqld]
 require_secure_transport = on
-ssl-cert = {{ pki_certificate_crt_path }}
-ssl-key = {{ pki_certificate_key_path }}
+ssl-cert = {{ pki_configs.database.certificate_crt_path }}
+ssl-key = {{ pki_configs.database.certificate_key_path }}
 tls_version = TLSv1.3
 
 # Network settings

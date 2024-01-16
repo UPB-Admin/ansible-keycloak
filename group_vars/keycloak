@@ -1,6 +1,1 @@
-function_group: keycloak
-pki_service_name: keycloak
-
-rsyslog_service_regex: keycloak
-
 # vim: ft=yaml

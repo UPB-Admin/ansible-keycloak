@@ -5,9 +5,9 @@
       file:
         state: directory
         recurse: yes
-        path: "{{ pki_root_dir }}"
-        owner: "{{ pki_file_owner }}"
-        group: "{{ pki_file_group }}"
+        path: "{{ pki_configs.load_balancers.root_dir }}"
+        owner: "{{ pki_configs.load_balancers.file_owner }}"
+        group: "{{ pki_configs.load_balancers.file_group }}"
         seuser: system_u
         setype: cert_t
 
@@ -23,9 +23,9 @@
     - name: Create dummy certificate sign request
       openssl_csr:
         path: "{{ pki_dummy_certificate_csr_path }}"
-        privatekey_path: "{{ pki_certificate_key_path }}"
+        privatekey_path: "{{ pki_configs.load_balancers.certificate_key_path }}"
         subject_alt_name: "DNS:Web-Server"
-        mode: "{{ pki_file_mode }}"
+        mode: "{{ pki_configs.load_balancers.file_mode }}"
         seuser: system_u
         setype: cert_t
 
@@ -33,9 +33,9 @@
       openssl_certificate:
         path: "{{ pki_dummy_certificate_crt_path }}"
         csr_path: "{{ pki_dummy_certificate_csr_path }}"
-        privatekey_path: "{{ pki_certificate_key_path }}"
+        privatekey_path: "{{ pki_configs.load_balancers.certificate_key_path }}"
         provider: selfsigned
-        mode: "{{ pki_file_mode }}"
+        mode: "{{ pki_configs.load_balancers.file_mode }}"
         seuser: system_u
         setype: cert_t
       notify: restart load balancer
@@ -52,9 +52,9 @@
     - name: Add the certificate used by the keycloak servers
       become: yes
       copy:
-        content: "{{ hostvars[function_groups.keycloak.master].pki_certificate }}"
+        content: "{{ hostvars[function_groups.keycloak.master].pki_certificate.keycloak }}"
         dest: "{{ keycloak_trusted_certificate_path }}"
-        mode: "{{ pki_file_mode }}"
+        mode: "{{ pki_configs.load_balancers.file_mode }}"
         seuser: system_u
         setype: cert_t
       notify: restart load balancer

@@ -19,7 +19,7 @@ keycloak_server_script_file: "{{ keycloak_bin_subdir }}/kc.sh"
 keycloak_conf_file: "{{ keycloak_conf_subdir }}/keycloak.conf"
 keycloak_infinispan_conf_file: "{{ keycloak_conf_subdir }}/cache-ispn.xml"
 
-infinispan_trusted_certificate_file: "{{ pki_trusted_dir }}/infinispan.crt"
+infinispan_trusted_certificate_file: "{{ pki_configs.keycloak.trusted_dir }}/infinispan.crt"
 database_trusted_certificate_file: "{{ keycloak_conf_subdir }}/database.crt"
 keycloak_truststore_file: "{{ keycloak_conf_subdir }}/truststore.jks"
 keycloak_keystore_file: "{{ keycloak_conf_subdir }}/application.keystore"
@@ -42,8 +42,6 @@ keycloak_database_conn_url: "jdbc:mariadb://{{ keycloak_database_servers }}/{{ d
 # Use a different port than the standalone Infinispan service to not conflict
 # with a dedicated Infinispan service is hosted on the same node as Keycloak
 keycloak_infinispan_tcpping_port: "{{ infinispan_tcpping_port + 10 }}"
-
-keycloak_system_user: keycloak
 
 keycloak_random_source: /dev/urandom
 keycloak_java_opts: "{{ java_common_mem_opts }} -Djava.net.preferIPv4Stack=true -Djava.security.egd=file:{{ keycloak_random_source }} -Dfile.encoding=UTF-8"

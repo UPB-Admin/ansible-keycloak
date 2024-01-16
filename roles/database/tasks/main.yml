@@ -31,9 +31,9 @@
       file:
         state: directory
         recurse: yes
-        path: "{{ pki_root_dir }}"
-        owner: "{{ pki_file_owner }}"
-        group: "{{ pki_file_group }}"
+        path: "{{ pki_configs.database.root_dir }}"
+        owner: "{{ pki_configs.database.file_owner }}"
+        group: "{{ pki_configs.database.file_group }}"
         seuser: system_u
         setype: cert_t
 

@@ -19,7 +19,9 @@
       file:
         path: "{{ rsyslog_cert_dir }}"
         state: directory
-        mode: "{{ pki_dir_mode }}"
+        mode: "0500"
+        owner: root
+        group: root
         seuser: system_u
         setype: cert_t
 
@@ -27,7 +29,7 @@
       copy:
         content: "{{ rsyslog_log_server_ca_certificate }}"
         dest: "{{ rsyslog_server_ca_crt_path }}"
-        mode: "{{ pki_file_mode }}"
+        mode: "0440"
         owner: root
         group: root
         seuser: system_u

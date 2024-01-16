@@ -24,8 +24,6 @@ infinispan_locking_acquire_timeout: 500       # maximum amount of time a cache l
 infinispan_tcpping_server_list: "{{ groups.infinispan | product(['[%d]' % infinispan_tcpping_port]) | map('join') | join(',') }}"
 infinispan_keystore_cert_alias: server
 
-infinispan_system_user: infinispan
-
 infinispan_users:
   - admin
   - monitor

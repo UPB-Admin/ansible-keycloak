@@ -1,6 +1,6 @@
-pki_dummy_certificate_csr_path: "{{ pki_root_dir }}/server-dummy.csr"
-pki_dummy_certificate_crt_path: "{{ pki_root_dir }}/server-dummy.crt"
-keycloak_trusted_certificate_path: "{{ pki_trusted_dir }}/keycloak-ssl.crt"
+pki_dummy_certificate_csr_path: "{{ pki_configs.load_balancers.root_dir }}/server-dummy.csr"
+pki_dummy_certificate_crt_path: "{{ pki_configs.load_balancers.root_dir }}/server-dummy.crt"
+keycloak_trusted_certificate_path: "{{ pki_configs.load_balancers.trusted_dir }}/keycloak-ssl.crt"
 
 load_balancer_ssl_default_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
 

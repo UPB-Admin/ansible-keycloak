@@ -17,9 +17,9 @@
       file:
         state: directory
         recurse: yes
-        path: "{{ pki_root_dir }}"
-        owner: "{{ pki_file_owner }}"
-        group: "{{ pki_file_group }}"
+        path: "{{ pki_configs.keycloak.root_dir }}"
+        owner: "{{ pki_configs.keycloak.file_owner }}"
+        group: "{{ pki_configs.keycloak.file_group }}"
         seuser: system_u
         setype: cert_t
 
@@ -190,11 +190,11 @@
   block:
     - name: Copy the certificate used by the infinispan servers
       copy:
-        content: "{{ hostvars[function_groups.infinispan.master].pki_certificate }}"
+        content: "{{ hostvars[function_groups.infinispan.master].pki_certificate.infinispan }}"
         dest: "{{ infinispan_trusted_certificate_file }}"
         mode: 0400
-        owner: "{{ pki_file_owner }}"
-        group: "{{ pki_file_group }}"
+        owner: "{{ pki_configs.keycloak.file_owner }}"
+        group: "{{ pki_configs.keycloak.file_group }}"
 
     - name: Create java truststore with infinispan certificate
       java_cert:
@@ -217,17 +217,17 @@
 
     - name: Copy the certificate used by the database servers
       copy:
-        content: "{{ hostvars[function_groups.database.master].pki_certificate }}"
+        content: "{{ hostvars[function_groups.database.master].pki_certificate.database }}"
         dest: "{{ database_trusted_certificate_file }}"
         mode: 0440
-        owner: "{{ pki_file_owner }}"
+        owner: "{{ pki_configs.keycloak.file_owner }}"
         group: "{{ keycloak_system_user }}"
 
     - name: Create java keystore based on PKI certificate and key
       openssl_pkcs12:
         action: export
-        certificate_path: "{{ pki_certificate_crt_path }}"
-        privatekey_path: "{{ pki_certificate_key_path }}"
+        certificate_path: "{{ pki_configs.keycloak.certificate_crt_path }}"
+        privatekey_path: "{{ pki_configs.keycloak.certificate_key_path }}"
         friendly_name: "{{ keycloak_keystore_cert_alias }}"
         path: "{{ keycloak_keystore_file }}"
         passphrase: "{{ vault.keycloak.keystore.pass }}"

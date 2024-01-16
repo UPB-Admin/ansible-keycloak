@@ -1,78 +1,84 @@
+- name: Configure variables for server PKI configurations
+  set_fact:
+    pki_configs: |
+      {% set service_config = pki_service_specific_configs[function] %}
+      {% set root_dir = "/etc/pki/" + service_config.service_name %}
+      {{
+        pki_configs | default({}) | combine({function: {
+          "root_dir": root_dir,
+          "private_dir": root_dir + "/private",
+          "trusted_dir": root_dir + "/trusted",
+
+          "certificate_key_path": root_dir + "/private/server.key",
+          "certificate_csr_path": root_dir + "/server.csr",
+          "certificate_crt_path": root_dir + "/server.crt",
+          "dhparams_path": root_dir + "/dhparams.pem",
+
+          "file_owner": service_config.file_owner | default(pki_file_owner),
+          "file_group": service_config.file_group | default(pki_file_group),
+          "dir_mode": service_config.dir_mode | default(pki_dir_mode),
+          "file_mode": service_config.file_mode | default(pki_file_mode),
+          "key_type": service_config.key_type | default(pki_key_type),
+          "key_size": service_config.key_size | default(pki_key_size),
+
+          "country_name": service_config.country_name | default(pki_country_name),
+          "organization_name": service_config.organization_name | default(pki_organization_name),
+          "locality_name": service_config.locality_name | default(pki_locality_name),
+          "common_name": service_config.common_name | default(function),
+          "subject_alt_names": service_config.subject_alt_names | default([function] + groups[function]) | map('regex_replace', '^', 'DNS:') | list,
+        }})
+      }}
+  with_items: "{{ group_names | intersect(pki_service_specific_configs.keys()) }}"
+  loop_control:
+    loop_var: function
+    label: "{{ function }}"
+
+- name: Print PKI configurations (for verbosity 2 or higher)
+  debug:
+    var: pki_configs
+    verbosity: 2
+
+
 - name: Create PKI file directories
   become: yes
   file:
-    path: "{{ item }}"
+    path: "{{ item[1][item.0] }}"
     state: directory
-    mode: "{{ pki_dir_mode }}"
+    mode: "{{ item[1].dir_mode }}"
     seuser: system_u
     setype: cert_t
-  with_items:
-    - "{{ pki_root_dir }}"
-    - "{{ pki_private_dir }}"
-    - "{{ pki_trusted_dir }}"
+  with_cartesian:
+    - [ 'root_dir', 'private_dir', 'trusted_dir' ]
+    - "{{ pki_configs.values() }}"
+  loop_control:
+    label: "{{ item[1][item.0] }}"
   notify: pki changed
 
 
 - name: Create PKI certificate files
-  become: yes
-  when: inventory_hostname == function_groups[function_group].master
-  block:
-    - name: Check if OpenSSL {{ pki_key_type }} private key exists
-      stat:
-        path: "{{ pki_certificate_key_path }}"
-      register: pki_private_key_stat
-
-    - name: Create OpenSSL {{ pki_key_type }} private key
-      openssl_privatekey:
-        path: "{{ pki_certificate_key_path }}"
-        type: "{{ pki_key_type }}"
-        size: "{{ pki_key_size }}"
-        mode: "{{ pki_file_mode }}"
-      notify: pki changed
-      when: not pki_private_key_stat.stat.exists
-
-    - name: Create certificate sign request
-      openssl_csr:
-        path: "{{ pki_certificate_csr_path }}"
-        privatekey_path: "{{ pki_certificate_key_path }}"
-        common_name: "{{ pki_common_name }}"
-        country_name: "{{ pki_country_name }}"
-        organization_name: "{{ pki_organization_name }}"
-        locality_name: "{{ pki_locality_name }}"
-        subject_alt_name: "{{ pki_subject_alt_names | map('regex_replace', '^', 'DNS:') | list }}"
-        mode: "{{ pki_file_mode }}"
-      notify: pki changed
-
-    - name: Check if certificate contains the correct subject alt names and common name
-      openssl_certificate_info:
-        path: "{{ pki_certificate_crt_path }}"
-      ignore_errors: True
-      register: pki_certificate_check
-
-    - name: Create OpenSSL certificate
-      openssl_certificate:
-        path: "{{ pki_certificate_crt_path }}"
-        privatekey_path: "{{ pki_certificate_key_path }}"
-        csr_path: "{{ pki_certificate_csr_path }}"
-        provider: selfsigned
-        mode: "{{ pki_file_mode }}"
-      when: >
-        pki_certificate_check.failed
-        or pki_certificate_check.subject.commonName | default('') != pki_common_name
-        or pki_certificate_check.subject_alt_name   | symmetric_difference(pki_subject_alt_names | map('regex_replace', '^', 'DNS:') | list)
-      notify: pki changed
+  include_tasks: create_pki_cert_files.yml
+  when: inventory_hostname == function_groups[item.key].master
+  with_dict: "{{ pki_configs }}"
+  loop_control:
+    label: "{{ item.key }}"
 
 
-- name: Copy PKI certificate files from masters
+- name: Copy PKI certificate files from master servers
   include_tasks:
     file: copy_ssl_files.yml
     apply:
       tags: always
-  with_items:
-    - path: "{{ pki_certificate_key_path }}"
-    - path: "{{ pki_certificate_csr_path }}"
-    - path: "{{ pki_certificate_crt_path }}"
-      fact_key: pki_certificate
+  with_cartesian:
+    - "{{ copied_files }}"
+    - "{{ pki_configs | dict2items }}"
+  loop_control:
+    label: "{{ item.1.value[item.0.key] }}"
+  vars:
+    copied_files:
+      - key: certificate_key_path
+      - key: certificate_csr_path
+      - key: certificate_crt_path
+        fact_key: pki_certificate
 
 
 - name: Create Diffie-Helman parameters on first host and slurp contents
@@ -80,16 +86,31 @@
   run_once: yes
   when: not (pki_dhparams | default(""))
   block:
+    - name: Find if the Diffie-Hellamn parameters have been generated for any service
+      stat:
+        path: "{{ item.value.dhparams_path }}"
+      with_dict: "{{ pki_configs }}"
+      loop_control:
+        label: "{{ item.value.dhparams_path }}"
+      register: pki_dhparams_stat
+
     - name: Create Diffie-Hellman parameters
       openssl_dhparam:
-        path: "{{ pki_dhparams_path }}"
-        size: "{{ pki_key_size }}"
-        mode: "{{ pki_file_mode }}"
+        path: "{{ pki_config.value.dhparams_path }}"
+        size: "{{ pki_config.value.key_size }}"
+        mode: "{{ pki_config.value.file_mode }}"
+        state: present
+      when: not (pki_dhparams_stat.results | map(attribute='stat.exists') is any)
+      register: dhparams_generated
+      vars:
+        pki_config: "{{ pki_configs | dict2items | first }}"
       notify: pki changed
 
     - name: Slurp Diffie-Hellman parameters
       slurp:
-        src: "{{ pki_dhparams_path }}"
+        src: |-
+          {% set paths = pki_dhparams_stat.results | json_query("[?stat.exists].stat.path") %}
+          {{ paths[0] if paths | length > 0 else dhparams_generated.filename }}
       register: dhparams
 
     - name: Decode Diffie-Hellman parameters
@@ -101,6 +122,9 @@
   become: yes
   copy:
     content: "{{ pki_dhparams }}"
-    dest: "{{ pki_dhparams_path }}"
-    mode: "{{ pki_file_mode }}"
+    dest: "{{ item.value.dhparams_path }}"
+    mode: "{{ item.value.file_mode }}"
+  with_dict: "{{ pki_configs }}"
+  loop_control:
+    label: "{{ item.value.dhparams_path }}"
   notify: pki changed

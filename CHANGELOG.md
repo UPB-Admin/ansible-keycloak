@@ -13,6 +13,8 @@
     versions of Java would be used, it would cause the Ansible playbooks to
     override the alternatives when both Infinispan and Keycloak are hosted on
     the same node. This change also upgrades Infinispan to Java 17.
+  - Update PKI generation to correctly create PKI files for all services running
+    on a single node.
 
 ### December 2023
   - Update the playbook files to work with Centos 9 (and newer package versions

@@ -1,6 +1,1 @@
-function_group: ldap
-pki_service_name: ldap
-
-rsyslog_service_regex: ns-slapd
-
 # vim: ft=yaml

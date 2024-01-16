@@ -15,31 +15,6 @@ firewalld_dmz_zone: dmz
 firewalld_has_external: "{{ interfaces_internal_name != interfaces_external_name }}"
 firewalld_external_zone: "{{ firewalld_dmz_zone if firewalld_has_external else firewalld_internal_zone }}"
 
-# PKI file locations
-pki_root_dir: "/etc/pki/{{ pki_service_name }}"
-pki_private_dir: "{{ pki_root_dir }}/private"
-pki_trusted_dir: "{{ pki_root_dir }}/trusted"
-
-pki_certificate_key_path: "{{ pki_private_dir }}/server.key"
-pki_certificate_csr_path: "{{ pki_root_dir }}/server.csr"
-pki_certificate_crt_path: "{{ pki_root_dir }}/server.crt"
-pki_dhparams_path: "{{ pki_root_dir }}/dhparams.pem"
-
-# PKI parameters
-pki_country_name: XX
-pki_organization_name: Test-Organization
-pki_locality_name: Some-Locality
-
-pki_file_owner: root
-pki_file_group: root
-pki_dir_mode: "0510"
-pki_file_mode: "0440"
-pki_key_type: RSA
-pki_key_size: 4096
-
-pki_common_name: "{{ function_group }}"
-pki_subject_alt_names: "{{ [function_group] + groups[function_group] }}"
-
 # Variable used to keep track of whether PKI files have been updated
 pki_changed: False
 
@@ -140,7 +115,14 @@ prometheus_servers: []
 # Whether to monitor services using Prometheus
 prometheus_monitor: "{{ prometheus_servers | length > 0 }}"
 # Exporters to install on the nodes
-prometheus_exporters_to_install: [ "node" ]
+prometheus_service_specific_exporters:
+  database: ["node", "database"]
+  infinispan: ["node"]
+  keycloak: ["node"]
+  ldap: ["node"]
+  load_balancers: ["node", "haproxy"]
+
+prometheus_exporters_to_install: "{{ prometheus_service_specific_exporters | dict2items | selectattr('key', 'in', group_names) | map(attribute='value') | list | flatten | unique }}"
 
 prometheus_node_exporter_version: 1.7.0
 prometheus_database_exporter_version: 0.15.0
@@ -178,5 +160,10 @@ rsyslog_log_server_ca_certificate: ""
 
 # Whether set up rsyslog
 rsyslog_configure: "{{ rsyslog_log_servers | length > 0 }}"
+
+database_system_user: mysql
+infinispan_system_user: infinispan
+keycloak_system_user: keycloak
+prometheus_system_user: prometheus
 
 # vim: ft=yaml

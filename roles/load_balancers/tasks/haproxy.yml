@@ -15,14 +15,14 @@
     - name: Add symlinks for certificate keys as CERT.crt.key
       file:
         path: "{{ item }}.key"
-        src: "{{ pki_certificate_key_path }}"
-        owner: "{{ pki_file_owner }}"
-        group: "{{ pki_file_owner }}"
+        src: "{{ pki_configs.load_balancers.certificate_key_path }}"
+        owner: "{{ pki_configs.load_balancers.file_owner }}"
+        group: "{{ pki_configs.load_balancers.file_group }}"
         seuser: system_u
         setype: cert_t
         state: link
       with_items:
-        - "{{ pki_certificate_crt_path }}"
+        - "{{ pki_configs.load_balancers.certificate_crt_path }}"
         - "{{ pki_dummy_certificate_crt_path }}"
       notify: restart load balancer
 
@@ -37,7 +37,7 @@
     # HAProxy currently does not internally handle OCSP so we must do it manually
     - name: Read certificate file to see if OCSP is enabled
       openssl_certificate_info:
-        path: "{{ pki_certificate_crt_path }}"
+        path: "{{ pki_configs.load_balancers.certificate_crt_path }}"
       register: cert_info
 
     - name: Set up OCSP files if certificate OCSP extension is present
@@ -60,7 +60,7 @@
         - name: Set up cronjob to periodically fetch certificate OCSP
           cron:
             name: "HAProxy certificate OCSP renew"
-            job: "{{ haproxy_cert_ocsp_script }} '{{ pki_certificate_crt_path }}'"
+            job: "{{ haproxy_cert_ocsp_script }} '{{ pki_configs.load_balancers.certificate_crt_path }}'"
             weekday: "3"
             hour: "1"
             minute: "0"
@@ -69,7 +69,7 @@
 
         - name: Force a run of the script now to make sure the server has OCSP configured
           command:
-            argv: [ "{{ haproxy_cert_ocsp_script}}", "{{ pki_certificate_crt_path }}" ]
+            argv: [ "{{ haproxy_cert_ocsp_script}}", "{{ pki_configs.load_balancers.certificate_crt_path }}" ]
 
 
 - name: Configure haproxy

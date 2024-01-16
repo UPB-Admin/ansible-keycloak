@@ -1,3 +1,1 @@
-prometheus_system_user: prometheus
-
 database_prometheus_user: exporter

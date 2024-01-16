@@ -15,8 +15,6 @@ database_systemd_override_file: "{{ database_systemd_override_dir }}/overrides.c
 
 database_unix_socket: "{{ database_data_dir }}/mysql.sock"
 
-database_system_user: mysql
-
 database_cluster_name: database_cluster
 
 database_wsrep_slave_threads: "{{ ansible_processor_vcpus * 4 }}"

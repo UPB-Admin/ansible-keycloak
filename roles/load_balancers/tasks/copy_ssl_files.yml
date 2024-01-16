@@ -10,9 +10,9 @@
   copy:
     content: "{{ slurped_contents.content | b64decode }}"
     dest: "{{ item }}"
-    mode: "{{ pki_file_mode }}"
-    owner: "{{ pki_file_owner }}"
-    group: "{{ pki_file_owner }}"
+    mode: "{{ pki_configs.load_balancers.file_mode }}"
+    owner: "{{ pki_configs.load_balancers.file_owner }}"
+    group: "{{ pki_configs.load_balancers.file_group }}"
     seuser: system_u
     setype: cert_t
   notify:

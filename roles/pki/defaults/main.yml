@@ -1,0 +1,28 @@
+# PKI parameters
+pki_country_name: XX
+pki_organization_name: Test-Organization
+pki_locality_name: Some-Locality
+
+pki_file_owner: root
+pki_file_group: root
+pki_dir_mode: "0510"
+pki_file_mode: "0440"
+pki_key_type: RSA
+pki_key_size: 4096
+
+# Configuration overrides specific to each service
+pki_service_specific_configs:
+  database:
+    service_name: mariadb
+    file_group: "{{ database_system_user }}"
+  infinispan:
+    service_name: infinispan
+  keycloak:
+    service_name: keycloak
+  ldap:
+    service_name: ldap
+  load_balancers:
+    service_name: load_balancer
+    subject_alt_names:
+      - "{{ service_hostname_dns }}"
+    common_name: "{{ service_hostname_dns }}"
