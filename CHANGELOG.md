@@ -1,5 +1,8 @@
 ## Changelog
 
+### February 2024
+  - Bump Keycloak version to 24.0.6.
+
 ### January 2024
   - Change Keycloak embedded Infinispan JGroups stack to use a non default TCP
     port. This should allow hosting a dedicated Infinispan instance on the same
