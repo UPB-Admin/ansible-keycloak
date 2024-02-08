@@ -2,16 +2,19 @@
 # a multiple of 256MB)
 java_heap_mem_mul: 256
 
-# Reserve memory for non-Java services. Reserve more memory if a database is
-# expected to run on the server. At least 1/3 of the memory should be reserved regardless
-java_system_reserved_mem: "{{ [('database' in group_names) | ternary(1536, 512), (1/3) * ansible_memtotal_mb] | max }}"
+# Minimum reserved memory for non-Java services. Reserve more memory if a database is
+# expected to run on the server. Add an excess of 768MB of RAM for other applications.
+java_system_reserved_mem: "{{ database_mem_buffer_size|int + 768 }}"
 
-# Number of Java services on the server - will have to split resources
-java_num_services: "{{ ['infinispan', 'keycloak'] | intersect(group_names) | length }}"
+# Maximum memory available for a Java service. Round down to the nearest multiple of java_heap_mem_mul.
+# Reserve at least java_system_reserved_mem for other applications.
+java_max_available_mem: "{{ ((ansible_memtotal_mb - java_system_reserved_mem|int) / java_heap_mem_mul / java_num_services_installed|int) | int * java_heap_mem_mul }}"
 
-# Maximum heap size. Round down to the nearest multiple of java_heap_mem_mul.
-# Reserve at least java_system_reserved_mem for other system applications
-java_max_heap_size: "{{ ((ansible_memtotal_mb - java_system_reserved_mem|int) / java_heap_mem_mul / java_num_services|int) | int * java_heap_mem_mul }}"
+# Amount of memory available for Java service heap space. 4GB maximum, which
+# should be enough for 600,000 Keycloak user sessions
+# (1GB base + 256MB per 50,000 user sessions, according to the Keycloak teams' testing
+# see: https://www.keycloak.org/high-availability/concepts-memory-and-cpu-sizing)
+java_max_heap_size: "{{ [java_max_available_mem|int, 4096] | min }}"
 
 # Minimum heap size. Use the same value as the max to avoid dynamic allocations
 java_min_heap_size: "{{ java_max_heap_size }}"
@@ -21,7 +24,8 @@ java_max_metaspace_size: "{{ (java_max_heap_size|int / 2)|int }}"
 java_metaspace_size: "{{ (java_max_metaspace_size|int / 2)|int }}"
 
 # Minimum amount of memory in megabytes we expect a Java service should have to run without issues
-java_min_mem: 1024
+# 1024MB base memory + 256MB for 50,000 user sessions
+java_min_mem: 1280
 
 java_common_mem_opts: "-Xms{{ java_min_heap_size }}m -Xmx{{ java_max_heap_size }}m -XX:MetaspaceSize={{ java_metaspace_size }}m -XX:MaxMetaspaceSize={{ java_max_metaspace_size }}m -XX:+UseG1GC"
 

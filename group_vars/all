@@ -94,6 +94,20 @@ function_groups:
   load_balancers:
     master: "{{ groups.load_balancers[0] }}"
 
+java_services:
+  - infinispan
+  - keycloak
+
+# Number of Java services on the server - will have to split resources
+java_num_services_installed: "{{ java_services | intersect(group_names) | length }}"
+
+# Amount of memory the database can use
+# If a database should not run on the system it will use 0% of memory
+# Use 33% of memory if the database runs on the same server as a Java service, or 50% otherwise
+database_mem_buffer_percent: "{{ ('database' not in group_names) | ternary(0, (java_num_services_installed|int > 0) | ternary(1/3, 1/2)) }}"
+database_mem_buffer_size: "{{ ansible_memtotal_mb * database_mem_buffer_percent|float }}"
+
+
 # List of node clusters. They MUST be named "cluster_*" - e.g. "cluster_1", "cluster_2"
 node_clusters: "{{ groups | select('match', 'cluster_*') | list }}"
 

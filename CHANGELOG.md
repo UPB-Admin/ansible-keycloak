@@ -5,6 +5,13 @@
   - Increase timeouts for remote store connections in Keycloak.
   - Disable MariaDB performance schema by default to reduce the database's
     memory footprint. It can be re-enabled if required.
+  - Redo memory allocation calculations. The new calculations should be more
+    fair for each service when multiple services run on the same system.
+    Keycloak and Infinispan heap size is capped at 4GB, which should be enough
+    for smaller deployments with up to 600 000 user sessions. Also, deploying
+    Keycloak or Infinispan on servers with less than 2GB of RAM will fail, since
+    we expect at least 768MB of RAM reserved for system overhead, and 1280MB of
+    RAM for the service. This is a conservative estimate.
 
 ### January 2024
   - Change Keycloak embedded Infinispan JGroups stack to use a non default TCP
