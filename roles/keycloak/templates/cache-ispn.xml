@@ -37,7 +37,8 @@
         <{{ cache_type }}-cache name="{{ cache_name }}" {{ '' if cache_type == "replicated" else 'owners="2"' }}>
             <remote-store xmlns="urn:infinispan:config:store:remote:14.0" cache="{{ cache_name }}"
                           purge="false" preload="false" shared="true" segmented="false" raw-values="true"
-                          marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
+                          marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory"
+                          socket-timeout="{{ keycloak_remote_store_socket_timeout }}">
 
 {% for server in cluster_servers.infinispan %}
                 <remote-server host="{{ server }}" port="{{ infinispan_hotrod_port }}"/>

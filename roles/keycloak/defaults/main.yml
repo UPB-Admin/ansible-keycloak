@@ -43,6 +43,9 @@ keycloak_database_conn_url: "jdbc:mariadb://{{ keycloak_database_servers }}/{{ d
 # with a dedicated Infinispan service is hosted on the same node as Keycloak
 keycloak_infinispan_tcpping_port: "{{ infinispan_tcpping_port + 10 }}"
 
+# Set a three socket connection timeout for HotRod remote stores
+keycloak_remote_store_socket_timeout: 180000
+
 keycloak_random_source: /dev/urandom
 keycloak_java_opts: "{{ java_common_mem_opts }} -Djava.net.preferIPv4Stack=true -Djava.security.egd=file:{{ keycloak_random_source }} -Dfile.encoding=UTF-8"
 

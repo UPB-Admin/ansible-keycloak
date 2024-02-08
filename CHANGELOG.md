@@ -2,6 +2,7 @@
 
 ### February 2024
   - Bump Keycloak version to 24.0.6.
+  - Increase timeouts for remote store connections in Keycloak.
 
 ### January 2024
   - Change Keycloak embedded Infinispan JGroups stack to use a non default TCP
