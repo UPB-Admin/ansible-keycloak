@@ -13,6 +13,8 @@ database_backups_dir: "{{ database_data_dir }}/_backups"
 database_systemd_override_dir: "{{ systemd_override_dir }}/mariadb.service.d"
 database_systemd_override_file: "{{ database_systemd_override_dir }}/overrides.conf"
 
+database_performance_schema: OFF
+
 database_unix_socket: "{{ database_data_dir }}/mysql.sock"
 
 database_cluster_name: database_cluster

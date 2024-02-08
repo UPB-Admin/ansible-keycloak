@@ -209,6 +209,11 @@ You will need to set some of the following variables for your deployment
     group name from the `group_names` special variable of a host, or `"all"`),
     and the values are lists containing the configurations for hosts in the
     group.
+  - `database_performance_schema`: Whether to enable or disable database
+    performance information in MariaDB. Valid options are `ON` and `OFF`. By
+    default the performance schema is disabled to reduce the memory footprint
+    of the database (the additional computed data increases the required system
+    memory).
 
 The override variables can be specified inside a YAML file that you will include
 when running the playbooks. An example of an overrides file can be found in the
