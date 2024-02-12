@@ -214,6 +214,9 @@ You will need to set some of the following variables for your deployment
     default the performance schema is disabled to reduce the memory footprint
     of the database (the additional computed data increases the required system
     memory).
+  - `java_shared_system_mem_max`: Maximum amount of memory allocated for Java
+    services (Keycloak and Infinispan) if they are installed on a system that
+    also runs other services (e.g., database).
 
 The override variables can be specified inside a YAML file that you will include
 when running the playbooks. An example of an overrides file can be found in the

@@ -98,14 +98,38 @@ java_services:
   - infinispan
   - keycloak
 
-# Number of Java services on the server - will have to split resources
+
+# Number of installed services running on this server
+function_num_services_installed: "{{ function_groups.keys() | intersect(group_names) | length }}"
+# Number of Java services on the server
 java_num_services_installed: "{{ java_services | intersect(group_names) | length }}"
 
+# Absolute maximum amount of memory allocated to a Java service.
+# 4GB per service maximum if non-Java services run on this server, which should
+# be enough for 600,000 Keycloak user sessions: (1GB base + 256MB per 50,000
+# user sessions, according to the Keycloak teams' testing
+# see: https://www.keycloak.org/high-availability/concepts-memory-and-cpu-sizing)
+java_shared_system_mem_max: 4096 # MB
+java_service_mem_ceil: "{{ java_shared_system_mem_max if (function_num_services_installed|int > java_num_services_installed|int) else (ansible_memtotal_mb / java_num_services_installed|int) }}"
+# Memory reserved for other system services (other than the installed services)
+system_reserved_mem: 768 # MB
+system_mem_multiplier: 256 # MB
+
+# Maximum memory available for a Java service. Round down to the nearest multiple of system_mem_multiplier.
+# Reserve at least system_reserved_mem for other applications.
+java_max_available_mem: |-
+  {% set service_mem_slice = (ansible_memtotal_mb - system_reserved_mem) / function_num_services_installed|int %}
+  {% set rounded_mem_slice = (service_mem_slice / system_mem_multiplier) | int * system_mem_multiplier %}
+  {{ [rounded_mem_slice, java_service_mem_ceil|int] | min }}
+
 # Amount of memory the database can use
-# If a database should not run on the system it will use 0% of memory
-# Use 33% of memory if the database runs on the same server as a Java service, or 50% otherwise
-database_mem_buffer_percent: "{{ ('database' not in group_names) | ternary(0, (java_num_services_installed|int > 0) | ternary(1/3, 1/2)) }}"
-database_mem_buffer_size: "{{ ansible_memtotal_mb * database_mem_buffer_percent|float }}"
+# Reserve at least system_reserved_mem for other applications.
+# Split memory with other services - keep in mind how much memory Java services get
+# and split remaining memory with non-Java services.
+database_mem_max: |-
+  {% set non_java_free_mem = ansible_memtotal_mb - system_reserved_mem - java_max_available_mem|int * java_num_services_installed|int %}
+  {% set database_mem_slice = non_java_free_mem / ([function_num_services_installed|int - java_num_services_installed|int, 1] | max) %}
+  {{ (database_mem_slice / system_mem_multiplier) | int * system_mem_multiplier }}
 
 
 # List of node clusters. They MUST be named "cluster_*" - e.g. "cluster_1", "cluster_2"

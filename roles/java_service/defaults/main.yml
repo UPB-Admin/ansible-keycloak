@@ -1,21 +1,5 @@
-# Use 256 as the multiplier for heap memory allocation (all allocations will be
-# a multiple of 256MB)
-java_heap_mem_mul: 256
-
-# Minimum reserved memory for non-Java services. Reserve more memory if a database is
-# expected to run on the server. Add an excess of 768MB of RAM for other applications.
-java_system_reserved_mem: "{{ database_mem_buffer_size|int + 768 }}"
-
-# Maximum memory available for a Java service. Round down to the nearest multiple of java_heap_mem_mul.
-# Reserve at least java_system_reserved_mem for other applications.
-java_max_available_mem: "{{ ((ansible_memtotal_mb - java_system_reserved_mem|int) / java_heap_mem_mul / java_num_services_installed|int) | int * java_heap_mem_mul }}"
-
-# Amount of memory available for Java service heap space. 4GB maximum, which
-# should be enough for 600,000 Keycloak user sessions
-# (1GB base + 256MB per 50,000 user sessions, according to the Keycloak teams' testing
-# see: https://www.keycloak.org/high-availability/concepts-memory-and-cpu-sizing)
-java_max_heap_size: "{{ [java_max_available_mem|int, 4096] | min }}"
-
+# Amount of memory available for Java service heap space.
+java_max_heap_size: "{{ java_max_available_mem }}"
 # Minimum heap size. Use the same value as the max to avoid dynamic allocations
 java_min_heap_size: "{{ java_max_heap_size }}"
 # Maximum size of metaspace

@@ -12,6 +12,10 @@
     Keycloak or Infinispan on servers with less than 2GB of RAM will fail, since
     we expect at least 768MB of RAM reserved for system overhead, and 1280MB of
     RAM for the service. This is a conservative estimate.
+    **NB:** The memory cap of 4GB is only applied if both Java and non-Java
+    services run on the same server. Otherwise, Java services should be able to
+    use almost all available memory. This limit can be controlled using the
+    `java_shared_system_mem_max` variable.
 
 ### January 2024
   - Change Keycloak embedded Infinispan JGroups stack to use a non default TCP
