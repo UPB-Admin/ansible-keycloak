@@ -1,7 +1,7 @@
 ## Changelog
 
 ### February 2024
-  - Bump Keycloak version to 24.0.6.
+  - Bump Keycloak version to 23.0.6.
   - Increase timeouts for remote store connections in Keycloak.
   - Disable MariaDB performance schema by default to reduce the database's
     memory footprint. It can be re-enabled if required.
