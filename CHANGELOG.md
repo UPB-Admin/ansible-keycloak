@@ -1,5 +1,8 @@
 ## Changelog
 
+### March 2024
+  - Bump Keycloak version to 23.0.7.
+
 ### February 2024
   - Bump Keycloak version to 23.0.6.
   - Increase timeouts for remote store connections in Keycloak.
