@@ -19,13 +19,13 @@ firewall_rich_rules:
     - zone: "{{ firewalld_internal_zone }}"
       port: "{{ keycloak_http_port }}"
       protocol: tcp
-      source_ips: "{{ groups.load_balancers | map('extract', hostvars, 'interfaces_internal_ip') }}"
+      source_ips: "{{ groups.load_balancers | default([]) | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
     # Allow connections from the load balancers to the HTTPS port
     - zone: "{{ firewalld_internal_zone }}"
       port: "{{ keycloak_https_port }}"
       protocol: tcp
-      source_ips: "{{ groups.load_balancers | map('extract', hostvars, 'interfaces_internal_ip') }}"
+      source_ips: "{{ groups.load_balancers | default([]) | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
   infinispan:
     # Allow connections to infinispan inter-cluster clustering port from infinispan servers
@@ -88,13 +88,13 @@ firewall_rich_rules:
     - zone: "{{ firewalld_internal_zone }}"
       port: "{{ ldap_listen_port }}"
       protocol: tcp
-      source_ips: "{{ (groups.keycloak + groups.ldap) | map('extract', hostvars, 'interfaces_internal_ip') }}"
+      source_ips: "{{ (groups.keycloak + groups.ldap | default([])) | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
     # Allow connections to the LDAP secure port from keycloak and LDAP servers
     - zone: "{{ firewalld_internal_zone }}"
       port: "{{ ldap_secure_listen_port }}"
       protocol: tcp
-      source_ips: "{{ (groups.keycloak + groups.ldap) | map('extract', hostvars, 'interfaces_internal_ip') }}"
+      source_ips: "{{ (groups.keycloak + groups.ldap | default([])) | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
 
 # Custom firewall rich rules
