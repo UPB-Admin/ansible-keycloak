@@ -92,7 +92,7 @@ function_groups:
   ldap:
     master: "{{ (groups.ldap | default(['']))[0] }}"
   load_balancers:
-    master: "{{ groups.load_balancers[0] }}"
+    master: "{{ (groups.load_balancers | default(['']))[0] }}"
 
 java_services:
   - infinispan
