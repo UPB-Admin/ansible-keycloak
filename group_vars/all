@@ -139,7 +139,7 @@ cluster_servers:
   keycloak: "{{ groups.keycloak | intersect(groups[cluster_name]) }}"
   infinispan: "{{ groups.infinispan | intersect(groups[cluster_name]) }}"
   database: "{{ groups.database | intersect(groups[cluster_name]) }}"
-  ldap: "{{ groups.ldap | intersect(groups[cluster_name]) }}"
+  ldap: "{{ groups.ldap | default([]) | intersect(groups[cluster_name]) }}"
 
 # Array containing IPs of hosts that can access the admin console
 access_admin_allowed_sources: []
