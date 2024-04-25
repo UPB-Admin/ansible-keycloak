@@ -244,6 +244,27 @@
         state: started
 
 
+- name: Configure metrics proxy (nginx)
+  become: yes
+  block:
+    - name: Setup main nginx.conf configuration file
+      template:
+        src: nginx.conf
+        dest: /etc/nginx/nginx.conf
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: httpd_config_t
+      notify: restart metrics proxy
+
+    - name: Allow nginx to connect to the infinispan service
+      seboolean:
+        name: httpd_can_network_connect
+        state: yes
+        persistent: yes
+
+
 - name: Restart infinispan if required, make sure it finishes starting
   become: yes
   block:
@@ -291,24 +312,3 @@
         label: "{{ description.item }}"
   vars:
     ansible_remote_tmp: "/tmp/${USER}/.ansible"
-
-
-- name: Configure metrics proxy (nginx)
-  become: yes
-  block:
-    - name: Setup main nginx.conf configuration file
-      template:
-        src: nginx.conf
-        dest: /etc/nginx/nginx.conf
-        mode: 0400
-        owner: root
-        group: root
-        seuser: system_u
-        setype: httpd_config_t
-      notify: restart metrics proxy
-
-    - name: Allow nginx to connect to the infinispan service
-      seboolean:
-        name: httpd_can_network_connect
-        state: yes
-        persistent: yes
