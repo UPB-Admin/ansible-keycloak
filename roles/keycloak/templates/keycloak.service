@@ -14,7 +14,7 @@ After=syslog.target network-online.target
 
 [Service]
 Environment=JAVA_OPTS="{{ keycloak_java_opts }}"
-ExecStart=/bin/bash "{{ keycloak_server_script_file }}" -Djboss.site.name="{{ keycloak_site_name }}" start --optimized
+ExecStart=/bin/bash "{{ keycloak_server_script_file }}" start --optimized
 Type=simple
 User={{ keycloak_system_user }}
 LimitNOFILE=102642
