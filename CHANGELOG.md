@@ -1,5 +1,8 @@
 ## Changelog
 
+### May 2024
+  - Bump Keycloak version to 24.0.4
+
 ### March 2024
   - Bump Keycloak version to 23.0.7.
 
