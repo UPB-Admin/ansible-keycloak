@@ -99,7 +99,7 @@
       <replicated-cache-configuration name="cache-cfg" mode="{{ infinispan_backup_strategy }}">
          <locking acquire-timeout="{{ infinispan_locking_acquire_timeout }}" />
          <backups>
-{% for cluster in (node_clusters | difference(cluster_name)) %}
+{% for cluster in (node_clusters | difference([cluster_name])) %}
             <backup site="{{ cluster }}" strategy="{{ infinispan_backup_strategy }}" timeout="{{ infinispan_backup_timeout }}">
                <take-offline after-failures="{{ infinispan_backup_failures_till_offline }}" min-wait="{{ infinispan_backup_wait_till_offline }}"/>
             </backup>

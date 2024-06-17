@@ -1,5 +1,8 @@
 ## Changelog
 
+### June 2024
+  - Fix typo in Infinispan backup configurations.
+
 ### May 2024
   - Bump Keycloak version to 24.0.4
 
