@@ -19,7 +19,7 @@
       file:
         path: "{{ rsyslog_cert_dir }}"
         state: directory
-        mode: "0500"
+        mode: 0500
         owner: root
         group: root
         seuser: system_u
@@ -29,7 +29,7 @@
       copy:
         content: "{{ rsyslog_log_server_ca_certificate }}"
         dest: "{{ rsyslog_server_ca_crt_path }}"
-        mode: "0440"
+        mode: 0440
         owner: root
         group: root
         seuser: system_u
@@ -37,8 +37,107 @@
       notify: restart rsyslog
 
 
+- name: Set up client certificate and key if required
+  become: yes
+  when: (rsyslog_log_servers | map(attribute="use_client_cert", default=False) | list) is any
+  block:
+    - name: Create client private key
+      run_once: true
+      openssl_privatekey:
+        path: "{{ rsyslog_client_key_path }}"
+        type: Ed25519
+        state: present
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: cert_t
+
+    - name: Slurp private key
+      run_once: true
+      slurp:
+        src: "{{ rsyslog_client_key_path }}"
+      register: rsyslog_client_key
+
+    - name: Copy private key to all nodes
+      copy:
+        content: "{{ rsyslog_client_key.content | b64decode }}"
+        dest: "{{ rsyslog_client_key_path }}"
+        mode: 0400
+        owner: root
+        group: root
+        seuser: system_u
+        setype: cert_t
+      notify: restart rsyslog
+
+    - name: Generate and print certificate sign request if a certificate is not found
+      when: not (rsyslog_client_certificate | default(False))
+      block:
+        - name: Generate certificate sign request
+          run_once: true
+          openssl_csr:
+            path: "{{ rsyslog_client_csr_path }}"
+            state: present
+            privatekey_path: "{{ rsyslog_client_key_path }}"
+            common_name: "{{ service_hostname_dns }}"
+            country_name: "{{ pki_country_name }}"
+            state_or_province_name: "{{ pki_locality_name }}"
+            locality_name: "{{ pki_locality_name }}"
+            organization_name: "{{ pki_organization_name }}"
+            basic_constraints:
+              - "CA:FALSE"
+            basic_constraints_critical: true
+            key_usage:
+              - digitalSignature
+              - nonRepudiation
+              - keyEncipherment
+            key_usage_critical: true
+            extended_key_usage:
+              - clientAuth
+            extended_key_usage_critical: true
+            return_content: true
+            mode: 0400
+            owner: root
+            group: root
+            seuser: system_u
+            setype: cert_t
+          register: rsyslog_client_csr
+
+        - name: Certificate signing is required
+          run_once: true
+          pause:
+            seconds: 5
+            prompt: |
+              ...................................................................................
+              A signed certificate is required for clients that have mTLS enabled.
+              The rsyslog client cannot be fully configured until then.
+              Send the following certificate sign request to the CA and then
+              define the `rsyslog_client_certificate` variable to contain the signed certificate.
+              ...................................................................................
+
+              {{ rsyslog_client_csr.csr }}
+
+        - name: Set a fact to specify that rsyslog is not configured
+          set_fact:
+            rsyslog_not_fully_configured: true
+
+    - name: Copy client certificate to all nodes if configured
+      when: rsyslog_client_certificate | default(False)
+      copy:
+        content: "{{ rsyslog_client_certificate }}"
+        dest: "{{ rsyslog_client_cert_path }}"
+        mode: 0440
+        owner: root
+        group: root
+        seuser: system_u
+        setype: cert_t
+      notify: restart rsyslog
+
+
+
 - name: Configure rsyslog to send logs to the log servers
   become: yes
+  when: not (rsyslog_not_fully_configured | default(false))
   template:
     src: rsyslog-remotelog.conf
     dest: "{{ rsyslog_config_file_path }}"

@@ -2,6 +2,11 @@
 
 ### June 2024
   - Fix typo in Infinispan backup configurations.
+  - Add optional configurations for mTLS rsyslog. The playbook only generates
+    the private key and certificate sign request, but does not (as it cannot)
+    automatically sign the CSR to generate a certificate. This means that the
+    playbook must be run twice - once to generate the certificate sign request,
+    and a second time to configure the certificate and restart rsyslog.
 
 ### May 2024
   - Bump Keycloak version to 24.0.4

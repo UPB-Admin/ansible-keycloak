@@ -4,4 +4,3 @@
     name: rsyslog
     state: restarted
     enabled: yes
-

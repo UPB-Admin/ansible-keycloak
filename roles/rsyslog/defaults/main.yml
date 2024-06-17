@@ -3,6 +3,9 @@ rsyslog_default_proto: udp
 
 rsyslog_cert_dir: /etc/pki/rsyslog
 rsyslog_server_ca_crt_path: "{{ rsyslog_cert_dir }}/server-ca.crt"
+rsyslog_client_key_path: "{{ rsyslog_cert_dir }}/client-key.pem"
+rsyslog_client_csr_path: "{{ rsyslog_cert_dir }}/client-cert.csr"
+rsyslog_client_cert_path: "{{ rsyslog_cert_dir }}/client-cert.pem"
 
 rsyslog_config_file_path: /etc/rsyslog.d/remotelog.conf
 
