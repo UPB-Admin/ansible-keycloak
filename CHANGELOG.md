@@ -7,6 +7,8 @@
     automatically sign the CSR to generate a certificate. This means that the
     playbook must be run twice - once to generate the certificate sign request,
     and a second time to configure the certificate and restart rsyslog.
+  - Add SELinux port configurations for rsyslog, to allow connecting to
+    non-standard syslog ports.
 
 ### May 2024
   - Bump Keycloak version to 24.0.4

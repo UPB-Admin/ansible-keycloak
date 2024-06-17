@@ -134,6 +134,17 @@
       notify: restart rsyslog
 
 
+- name: Add the server port/protocol pairs to the rsyslog SELinux context
+  become: yes
+  seport:
+    ports: "{{ item.port | default(rsyslog_default_port) }}"
+    proto: "{{ item.proto | default(rsyslog_default_proto) }}"
+    setype: syslogd_port_t
+    state: present
+  with_items: "{{ rsyslog_log_servers }}"
+  loop_control:
+    label: "syslogd_port_t {{ item.port }}/{{ item.proto }}"
+
 
 - name: Configure rsyslog to send logs to the log servers
   become: yes
