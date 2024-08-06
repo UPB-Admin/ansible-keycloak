@@ -10,7 +10,7 @@
 
 [Unit]
 Description=Keycloak Server Service
-After=syslog.target network-online.target
+After=syslog.target network-online.target mariadb.service infinispan.service
 
 [Service]
 Environment=JAVA_OPTS="{{ keycloak_java_opts }}"

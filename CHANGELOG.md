@@ -4,6 +4,10 @@
   - Configure firewall port in NetworkManager configuration file. Starting with
     RHEL 9 the configuration using network-scripts has been deprecated, and
     replaced with NetworkManager configuration scripts.
+  - Add MariaDB and Infinispan services to the "After=" section in the Keycloak
+    service file. This will make Keycloak wait for both services to finish
+    starting before attempting to start itself (only works if services are
+    hosted on the same node).
 
 ### June 2024
   - Fix typo in Infinispan backup configurations.
