@@ -1,5 +1,10 @@
 ## Changelog
 
+### August 2024
+  - Configure firewall port in NetworkManager configuration file. Starting with
+    RHEL 9 the configuration using network-scripts has been deprecated, and
+    replaced with NetworkManager configuration scripts.
+
 ### June 2024
   - Fix typo in Infinispan backup configurations.
   - Add optional configurations for mTLS rsyslog. The playbook only generates

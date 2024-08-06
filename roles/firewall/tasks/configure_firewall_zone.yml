@@ -23,16 +23,35 @@
   stat:
     path: "{{ sysconfig_interface_file_prefix }}{{ item }}"
   with_items: "{{ zone.interfaces }}"
-  register: sysconfig_file_exists
+  register: sysconfig_files
 
-- name: Add zone configuration to sysconfig file
+- name: Add zone configuration to sysconfig files
   lineinfile:
     path: "{{ file.stat.path }}"
     state: present
     regexp: ZONE=
     line: "ZONE={{ zone.name }}"
   when: file.stat.exists
-  with_items: "{{ sysconfig_file_exists.results }}"
+  with_items: "{{ sysconfig_files.results }}"
+  loop_control:
+    loop_var: file
+    label: "{{ file.item }}"
+
+- name: Check if NetworkManager config file for each interface exists
+  stat:
+    path: "{{ networkmanager_system_connections_dir }}/{{ item }}.nmconnection"
+  with_items: "{{ zone.interfaces }}"
+  register: networkmanager_config_files
+
+- name: Add zone configuration to NetworkManager config files
+  ini_file:
+    path: "{{ file.stat.path }}"
+    section: connection
+    option: zone
+    value: "{{ zone.name }}"
+    state: present
+  when: file.stat.exists
+  with_items: "{{ networkmanager_config_files.results }}"
   loop_control:
     loop_var: file
     label: "{{ file.item }}"
