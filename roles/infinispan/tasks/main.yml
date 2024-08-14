@@ -103,26 +103,14 @@
           state: absent
 
 
-- name: Download and setup JDBC
+- name: Create Infinispan persistence data directory
   become: yes
-  block:
-    - name: Copy the certificate used by the database servers
-      copy:
-        content: "{{ hostvars[function_groups.database.master].pki_certificate.database }}"
-        dest: "{{ database_trusted_certificate_file }}"
-        mode: 0440
-        owner: "{{ pki_configs.infinispan.file_owner }}"
-        group: "{{ infinispan_system_user }}"
-
-    - name: Download JDBC connector
-      get_url:
-        url: "{{ jdbc_mariadb_download_url }}"
-        dest: "{{ jdbc_mariadb_module_jar }}"
-        http_agent: wget
-        checksum: "{{ jdbc_mariadb_checksum }}"
-        mode: 0440
-        owner: root
-        group: "{{ infinispan_system_user }}"
+  file:
+    path: "{{ infinispan_persistence_data_dir }}"
+    state: directory
+    mode: 0770
+    owner: root
+    group: "{{ infinispan_system_user }}"
 
 
 - name: Configure infinispan service
@@ -162,20 +150,26 @@
   block:
     - name: Set default facl permissions on infinispan directory
       acl:
-        path: "{{ infinispan_install_dir }}"
+        path: "{{ item }}"
         default: yes
         etype: other
         permissions: 0
         recursive: yes
         state: present
+      with_items:
+        - "{{ infinispan_install_dir }}"
+        - "{{ infinispan_persistence_data_dir }}"
 
     - name: Apply facl permissions on infinispan directory
       acl:
-        path: "{{ infinispan_install_dir }}"
+        path: "{{ item }}"
         etype: other
         permissions: 0
         recursive: yes
         state: present
+      with_items:
+        - "{{ infinispan_install_dir }}"
+        - "{{ infinispan_persistence_data_dir }}"
 
 
 - name: Configure infinispan for cross DC function
@@ -203,45 +197,6 @@
         owner: root
         group: "{{ infinispan_system_user }}"
       notify: restart infinispan
-
-
-- name: Stop Infinispan and Keycloak servers, restart just the first server to populate the JDBC database if required
-  run_once: yes
-  become: yes
-  when: (hostvars[function_groups.database.master].infinispan_num_tables | default(0) | int) == 0
-  block:
-    - name: Stop all keycloak servers
-      delegate_to: "{{ item }}"
-      become: yes
-      systemd:
-        name: keycloak
-        state: stopped
-      with_items: "{{ groups.keycloak }}"
-      register: keycloak_status
-      failed_when:
-        - keycloak_status.failed
-        - '"Could not find the requested service" not in keycloak_status.msg'
-
-    - name: Stop all infinispan servers
-      run_once: no
-      systemd:
-        name: infinispan
-        state: stopped
-
-    - name: Restart infinispan
-      systemd:
-        name: infinispan
-        state: started
-        enabled: yes
-        daemon_reload: yes
-
-    - name: Wait until infinispan starts and opens the hotrod port
-      wait_for:
-        port: "{{ infinispan_hotrod_port }}"
-        host: "{{ inventory_hostname }}"
-        timeout: "{{ service_start_timeout }}"
-        msg: "Infinispan did not start after {{ service_start_timeout }} seconds"
-        state: started
 
 
 - name: Configure metrics proxy (nginx)
@@ -312,3 +267,13 @@
         label: "{{ description.item }}"
   vars:
     ansible_remote_tmp: "/tmp/${USER}/.ansible"
+
+
+- name: Explicitly grant permissions to users using roles
+  become: yes
+  lineinfile:
+    path: "{{ infinispan_server_conf_subdir }}/groups.properties"
+    line: "{{ item }}={{ item }}"
+    regexp: "^{{ item }}="
+    state: present
+  with_items: "{{ infinispan_users }}"

@@ -27,6 +27,12 @@ firewall_rich_rules:
       protocol: tcp
       source_ips: "{{ groups.load_balancers | default([]) | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
+    # Allow connections from the load balancers to the Keycloak management port
+    - zone: "{{ firewalld_internal_zone }}"
+      port: "{{ keycloak_management_port }}"
+      protocol: tcp
+      source_ips: "{{ groups.load_balancers | default([]) | map('extract', hostvars, 'interfaces_internal_ip') }}"
+
   infinispan:
     # Allow connections to infinispan inter-cluster clustering port from infinispan servers
     - zone: "{{ firewalld_internal_zone }}"
@@ -51,7 +57,7 @@ firewall_rich_rules:
     - zone: "{{ firewalld_internal_zone }}"
       port: "{{ database_listen_port }}"
       protocol: tcp
-      source_ips: "{{ (groups.keycloak + groups.infinispan + groups.database) | map('extract', hostvars, 'interfaces_internal_ip') }}"
+      source_ips: "{{ (groups.keycloak + groups.database) | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
     # Allow connections to Galera Cluster replication TCP port from database servers
     - zone: "{{ firewalld_internal_zone }}"

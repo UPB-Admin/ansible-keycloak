@@ -9,6 +9,24 @@
     starting before attempting to start itself (only works if services are
     hosted on the same node).
   - Increase rsyslog message maximum size.
+  - Upgrade Keycloak to version 25.0.2 and Infinispan to version 15.0.5.
+    This is a large change that introduces multiple changes: Keycloak now
+    supports persisting user sessions in the database as an experimental
+    feature. We have enabled this feature by default; consequently, Infinispan
+    persistence to the database has been removed and replaced with a local
+    file storage persistence.
+    Various other changes have been introduced as requirements for the upgrade:
+    a new management port has been added to Keycloak and is exposed to the
+    reverse proxy on port 9001, Java has been bumped to version 21, Infinispan
+    cache configurations have been updated, Keycloak HotRod marshalling has been
+    removed, Infinispan role mappings are explicitly set in the
+    `groups.properties` file, the `MONITOR` role has been added for the Keycloak
+    user in Infinispan.
+    NOTE: The upgrade removes Infinispan persistence to the database; all
+    existing user sessions from before the upgrade will be lost.
+    NOTE: The playbook does not remove the database used for Infinispan
+    persistence. After upgrading and confirming that everything works as
+    expected, you can safely drop the `infinispan` database.
 
 ### June 2024
   - Fix typo in Infinispan backup configurations.

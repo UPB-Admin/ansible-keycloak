@@ -6,31 +6,17 @@
 
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-14.0.xsd
-                            urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
-      xmlns="urn:infinispan:config:14.0"
-      xmlns:server="urn:infinispan:server:14.0">
+      xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd
+                            urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+      xmlns="urn:infinispan:config:15.0"
+      xmlns:server="urn:infinispan:server:15.0">
 
-   <server xmlns="urn:infinispan:server:14.0">
+   <server xmlns="urn:infinispan:server:15.0">
       <interfaces>
          <interface name="public">
             <inet-address value="${infinispan.bind.address:{{ interfaces_internal_ip }}}"/>
          </interface>
       </interfaces>
-
-      <data-sources>
-         <data-source name="jdbcDS" jndi-name="java:jdbc/DS" statistics="true">
-            <connection-factory driver="org.mariadb.jdbc.Driver" url="{{ jdbc_mariadb_conn_url }}"
-               username="{{ database_config.infinispan.username }}" password="{{ vault.database.user.infinispan.pass }}">
-{% for key, value in jdbc_mariadb_conn_params.items() %}
-              <connection-property name="{{ key }}">{{ value }}</connection-property>
-{% endfor %}
-            </connection-factory>
-            <connection-pool initial-size="{{ jdbc_connection_pool_params.min_size }}" min-size="{{ jdbc_connection_pool_params.min_size }}" max-size="{{ jdbc_connection_pool_params.max_size }}"
-               background-validation="{{ jdbc_connection_pool_params.background_validation }}" idle-removal="{{ jdbc_connection_pool_params.idle_removal }}"
-               blocking-timeout="{{ jdbc_connection_pool_params.blocking_timeout }}" leak-detection="{{ jdbc_connection_pool_params.leak_detection }}"/>
-         </data-source>
-      </data-sources>
 
       <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
          <socket-binding name="default" port="${infinispan.bind.port:{{ infinispan_hotrod_port }}}"/>
@@ -89,40 +75,39 @@
       <transport cluster="${infinispan.cluster.name:cluster}" stack="xsite"/>
       <security>
          <authorization>
-            <identity-role-mapper/>
             <roles>
-               <role name="{{ infinispan_keycloak_user }}" permissions="ALL_READ ALL_WRITE EXEC LISTEN"/>
+               <role name="{{ infinispan_keycloak_user }}" permissions="ALL_READ ALL_WRITE EXEC LISTEN MONITOR"/>
             </roles>
          </authorization>
       </security>
 
-      <replicated-cache-configuration name="cache-cfg" mode="{{ infinispan_backup_strategy }}">
+      <global-state>
+         <persistent-location path="{{ infinispan_persistence_data_dir }}"/>
+      </global-state>
+
+{% for cache_name, cache_config in infinispan_caches.items() %}
+      <{{ cache_config.type }}-cache name="{{ cache_name }}" {{ cache_config.owners | default("") }}>
          <locking acquire-timeout="{{ infinispan_locking_acquire_timeout }}" />
-         <backups>
+         <backups {{ cache_config.merge_policy | default("") }}>
 {% for cluster in (node_clusters | difference([cluster_name])) %}
             <backup site="{{ cluster }}" strategy="{{ infinispan_backup_strategy }}" timeout="{{ infinispan_backup_timeout }}">
                <take-offline after-failures="{{ infinispan_backup_failures_till_offline }}" min-wait="{{ infinispan_backup_wait_till_offline }}"/>
             </backup>
 {% endfor %}
          </backups>
-         <persistence passivation="false">
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:14.0" dialect="MARIA_DB" shared="true">
-               <data-source jndi-url="java:jdbc/DS"/>
-               <string-keyed-table create-on-start="true" prefix="KC_ISPN{{ '_' + (cluster_name | upper) if cluster_name != (node_clusters | first) else '' }}">
-                  <id-column name="id" type="VARCHAR(512)"/>
-                  <data-column name="data" type="BLOB"/>
-                  <timestamp-column name="timestamp" type="BIGINT"/>
-                  <segment-column name="segnum" type="BIGINT"/>
-               </string-keyed-table>
-            </string-keyed-jdbc-store>
+         <persistence>
+            <file-store shared="false" preload="true" open-files-limit="{{ infinispan_file_store_limit_no_files | int }}">
+               <data path="file-store-data" max-file-size="{{ infinispan_file_store_data_file_size | int }}"/>
+               <index path="file-store-index"/>
+            </file-store>
          </persistence>
+
          <security>
             <authorization enabled="true" roles="admin {{ infinispan_keycloak_user }}"/>
          </security>
-      </replicated-cache-configuration>
 
-{% for cache_name, _ in infinispan_caches.items() %}
-      <replicated-cache name="{{ cache_name }}" configuration="cache-cfg"/>
+         <memory {{ cache_config.max_count | default("") }}/>
+      </{{ cache_config.type }}-cache>
 {% endfor %}
    </cache-container>
 </infinispan>

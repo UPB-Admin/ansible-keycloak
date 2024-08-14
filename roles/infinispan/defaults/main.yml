@@ -1,9 +1,11 @@
-infinispan_version: 14.0.7.Final
-infinispan_archive_checksum: sha1:2488cdb465c719a2dd45d61d52d508d7f9e3a8fd
+infinispan_version: 15.0.5.Final
+infinispan_archive_checksum: sha1:42c9656778b2dbc31ee1e8275069740efac817f3
 infinispan_archive_url: "https://downloads.jboss.org/infinispan/{{ infinispan_version }}/infinispan-server-{{ infinispan_version }}.zip"
 infinispan_install_base_dir: /opt           # the archive already has a top-level directory in it
 infinispan_install_dir: "{{ infinispan_install_base_dir }}/infinispan-server-{{ infinispan_version }}"
 infinispan_tmp_file: "/tmp/infinispan-{{ infinispan_version }}.zip"
+
+infinispan_persistence_data_dir: "/opt/infinispan-persistence"
 
 infinispan_server_bin_subdir:  "{{ infinispan_install_dir }}/bin"
 infinispan_server_log_subdir:  "{{ infinispan_install_dir }}/server/log"
@@ -24,33 +26,13 @@ infinispan_locking_acquire_timeout: 500       # maximum amount of time a cache l
 infinispan_tcpping_server_list: "{{ groups.infinispan | product(['[%d]' % infinispan_tcpping_port]) | map('join') | join(',') }}"
 infinispan_keystore_cert_alias: server
 
+infinispan_limit_no_file: 10000
+infinispan_file_store_limit_no_files: "{{ infinispan_limit_no_file / 5 }}"
+infinispan_file_store_data_file_size: "{{ 16 * 1024 * 1024 }}" # maximum 16MB
+
 infinispan_users:
   - admin
   - monitor
   - "{{ infinispan_keycloak_user }}"
 
 infinispan_java_opts: "{{ java_common_mem_opts}} -server -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true"
-
-jdbc_mariadb_version: 3.1.0
-jdbc_mariadb_checksum: sha1:4510549f3fe01b8ab634186f5c314f663d91eada
-jdbc_mariadb_download_url: "https://dlm.mariadb.com/Connectors/java/connector-java-{{ jdbc_mariadb_version }}/mariadb-java-client-{{ jdbc_mariadb_version }}.jar"
-jdbc_mariadb_module_dir: "{{ infinispan_server_lib_subdir }}"
-jdbc_mariadb_module_jar: "{{ jdbc_mariadb_module_dir }}/mariadb-{{ jdbc_mariadb_version }}.jar"
-
-database_trusted_certificate_file: "{{ infinispan_server_conf_subdir }}/database.crt"
-
-jdbc_mariadb_servers: "{{ cluster_servers.database | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
-jdbc_mariadb_conn_url: "jdbc:mariadb://{{ jdbc_mariadb_servers }}/{{ database_config.infinispan.dbname }}"
-jdbc_mariadb_conn_params:
-  sslMode: verify-full
-  serverSslCert: "{{ database_trusted_certificate_file }}"
-  enabledSslProtocolSuites: TLSv1.3
-  enabledSslCipherSuites: TLS_AES_256_GCM_SHA384
-
-jdbc_connection_pool_params:
-  min_size: 5
-  max_size: 400
-  background_validation: 1000
-  idle_removal: 1
-  blocking_timeout: 2000
-  leak_detection: 10000

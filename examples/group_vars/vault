@@ -29,8 +29,6 @@ vault:
         pass: changeme
       keycloak: # Credentials that will be used by keycloak to connect to the database
         pass: changeme
-      infinispan: # Credentials that will be used by infinispan to connect to the database
-        pass: changeme
       exporter: # Credentials used by the prometheus exporter to connect to the database
         pass: changeme
 

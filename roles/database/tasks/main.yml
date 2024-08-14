@@ -87,12 +87,11 @@
           - "ALTER USER 'mysql'@'localhost' IDENTIFIED BY '{{ vault.database.user.mysql.pass }}';"
 
 
-- name: Create and setup databases for Keycloak and Infinispan
+- name: Create and setup databases for Keycloak
   run_once: yes
   include_tasks: setup_database.yml
   with_items:
     - keycloak
-    - infinispan
   loop_control:
     loop_var: service
 
@@ -252,23 +251,7 @@
             keycloak_upgrading: True
 
 
-- name: Register the number of tables in the infinispan database as a fact
-  run_once: yes
-  block:
-    - name: Fetch the list of tables
-      community.mysql.mysql_query:
-        login_user: root
-        login_password: "{{ vault.database.user.root.pass }}"
-        login_unix_socket: "{{ database_unix_socket }}"
-        query: "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{{ database_config.infinispan.dbname }}';"
-      register: table_list
-
-    - name: Register the number of tables as a fact
-      set_fact:
-        infinispan_num_tables: "{{ table_list.rowcount[0] }}"
-
-
-- name: Backup database if keycloak is being upgraded
+- name: Backup database if Keycloak is being upgraded
   run_once: yes
   become: yes
   when: keycloak_upgrading | default(False)

@@ -183,9 +183,12 @@ You will need to set some of the following variables for your deployment
       name, a tag name);
     - `maven_extra_params`: A list of command line arguments to pass to maven;
       this parameter is optional; if not set, the package is built using
-      `maven package`.
-  - `keycloak_enabled_features`: A list of keycloak features to enable;
-  - `keycloak_disabled_features`: A list of keycloak features to disable;
+      `maven package`;
+  - `keycloak_enabled_features`: A list of Keycloak features to enable. The
+    `keycloak_default_enabled_features` defines a set of features that are
+    enabled by default. If you want to disable those features, override the
+    variable with an empty list;
+  - `keycloak_disabled_features`: A list of Keycloak features to disable;
   - `load_balancer_service`: The type of load balancer to install - either
     `nginx` or `haproxy` can be specified.
   - `rsyslog_log_servers`: A list of rsyslog log servers that can receive log

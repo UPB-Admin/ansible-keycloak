@@ -21,6 +21,7 @@ ExecStart=/bin/bash "{{ infinispan_server_script }}"
 Type=simple
 User={{ infinispan_system_user }}
 SyslogIdentifier=infinispan
+LimitNOFILE={{ infinispan_limit_no_file }}
 
 [Install]
 WantedBy=multi-user.target
