@@ -8,6 +8,7 @@
     service file. This will make Keycloak wait for both services to finish
     starting before attempting to start itself (only works if services are
     hosted on the same node).
+  - Increase rsyslog message maximum size.
 
 ### June 2024
   - Fix typo in Infinispan backup configurations.

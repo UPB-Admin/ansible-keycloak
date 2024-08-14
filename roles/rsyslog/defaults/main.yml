@@ -1,6 +1,8 @@
 rsyslog_default_port: 514
 rsyslog_default_proto: udp
 
+rsyslog_max_message_size: 32k
+
 rsyslog_cert_dir: /etc/pki/rsyslog
 rsyslog_server_ca_crt_path: "{{ rsyslog_cert_dir }}/server-ca.crt"
 rsyslog_client_key_path: "{{ rsyslog_cert_dir }}/client-key.pem"
