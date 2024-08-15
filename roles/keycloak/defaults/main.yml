@@ -6,7 +6,6 @@ keycloak_tmp_file: "/tmp/keycloak-{{ keycloak_version }}.tar.gz"
 keycloak_bin_subdir: "{{ keycloak_install_dir }}/bin"
 keycloak_conf_subdir: "{{ keycloak_install_dir }}/conf"
 keycloak_data_subdir: "{{ keycloak_install_dir }}/data"
-keycloak_log_subdir: "{{ keycloak_data_subdir }}/log"
 keycloak_tmp_subdir: "{{ keycloak_data_subdir }}/tmp"
 keycloak_providers_subdir: "{{ keycloak_install_dir }}/providers"
 keycloak_themes_subdir: "{{ keycloak_install_dir }}/themes"
@@ -18,6 +17,9 @@ keycloak_server_script_file: "{{ keycloak_bin_subdir }}/kc.sh"
 
 keycloak_conf_file: "{{ keycloak_conf_subdir }}/keycloak.conf"
 keycloak_infinispan_conf_file: "{{ keycloak_conf_subdir }}/cache-ispn.xml"
+
+keycloak_log_subdir: "/var/log/keycloak"
+keycloak_log_file: "{{ keycloak_log_subdir }}/keycloak.log"
 
 infinispan_trusted_certificate_file: "{{ pki_configs.keycloak.trusted_dir }}/infinispan.crt"
 database_trusted_certificate_file: "{{ keycloak_conf_subdir }}/database.crt"

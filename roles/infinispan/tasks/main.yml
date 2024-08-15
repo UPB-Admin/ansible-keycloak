@@ -65,12 +65,6 @@
           recurse: yes
           mode: u=rX,g=rX
 
-      - name: Create infinispan server logs subdirectory if it does not exist
-        file:
-          path: "{{ infinispan_server_log_subdir }}"
-          state: directory
-          mode: 0770
-
       - name: Create infinispan server data subdirectory if it does not exist
         file:
           path: "{{ infinispan_server_data_subdir }}"
@@ -101,6 +95,18 @@
         file:
           path: "{{ infinispan_tmp_file }}"
           state: absent
+
+
+- name: Create infinispan server logs subdirectory if it does not exist
+  become: yes
+  file:
+    path: "{{ infinispan_server_log_subdir }}"
+    state: directory
+    mode: 0770
+    owner: root
+    group: "{{ infinispan_system_user }}"
+    seuser: system_u
+    setype: var_log_t
 
 
 - name: Create Infinispan persistence data directory
@@ -148,7 +154,7 @@
 - name: Set file ACLs on infinispan server files
   become: yes
   block:
-    - name: Set default facl permissions on infinispan directory
+    - name: Set default facl permissions on Infinispan directories
       acl:
         path: "{{ item }}"
         default: yes
@@ -159,8 +165,9 @@
       with_items:
         - "{{ infinispan_install_dir }}"
         - "{{ infinispan_persistence_data_dir }}"
+        - "{{ infinispan_server_log_subdir }}"
 
-    - name: Apply facl permissions on infinispan directory
+    - name: Apply facl permissions on Infinispan directories
       acl:
         path: "{{ item }}"
         etype: other
@@ -170,6 +177,7 @@
       with_items:
         - "{{ infinispan_install_dir }}"
         - "{{ infinispan_persistence_data_dir }}"
+        - "{{ infinispan_server_log_subdir }}"
 
 
 - name: Configure infinispan for cross DC function
@@ -193,6 +201,15 @@
       template:
         src: infinispan-config.xml
         dest: "{{ infinispan_server_conf_subdir }}/infinispan.xml"
+        mode: 0440
+        owner: root
+        group: "{{ infinispan_system_user }}"
+      notify: restart infinispan
+
+    - name: Add the Infinispan log configuration file
+      template:
+        src: log4j2.xml
+        dest: "{{ infinispan_server_conf_subdir }}/log4j2.xml"
         mode: 0440
         owner: root
         group: "{{ infinispan_system_user }}"

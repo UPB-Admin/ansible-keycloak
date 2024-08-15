@@ -27,6 +27,10 @@
     NOTE: The playbook does not remove the database used for Infinispan
     persistence. After upgrading and confirming that everything works as
     expected, you can safely drop the `infinispan` database.
+  - Move Keycloak and Infinispan logs to `/var/log/keycloak` and
+    `/var/log/infinispan`, respectively. This is required to allow rsyslog to
+    track the log files using the `imfile` module (in `inotify` mode).
+    Inotify is blocked by SELinux for normal files.
 
 ### June 2024
   - Fix typo in Infinispan backup configurations.

@@ -84,12 +84,6 @@
           state: directory
           mode: 0770
 
-      - name: Create keycloak server log subdirectory if it does not exist
-        file:
-          path: "{{ keycloak_log_subdir }}"
-          state: directory
-          mode: 0770
-
       - name: Grant Keycloak write permissions on bytecode file(s)
         become: yes
         block:
@@ -111,6 +105,18 @@
         file:
           path: "{{ keycloak_tmp_file }}"
           state: absent
+
+
+- name: Create keycloak server log subdirectory if it does not exist
+  become: yes
+  file:
+    path: "{{ keycloak_log_subdir }}"
+    state: directory
+    mode: 0770
+    owner: root
+    group: "{{ keycloak_system_user }}"
+    seuser: system_u
+    setype: var_log_t
 
 
 - name: Add custom theme files
@@ -163,25 +169,31 @@
 
 
 
-- name: Set file ACLs on keycloak server files
+- name: Set file ACLs on Keycloak server and log files
   become: yes
   block:
-    - name: Set default facl permissions on keycloak directory
+    - name: Set default facl permissions on Keycloak directories
       acl:
-        path: "{{ keycloak_install_dir }}"
+        path: "{{ item }}"
         default: yes
         etype: other
         permissions: 0
         recursive: yes
         state: present
+      with_items:
+        - "{{ keycloak_install_dir }}"
+        - "{{ keycloak_log_subdir }}"
 
-    - name: Apply facl permissions on keycloak directory
+    - name: Apply facl permissions on Keycloak directories
       acl:
-        path: "{{ keycloak_install_dir }}"
+        path: "{{ item }}"
         etype: other
         permissions: 0
         recursive: yes
         state: present
+      with_items:
+        - "{{ keycloak_install_dir }}"
+        - "{{ keycloak_log_subdir }}"
       changed_when: False # Ignore; the files generated when the server is built always have permissions set for "other"
 
 
