@@ -84,3 +84,8 @@
     name: "{{ load_balancer_service }}"
     state: started
     enabled: yes
+
+
+- name: Register rsyslog logging for load balancer service
+  set_fact:
+    rsyslog_log_configs: "{{ rsyslog_log_configs + [{ 'type': 'journal', 'program_names': load_balancer_service }] }}"

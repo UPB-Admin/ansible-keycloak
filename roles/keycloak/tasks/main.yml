@@ -412,3 +412,8 @@
         timeout: "{{ service_start_timeout }}"
         msg: "Keycloak did not start after {{ service_start_timeout }} seconds"
         state: started
+
+
+- name: Register rsyslog logging for Keycloak service
+  set_fact:
+    rsyslog_log_configs: "{{ rsyslog_log_configs + [{ 'type': 'file', 'path': keycloak_log_file, 'tag': 'keycloak' }] }}"

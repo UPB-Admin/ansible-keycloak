@@ -31,6 +31,13 @@
     `/var/log/infinispan`, respectively. This is required to allow rsyslog to
     track the log files using the `imfile` module (in `inotify` mode).
     Inotify is blocked by SELinux for normal files.
+  - Improve rsyslog processing of logs by also reading logs from files.
+    This allows us to configure Keycloak and Infinispan to log in JSON format
+    for easier parsing, without changing the format of the logs in the journal.
+    Logging is configured at role level, instead of globally, which means that
+    only the services installed on the system have associated rules in the
+    rsyslog file. It is also possible to define additional custom logging from
+    either the journal or files.
 
 ### June 2024
   - Fix typo in Infinispan backup configurations.

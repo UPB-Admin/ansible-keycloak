@@ -15,6 +15,7 @@ infinispan_server_lib_subdir:  "{{ infinispan_install_dir }}/server/lib"
 infinispan_server_log_subdir:  "/var/log/infinispan"
 infinispan_server_log_file: "{{ infinispan_server_log_subdir }}/server.log"
 infinispan_server_log_json_file: "{{ infinispan_server_log_subdir }}/server.log.json"
+infinispan_log_file: "{{ infinispan_server_log_json_file if rsyslog_infinispan_file_format_json else infinispan_server_log_file }}"
 
 infinispan_cli: "{{ infinispan_server_bin_subdir }}/cli.sh"
 infinispan_server_script: "{{ infinispan_server_bin_subdir }}/server.sh"

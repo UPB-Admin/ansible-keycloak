@@ -11,11 +11,15 @@ rsyslog_client_cert_path: "{{ rsyslog_cert_dir }}/client-cert.pem"
 
 rsyslog_config_file_path: /etc/rsyslog.d/remotelog.conf
 
-rsyslog_service_regexes:
-  database: "mariadb|stunnel"
-  infinispan: infinispan
-  keycloak: keycloak
-  ldap: ns-slapd
-  load_balancers: "{{ load_balancer_service }}"
+rsyslog_input_file_settings:
+  read_mode: 0 # line buffering
+  severity: info
+  facility: local3
 
-rsyslog_service_regex: "{{ rsyslog_service_regexes | dict2items | selectattr('key', 'in', group_names) | map(attribute='value') | list | join('|') }}"
+regex_backslash: \\
+regex_double_backslash: \\\\
+
+rsyslog_journal_configs: "{{ rsyslog_log_configs | selectattr('type', 'eq', 'journal') }}"
+rsyslog_program_names_regex: "^({{ rsyslog_journal_configs | map(attribute='program_names') | flatten | map('regex_escape') | map('regex_replace', regex_backslash, regex_double_backslash) | unique | join('|') }})$"
+rsyslog_log_file_configs: "{{ rsyslog_log_configs | selectattr('type', 'eq', 'file') }}"
+rsyslog_log_file_tags_regex: "^({{ rsyslog_log_file_configs | map(attribute='tag') | flatten | map('regex_escape') | map('regex_replace', regex_backslash, regex_double_backslash) | unique | join('|') }})$"

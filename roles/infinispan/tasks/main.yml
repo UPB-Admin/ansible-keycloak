@@ -294,3 +294,8 @@
     regexp: "^{{ item }}="
     state: present
   with_items: "{{ infinispan_users }}"
+
+
+- name: Register rsyslog logging for Infinispan service
+  set_fact:
+    rsyslog_log_configs: "{{ rsyslog_log_configs + [{ 'type': 'file', 'path': infinispan_log_file, 'tag': 'infinispan' }] }}"

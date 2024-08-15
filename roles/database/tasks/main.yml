@@ -282,3 +282,8 @@
         mode: 0640
         owner: root
         group: "{{ database_system_user }}"
+
+
+- name: Register rsyslog logging for MariaDB service
+  set_fact:
+    rsyslog_log_configs: "{{ rsyslog_log_configs + [{ 'type': 'journal', 'program_names': ['mariadb', 'stunnel'] }] }}"

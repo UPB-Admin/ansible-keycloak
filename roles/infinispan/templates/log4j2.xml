@@ -94,10 +94,7 @@
   <Loggers>
     <Root level="INFO">
       <AppenderRef ref="STDOUT" level="INFO"/>
-
-      <!-- Uncomment just one of the two lines bellow to use alternatively JSON logging or plain-text logging to file-->
-      <AppenderRef ref="FILE"/>
-<!--      <AppenderRef ref="JSON-FILE"/>-->
+      <AppenderRef ref="{{ 'JSON-FILE' if rsyslog_infinispan_file_format_json else 'FILE' }}"/>
     </Root>
 
     <!-- You can set different levels for categories here -->

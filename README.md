@@ -202,6 +202,17 @@ You will need to set some of the following variables for your deployment
     authority used to sign the log servers' certificates, in PEM format.
     Note: This variable is used to determine if TLS should be enabled -
     TLS cannot be used if unset.
+  - `rsyslog_keycloak_file_format_json` / `rsyslog_infinispan_file_format_json`:
+    rsyslog reads the logs for Keycloak and Infinispan from log files. These
+    variables control whether the services output the logs in JSON format.
+    By default, we assume JSON format if rsyslog remote logging is enabled, or
+    the default (the more human-readable format) otherwise.
+    You can use these variables to specify if JSON logging is desired (boolean).
+  - `rsyslog_log_configs`: List of custom log configurations. Can specify either
+    logging from the journal, based on the program name, or files, and exposing
+    the logs via a tag that is sent to the remote host. The service specific log
+    configurations are appended to this list at the end of each role's task
+    file. The configuration template can be found in `group_vars/all`.
   - `firewall_custom_port_rules` and `firewall_custom_rich_rules`: Add
     "non-standard" configurations for allowed ports and rich rules. If you
     intend to permanently enable ports or add rich rules, use these variables to

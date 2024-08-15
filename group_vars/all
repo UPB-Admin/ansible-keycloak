@@ -239,6 +239,20 @@ rsyslog_log_server_ca_certificate: ""
 # Whether set up rsyslog
 rsyslog_configure: "{{ rsyslog_log_servers | length > 0 }}"
 
+# List of configurations for rsyslog - program names (from journal) and files
+# Entries are in one of the following formats:
+# - type: journal
+#   program_names:
+#     - example1
+#     - example2
+# - type: file
+#   path: /path/to/file/to/monitor
+#   tag: example
+rsyslog_log_configs: []
+
+rsyslog_keycloak_file_format_json: "{{ rsyslog_configure }}"
+rsyslog_infinispan_file_format_json: "{{ rsyslog_configure }}"
+
 database_system_user: mysql
 infinispan_system_user: infinispan
 keycloak_system_user: keycloak
