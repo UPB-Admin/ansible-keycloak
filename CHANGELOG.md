@@ -49,6 +49,9 @@
 
 - Add some security rules to Keycloak and Infinispan systemd services.
 
+- Use the more modern `RSYSLOG_ForwardFormat` template that sends more precise
+  timestamp information, as well as the timezone offset information.
+
 
 ### June 2024
 - Fix typo in Infinispan backup configurations.
