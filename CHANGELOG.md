@@ -38,6 +38,7 @@
     only the services installed on the system have associated rules in the
     rsyslog file. It is also possible to define additional custom logging from
     either the journal or files.
+  - Add some security rules to Keycloak and Infinispan systemd services.
 
 ### June 2024
   - Fix typo in Infinispan backup configurations.

@@ -2,3 +2,9 @@ systemd_override_dir: /etc/systemd/system
 systemd_service_dir: /usr/lib/systemd/system
 
 service_start_timeout: 300
+
+systemd_service_security_settings: |-
+  ProtectSystem=full
+  ProtectHome=yes
+  NoNewPrivileges=true
+  UMask=0037

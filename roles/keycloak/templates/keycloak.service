@@ -21,6 +21,9 @@ LimitNOFILE=102642
 PIDFile=/run/keycloak/keycloak.pid
 SyslogIdentifier=keycloak
 
+# Security settings
+{{ systemd_service_security_settings }}
+
 [Install]
 WantedBy=multi-user.target
 
