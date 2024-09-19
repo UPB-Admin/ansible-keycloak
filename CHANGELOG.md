@@ -1,5 +1,8 @@
 ## Changelog
 
+### September 2024
+- Bump Keycloak to version 25.0.6.
+
 ### August 2024
 - Configure firewall port in NetworkManager configuration file. Starting with
   RHEL 9 the configuration using network-scripts has been deprecated, and
