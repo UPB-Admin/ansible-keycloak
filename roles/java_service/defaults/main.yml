@@ -8,8 +8,8 @@ java_max_metaspace_size: "{{ (java_max_heap_size|int / 2)|int }}"
 java_metaspace_size: "{{ (java_max_metaspace_size|int / 2)|int }}"
 
 # Minimum amount of memory in megabytes we expect a Java service should have to run without issues
-# 1024MB base memory + 256MB for 50,000 user sessions
-java_min_mem: 1280
+# 1250MB, should be enough according to https://www.keycloak.org/high-availability/concepts-memory-and-cpu-sizing
+java_min_mem: 1250
 
 java_common_mem_opts: "-Xms{{ java_min_heap_size }}m -Xmx{{ java_max_heap_size }}m -XX:MetaspaceSize={{ java_metaspace_size }}m -XX:MaxMetaspaceSize={{ java_max_metaspace_size }}m -XX:+UseG1GC"
 

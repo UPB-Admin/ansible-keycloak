@@ -1,10 +1,11 @@
-keycloak_archive_checksum: sha1:4f98b23d9f71422d11a6575f03445ce554664241
+keycloak_archive_checksum: sha1:82b65b4741378a9fda1fdd3556c7b3a58c8a4ebd
 keycloak_archive_url: "https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz"
 keycloak_install_dir: "/opt/keycloak-{{ keycloak_version }}"
 keycloak_tmp_file: "/tmp/keycloak-{{ keycloak_version }}.tar.gz"
 
 keycloak_bin_subdir: "{{ keycloak_install_dir }}/bin"
 keycloak_conf_subdir: "{{ keycloak_install_dir }}/conf"
+keycloak_truststore_subdir: "{{ keycloak_conf_subdir }}/truststores"
 keycloak_data_subdir: "{{ keycloak_install_dir }}/data"
 keycloak_tmp_subdir: "{{ keycloak_data_subdir }}/tmp"
 keycloak_providers_subdir: "{{ keycloak_install_dir }}/providers"
@@ -21,9 +22,8 @@ keycloak_infinispan_conf_file: "{{ keycloak_conf_subdir }}/cache-ispn.xml"
 keycloak_log_subdir: "/var/log/keycloak"
 keycloak_log_file: "{{ keycloak_log_subdir }}/keycloak.log"
 
-infinispan_trusted_certificate_file: "{{ pki_configs.keycloak.trusted_dir }}/infinispan.crt"
+infinispan_trusted_certificate_file: "{{ keycloak_truststore_subdir }}/infinispan.crt"
 database_trusted_certificate_file: "{{ keycloak_conf_subdir }}/database.crt"
-keycloak_truststore_file: "{{ keycloak_conf_subdir }}/truststore.jks"
 keycloak_keystore_file: "{{ keycloak_conf_subdir }}/application.keystore"
 
 keycloak_keystore_cert_alias: server
@@ -49,7 +49,11 @@ keycloak_infinispan_tcpping_port: "{{ infinispan_tcpping_port + 10 }}"
 keycloak_remote_store_socket_timeout: 180000
 
 keycloak_random_source: /dev/urandom
-keycloak_java_opts: "{{ java_common_mem_opts }} -Djava.net.preferIPv4Stack=true -Djava.security.egd=file:{{ keycloak_random_source }} -Dfile.encoding=UTF-8"
+keycloak_java_opts: >-
+  {{ java_common_mem_opts }}
+  -Djava.net.preferIPv4Stack=true -Djava.security.egd=file:{{ keycloak_random_source }}
+  -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.err.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8
+  -XX:+ExitOnOutOfMemoryError -XX:FlightRecorderOptions=stackdepth=512
 
 keycloak_node_index: "{{ lookup('ansible.utils.index_of', cluster_servers.keycloak, 'eq', inventory_hostname, wantlist=True) | first }}"
 keycloak_node_name: "{{ 'k_%d%d' % (cluster_number, keycloak_node_index|int + 1) }}"

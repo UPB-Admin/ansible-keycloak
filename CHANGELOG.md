@@ -9,6 +9,15 @@
 - Add option to log audit events to the log file, besides the databases
   (defaults to true).
 
+- Upgrade Keycloak to 26.0.7. This Keycloak version changes how communication to
+  the external Infinispan server is configured (i.e., remote Infinispan servers
+  are defined as variables in the Keycloak configuration file, instead of the
+  `cache-ispn.xml` file, which has been removed). Other parameters, such as
+  serialization protocol to Infinispan have also been changed.
+
+- Also update Infinispan to version 15.0.11.Final to be in lockstep with the
+  version used by Keycloak internally.
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 

@@ -76,7 +76,7 @@
       <security>
          <authorization>
             <roles>
-               <role name="{{ infinispan_keycloak_user }}" permissions="ALL_READ ALL_WRITE EXEC LISTEN MONITOR"/>
+               <role name="{{ infinispan_keycloak_user }}" permissions="ALL_READ ALL_WRITE EXEC LISTEN MONITOR CREATE"/>
             </roles>
          </authorization>
       </security>
@@ -86,11 +86,14 @@
       </global-state>
 
 {% for cache_name, cache_config in infinispan_caches.items() %}
-      <{{ cache_config.type }}-cache name="{{ cache_name }}" {{ cache_config.owners | default("") }}>
+      <distributed-cache name="{{ cache_name }}" owners="2">
          <locking acquire-timeout="{{ infinispan_locking_acquire_timeout }}" />
-         <backups {{ cache_config.merge_policy | default("") }}>
+         <transaction mode="{{ infinispan_transaction_mode }}" locking="{{ infinispan_transaction_locking }}" />
+
+         <backups>
 {% for cluster in (node_clusters | difference([cluster_name])) %}
-            <backup site="{{ cluster }}" strategy="{{ infinispan_backup_strategy }}" timeout="{{ infinispan_backup_timeout }}">
+            <backup site="{{ cluster }}" strategy="{{ infinispan_backup_strategy }}"
+                    timeout="{{ infinispan_backup_timeout }}" failure-policy="{{ infinispan_backup_failure_policy }}">
                <take-offline after-failures="{{ infinispan_backup_failures_till_offline }}" min-wait="{{ infinispan_backup_wait_till_offline }}"/>
             </backup>
 {% endfor %}
@@ -106,8 +109,13 @@
             <authorization enabled="true" roles="admin {{ infinispan_keycloak_user }}"/>
          </security>
 
-         <memory {{ cache_config.max_count | default("") }}/>
-      </{{ cache_config.type }}-cache>
+         <encoding>
+             <key media-type="application/x-protostream"/>
+             <value media-type="application/x-protostream"/>
+         </encoding>
+
+         <memory max-count="{{ cache_config.max_count | default(10000) }}"/>
+      </distributed-cache>
 {% endfor %}
    </cache-container>
 </infinispan>

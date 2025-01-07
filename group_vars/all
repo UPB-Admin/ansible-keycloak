@@ -1,4 +1,4 @@
-keycloak_version: 25.0.6
+keycloak_version: 26.0.7
 
 # Interfaces, available to the server
 # In case there is more than one interface, the correct internal/external interfaces should be set
@@ -66,56 +66,21 @@ database_galera_ist_port: 4568
 database_galera_sst_port: 4444
 
 
-# Enable the "persistent-user-sessions" and "hostname version 2" features by default
+# Enable the "multi-site" and "hostname version 2" features by default
 keycloak_default_enabled_features:
-  - persistent-user-sessions
+  - multi-site
   - hostname:v2
 
 keycloak_all_enabled_features: "{{ keycloak_enabled_features | default([]) + keycloak_default_enabled_features }}"
-
-
-# Helper variables for Infinispan cache configuration
-infinispan_merge_policy_always_remove: "merge-policy=\"ALWAYS_REMOVE\""
-infinispan_session_cache_max_count: "{{ 'max-count=\"10000\"' if 'persistent-user-sessions' in keycloak_all_enabled_features else '' }}"
-infinispan_session_cache_owners_count: "owners=\"{{ 1 if 'persistent-user-sessions' in keycloak_all_enabled_features else 2 }}\""
 
 # Caches with their respective cache types (from keycloak's point of view;
 # infinispan creates all caches as replicated caches)
 infinispan_caches:
   work:
-    type: replicated
-  sessions:
-    type: distributed
-    merge_policy: "{{ infinispan_merge_policy_always_remove }}"
-    max_count: "{{ infinispan_session_cache_max_count }}"
-    owners: "{{ infinispan_session_cache_owners_count }}"
-  clientSessions:
-    type: distributed
-    merge_policy: "{{ infinispan_merge_policy_always_remove }}"
-    max_count: "{{ infinispan_session_cache_max_count }}"
-    owners: "{{ infinispan_session_cache_owners_count }}"
-  offlineSessions:
-    type: distributed
-    merge_policy: "{{ infinispan_merge_policy_always_remove }}"
-    max_count: "{{ infinispan_session_cache_max_count }}"
-    owners: "{{ infinispan_session_cache_owners_count }}"
-  offlineClientSessions:
-    type: distributed
-    merge_policy: "{{ infinispan_merge_policy_always_remove }}"
-    max_count: "{{ infinispan_session_cache_max_count }}"
-    owners: "{{ infinispan_session_cache_owners_count }}"
   authenticationSessions:
-    type: distributed
-    merge_policy: "{{ infinispan_merge_policy_always_remove }}"
-    owners: "owners=\"2\""
   loginFailures:
-    type: distributed
-    owners: "owners=\"2\""
   actionTokens:
-    type: distributed
-    max_count: "max-count=\"-1\""
-    owners: "owners=\"2\""
-    expiration: "interval=\"300000\" max-idle=\"-1\""
+    max_count: -1
 
 
 # User used by keycloak to connect to the infinispan cluster
