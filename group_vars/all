@@ -231,6 +231,9 @@ prometheus_exporters:
     port: 9101
     extra_cond: "{{ load_balancer_service == 'haproxy' }}"
 
+# Log audit events using JBoss logging to the log file
+keycloak_jboss_event_logging: True
+
 # rsyslog remote servers
 rsyslog_log_servers: []
 # CA certificate for rsyslog log servers

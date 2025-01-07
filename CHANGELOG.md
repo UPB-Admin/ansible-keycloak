@@ -6,6 +6,9 @@
   Not setting this option results in Infinispan refusing to start if the service
   was not cleanly shut down before.
 
+- Add option to log audit events to the log file, besides the databases
+  (defaults to true).
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 

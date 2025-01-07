@@ -189,6 +189,8 @@ You will need to set some of the following variables for your deployment
     enabled by default. If you want to disable those features, override the
     variable with an empty list;
   - `keycloak_disabled_features`: A list of Keycloak features to disable;
+  - `keycloak_jboss_event_logging`: Whether to log Keycloak audit events to the
+    log files, besides the database (defaults to true);
   - `load_balancer_service`: The type of load balancer to install - either
     `nginx` or `haproxy` can be specified.
   - `rsyslog_log_servers`: A list of rsyslog log servers that can receive log
