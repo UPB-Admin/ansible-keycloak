@@ -26,6 +26,9 @@ infinispan_backup_timeout: 10000              # 10s
 infinispan_backup_failures_till_offline: 10   # take site offline after 10 failures
 infinispan_backup_wait_till_offline: 60000    # wait min 60s before taking taking site offline
 infinispan_locking_acquire_timeout: 500       # maximum amount of time a cache lock can be held - in milliseconds
+# ignore dangling lock files; meant to avoid errors after system reboot
+# may cause some issues if service is started after improperly stopped
+infinispan_unclean_shutdown_action: IGNORE
 
 infinispan_tcpping_server_list: "{{ groups.infinispan | product(['[%d]' % infinispan_tcpping_port]) | map('join') | join(',') }}"
 infinispan_keystore_cert_alias: server

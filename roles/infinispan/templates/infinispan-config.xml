@@ -81,7 +81,7 @@
          </authorization>
       </security>
 
-      <global-state>
+      <global-state unclean-shutdown-action="{{ infinispan_unclean_shutdown_action }}">
          <persistent-location path="{{ infinispan_persistence_data_dir }}"/>
       </global-state>
 

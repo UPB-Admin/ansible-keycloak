@@ -1,5 +1,11 @@
 ## Changelog
 
+### January 2025
+- Add configuration option to ignore dangling lock files in Infinispan
+  persistence directory after an unclean service shutdown.
+  Not setting this option results in Infinispan refusing to start if the service
+  was not cleanly shut down before.
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 

@@ -231,6 +231,12 @@ You will need to set some of the following variables for your deployment
   - `java_shared_system_mem_max`: Maximum amount of memory allocated for Java
     services (Keycloak and Infinispan) if they are installed on a system that
     also runs other services (e.g., database).
+  - `infinispan_unclean_shutdown_action`: What action Infinispan should take
+    when a forced cache shutdown is detected (i.e., it uses lock files in
+    the global persistence directory to detect if the server reboots without
+    cleanly shutting down the service first). The default is set to `IGNORE`,
+    which ignores the lock files and starts the service regardless of how it was
+    previously stopped.
 
 The override variables can be specified inside a YAML file that you will include
 when running the playbooks. An example of an overrides file can be found in the
