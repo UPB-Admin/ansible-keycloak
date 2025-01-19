@@ -18,6 +18,9 @@
 - Also update Infinispan to version 15.0.11.Final to be in lockstep with the
   version used by Keycloak internally.
 
+- Update environment variables for initial (bootstrap) Keycloak administrator
+  account.
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 
