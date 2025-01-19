@@ -37,6 +37,13 @@
   running only LDAP, a `re_match($syslogtag, '^()$')` rule was added
   unnecessarily).
 
+- Change logging configurations to only log success audit events to the `file`
+  logger if all audit logs are logged. This is done by configuring the log level
+  of the `org.keycloak.events` to `debug` if logging is enabled, which means
+  that the events are logged by the `file` logger (since its log level is set to
+  `debug` to capture all events of `debug` level or higher), but not the
+  `console` logger (since its level is set to `info`, which is higher).
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 
