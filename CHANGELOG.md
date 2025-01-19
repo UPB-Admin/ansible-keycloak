@@ -46,6 +46,11 @@
 
 - Bump Keycloak to version 26.1.0.
 
+- Remove Keycloak truststore password from the example vault file, as Keycloak
+  can import certificates directly (in PEM format), without a truststore.
+  If already defined, removing the password from the production vault is not
+  required, since the value is simply not used by the playbook.
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 

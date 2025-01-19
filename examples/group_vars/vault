@@ -16,8 +16,6 @@ vault:
         pass: changeme
     keystore: # Password used to lock the keystore used by the keycloak servers
       pass: changeme
-    truststore: # Password used to lock the truststores used by the keycloak servers
-      pass: changeme
 
   database:
     user:
