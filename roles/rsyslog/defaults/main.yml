@@ -23,3 +23,10 @@ rsyslog_journal_configs: "{{ rsyslog_log_configs | selectattr('type', 'eq', 'jou
 rsyslog_program_names_regex: "^({{ rsyslog_journal_configs | map(attribute='program_names') | flatten | map('regex_escape') | map('regex_replace', regex_backslash, regex_double_backslash) | unique | join('|') }})$"
 rsyslog_log_file_configs: "{{ rsyslog_log_configs | selectattr('type', 'eq', 'file') }}"
 rsyslog_log_file_tags_regex: "^({{ rsyslog_log_file_configs | map(attribute='tag') | flatten | map('regex_escape') | map('regex_replace', regex_backslash, regex_double_backslash) | unique | join('|') }})$"
+
+rsyslog_re_match_rule: >-
+  {{
+    ["re_match($programname, '" + rsyslog_program_names_regex + "')" if rsyslog_journal_configs else "",
+     "re_match($syslogtag, '" + rsyslog_log_file_tags_regex + "')" if rsyslog_log_file_configs else ""
+    ] | select() | join(" or ")
+  }}

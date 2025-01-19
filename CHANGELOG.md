@@ -33,6 +33,10 @@
   also handled by the other rsyslog rules, which could copy the data to some
   other locations (e.g., the `/var/log/messages` file).
 
+- Slightly improve rsyslog parsing by excluding empty rules (e.g., on a system
+  running only LDAP, a `re_match($syslogtag, '^()$')` rule was added
+  unnecessarily).
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 
