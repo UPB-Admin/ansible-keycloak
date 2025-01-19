@@ -204,27 +204,8 @@
       copy:
         content: "{{ hostvars[function_groups.infinispan.master].pki_certificate.infinispan }}"
         dest: "{{ infinispan_trusted_certificate_file }}"
-        mode: 0400
-        owner: "{{ pki_configs.keycloak.file_owner }}"
-        group: "{{ pki_configs.keycloak.file_group }}"
-
-    - name: Create java truststore with infinispan certificate
-      java_cert:
-        cert_path: "{{ infinispan_trusted_certificate_file }}"
-        cert_alias: infinispan
-        keystore_path: "{{ keycloak_truststore_file }}"
-        keystore_pass: "{{ vault.keycloak.truststore.pass }}"
-        keystore_create: yes
-        keystore_type: JKS
-        state: present
-      notify: restart keycloak
-
-    - name: Set file permissions on truststore file
-      file:
-        path: "{{ keycloak_truststore_file }}"
-        state: file
         mode: 0440
-        owner: root
+        owner: "{{ pki_configs.keycloak.file_owner }}"
         group: "{{ keycloak_system_user }}"
 
     - name: Copy the certificate used by the database servers
@@ -253,15 +234,6 @@
       template:
         src: keycloak.conf
         dest: "{{ keycloak_conf_file }}"
-        mode: 0440
-        owner: root
-        group: "{{ keycloak_system_user }}"
-      notify: restart keycloak
-
-    - name: Add the infinispan clustering configuration file
-      template:
-        src: cache-ispn.xml
-        dest: "{{ keycloak_infinispan_conf_file }}"
         mode: 0440
         owner: root
         group: "{{ keycloak_system_user }}"

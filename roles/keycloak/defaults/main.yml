@@ -17,7 +17,6 @@ keycloak_quarkus_lib_subdir: "{{ keycloak_lib_subdir }}/quarkus"
 keycloak_server_script_file: "{{ keycloak_bin_subdir }}/kc.sh"
 
 keycloak_conf_file: "{{ keycloak_conf_subdir }}/keycloak.conf"
-keycloak_infinispan_conf_file: "{{ keycloak_conf_subdir }}/cache-ispn.xml"
 
 keycloak_log_subdir: "/var/log/keycloak"
 keycloak_log_file: "{{ keycloak_log_subdir }}/keycloak.log"
