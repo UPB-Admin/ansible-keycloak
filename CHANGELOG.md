@@ -44,6 +44,8 @@
   `debug` to capture all events of `debug` level or higher), but not the
   `console` logger (since its level is set to `info`, which is higher).
 
+- Bump Keycloak to version 26.1.0.
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 
