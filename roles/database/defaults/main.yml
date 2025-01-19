@@ -23,5 +23,5 @@ database_wsrep_slave_threads: "{{ ansible_processor_vcpus * 4 }}"
 
 # The default version value; will be used if Keycloak was not installed yet
 keycloak_not_installed_version: 0.0.0
-# The maximum Keycloak installed version
-keycloak_max_version: "{{ keycloak_not_installed_version }}"
+# The currently running Keycloak version
+keycloak_running_version: "{{ keycloak_not_installed_version }}"

@@ -109,6 +109,23 @@
     setype: var_log_t
 
 
+# Keycloak marshalling has been changed from JBoss Marshalling to Infinispan protostream.
+# Since the two are incompatible, caches need to be cleaned up.
+- name: Remove Infinispan persistence data directory if Keycloak is upgrading to version 26
+  become: yes
+  when: hostvars[function_groups.database.master].keycloak_running_version is version("26.0.0", "<")
+  block:
+    - name: Stop Infinispan service before removing the persistence directory
+      systemd:
+        name: infinispan
+        state: stopped
+
+    - name: Remove the persistence data directory
+      file:
+        path: "{{ infinispan_persistence_data_dir }}"
+        state: absent
+
+
 - name: Create Infinispan persistence data directory
   become: yes
   file:

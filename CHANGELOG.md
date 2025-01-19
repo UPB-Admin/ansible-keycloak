@@ -21,6 +21,13 @@
 - Update environment variables for initial (bootstrap) Keycloak administrator
   account.
 
+- Add rule to remove Infinispan persistence directory and restart Infinispan
+  when upgrading Keycloak from a version earlier than 26; this is required since
+  the marshalling protocol has changed to Infinispan Protostream, and is
+  incompatible with the old JBoss Marshalling encoding. The variable used to
+  keep track of the latest installed Keycloak version has been renamed to
+  improve readability with this occasion.
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 

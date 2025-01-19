@@ -234,19 +234,19 @@
 
         - name: Determine the latest installed version of Keycloak
           set_fact:
-            keycloak_max_version: "{{ item.VERSION }}"
-          when: item.VERSION is version(keycloak_max_version, '>')
+            keycloak_running_version: "{{ item.VERSION }}"
+          when: item.VERSION is version(keycloak_running_version, '>')
           with_items: "{{ keycloak_versions.query_result[0] }}"
 
         - name: Fail if keycloak would be downgraded
           fail:
             msg: "Cannot downgrade Keycloak!"
-          when: keycloak_version is version(keycloak_max_version, "<")
+          when: keycloak_version is version(keycloak_running_version, "<")
 
         - name: Set Keycloak upgrading fact
           when:
-            - keycloak_max_version != keycloak_not_installed_version
-            - keycloak_version is version(keycloak_max_version, ">")
+            - keycloak_running_version != keycloak_not_installed_version
+            - keycloak_version is version(keycloak_running_version, ">")
           set_fact:
             keycloak_upgrading: True
 
@@ -272,12 +272,12 @@
         name: "{{ database_config.keycloak.dbname }}"
         encoding: "{{ database_config.keycloak.encoding }}"
         state: dump
-        target: "{{ database_backups_dir }}/keycloak-{{ keycloak_max_version }}.sql"
+        target: "{{ database_backups_dir }}/keycloak-{{ keycloak_running_version }}.sql"
         single_transaction: yes
 
     - name: Set file permissions on backup file
       file:
-        path: "{{ database_backups_dir }}/keycloak-{{ keycloak_max_version }}.sql"
+        path: "{{ database_backups_dir }}/keycloak-{{ keycloak_running_version }}.sql"
         state: file
         mode: 0640
         owner: root
