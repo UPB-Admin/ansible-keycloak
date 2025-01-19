@@ -28,6 +28,11 @@
   keep track of the latest installed Keycloak version has been renamed to
   improve readability with this occasion.
 
+- Add a "stop" rule to end parsing the data from the services in rsyslog.
+  Without this rule, the lines from the Keycloak and Infinispan log files were
+  also handled by the other rsyslog rules, which could copy the data to some
+  other locations (e.g., the `/var/log/messages` file).
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 
