@@ -1,1 +1,6 @@
+# The default version value; will be used if Keycloak was not installed yet
+keycloak_not_installed_version: 0.0.0
+# The currently running Keycloak version
+keycloak_running_version: "{{ keycloak_not_installed_version }}"
+
 # vim: ft=yaml

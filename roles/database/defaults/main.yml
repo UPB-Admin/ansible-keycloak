@@ -20,8 +20,3 @@ database_unix_socket: "{{ database_data_dir }}/mysql.sock"
 database_cluster_name: database_cluster
 
 database_wsrep_slave_threads: "{{ ansible_processor_vcpus * 4 }}"
-
-# The default version value; will be used if Keycloak was not installed yet
-keycloak_not_installed_version: 0.0.0
-# The currently running Keycloak version
-keycloak_running_version: "{{ keycloak_not_installed_version }}"
