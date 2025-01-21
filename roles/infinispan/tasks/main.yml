@@ -111,6 +111,8 @@
 
 # Keycloak marshalling has been changed from JBoss Marshalling to Infinispan protostream.
 # Since the two are incompatible, caches need to be cleaned up.
+# Ignore the errors that say the service does not exist since we do this
+# before configuring the service on a first installation.
 - name: Remove Infinispan persistence data directory if Keycloak is upgrading to version 26
   become: yes
   when: hostvars[function_groups.database.master].keycloak_running_version is version("26.0.0", "<")
@@ -119,6 +121,10 @@
       systemd:
         name: infinispan
         state: stopped
+      register: infinispan_stop
+      failed_when:
+        - infinispan_stop.failed == true
+        - not infinispan_stop.msg | regex_search("Could not find the requested service")
 
     - name: Remove the persistence data directory
       file:
