@@ -51,6 +51,9 @@
   If already defined, removing the password from the production vault is not
   required, since the value is simply not used by the playbook.
 
+- Change check in LDAP playbook to allow installation on RedHat-based systems,
+  not just CentOS; fail if the system is not RedHat-based, however.
+
 ### September 2024
 - Bump Keycloak to version 25.0.6.
 
