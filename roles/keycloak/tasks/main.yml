@@ -310,7 +310,7 @@
   when: not (hostvars[function_groups.database.master].keycloak_admin_exists | default(True))
   run_once: yes
   command:
-    argv: [ "/usr/bin/timeout", "-k30s", "{{ keycloak_admin_create_timeout }}", "{{ keycloak_server_script_file }}", "-Djboss.site.name='{{ keycloak_site_name }}'", "start", "--optimized" ]
+    argv: [ "/usr/bin/timeout", "-k30s", "{{ keycloak_admin_create_timeout }}", "{{ keycloak_server_script_file }}", "start", "--optimized" ]
   environment:
     KC_BOOTSTRAP_ADMIN_USERNAME: admin
     KC_BOOTSTRAP_ADMIN_PASSWORD: "{{ vault.keycloak.user.admin.pass }}"
