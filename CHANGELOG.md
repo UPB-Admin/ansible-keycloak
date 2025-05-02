@@ -1,5 +1,18 @@
 ## Changelog
 
+### May 2025
+
+- Configure the certificates to have the `CA: true` basic constraint and add the
+  "basic constraints critical" setting. This is the same behavior as
+  `openssl req -x509` and is a reasonable default for self-signed
+  certificates. The `CA: true` basic constraint is required by the
+  `update-ca-trust` command (according to this Stack Exchange post:
+  https://unix.stackexchange.com/a/599944); otherwise, the certificate is not
+  added to the certificate bundle. This is especially relevant for the load
+  balancers' certificate, to allow clients to trust it at system level.
+  **NOTE**: applying this change will restart all services, as their
+  certificates change and the services must reload the certificates.
+
 ### January 2025
 - Add configuration option to ignore dangling lock files in Infinispan
   persistence directory after an unclean service shutdown.

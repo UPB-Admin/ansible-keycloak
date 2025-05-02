@@ -23,6 +23,9 @@
         organization_name: "{{ item.value.organization_name }}"
         locality_name: "{{ item.value.locality_name }}"
         subject_alt_name: "{{ item.value.subject_alt_names }}"
+        basic_constraints:
+         - "CA:TRUE"
+        basic_constraints_critical: true
         mode: "{{ item.value.file_mode }}"
       notify: pki changed
 
