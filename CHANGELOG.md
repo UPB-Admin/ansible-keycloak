@@ -13,6 +13,13 @@
   **NOTE**: applying this change will restart all services, as their
   certificates change and the services must reload the certificates.
 
+- Add health checks (check if TCP ports respond) to the Infinispan and Keycloak
+  systemd service files. Also remove the `PIDFile` parameter from Keycloak's
+  service file as the service does not create the PID file, and using it in
+  conjunction with the `ExecStartPost` command makes systemd believe the
+  service start fails.
+
+
 ### January 2025
 - Add configuration option to ignore dangling lock files in Infinispan
   persistence directory after an unclean service shutdown.

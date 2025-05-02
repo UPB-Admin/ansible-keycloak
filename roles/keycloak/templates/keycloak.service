@@ -15,10 +15,12 @@ After=syslog.target network-online.target mariadb.service infinispan.service
 [Service]
 Environment=JAVA_OPTS="{{ keycloak_java_opts }}"
 ExecStart=/bin/bash "{{ keycloak_server_script_file }}" start --optimized
+# Inspired by https://unix.stackexchange.com/a/584965
+# For clarity, ":" is the noop operator, and "<" is the redirect operator
+ExecStartPost=/bin/bash -c 'while ! :< "/dev/tcp/{{ interfaces_external_ip|quote }}/{{ keycloak_https_port|quote }}"; do sleep 1; done &>/dev/null'
 Type=simple
 User={{ keycloak_system_user }}
 LimitNOFILE=102642
-PIDFile=/run/keycloak/keycloak.pid
 SyslogIdentifier=keycloak
 
 # Security settings

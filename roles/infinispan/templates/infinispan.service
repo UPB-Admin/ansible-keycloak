@@ -18,6 +18,9 @@ After=network-online.target
 Environment=INFINISPAN_HOME="{{ infinispan_install_dir }}"
 Environment=JAVA_OPTS="{{ infinispan_java_opts }}"
 ExecStart=/bin/bash "{{ infinispan_server_script }}"
+# Inspired by https://unix.stackexchange.com/a/584965
+# For clarity, ":" is the noop operator, and "<" is the redirect operator
+ExecStartPost=/bin/bash -c 'while ! :< "/dev/tcp/{{ interfaces_external_ip|quote }}/{{ infinispan_hotrod_port|quote }}"; do sleep 1; done &>/dev/null'
 Type=simple
 User={{ infinispan_system_user }}
 SyslogIdentifier=infinispan
