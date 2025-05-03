@@ -22,6 +22,10 @@
 - Fix a typo in the Keycloak configuration file that sets the minimum database
   connection pool size.
 
+- Bump Keycloak to version 26.2.2 and Infinispan to version 15.0.14 (aligned
+  with the version used by Keycloak). Also update the download URL template for
+  Infinispan to GitHub releases.
+
 
 ### January 2025
 - Add configuration option to ignore dangling lock files in Infinispan
