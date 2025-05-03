@@ -19,6 +19,9 @@
   conjunction with the `ExecStartPost` command makes systemd believe the
   service start fails.
 
+- Fix a typo in the Keycloak configuration file that sets the minimum database
+  connection pool size.
+
 
 ### January 2025
 - Add configuration option to ignore dangling lock files in Infinispan
