@@ -26,6 +26,10 @@
   with the version used by Keycloak). Also update the download URL template for
   Infinispan to GitHub releases.
 
+- Configure more restrictive permissions for the mysqld exporter, based on the
+  [issue #622](https://github.com/prometheus/mysqld_exporter/issues/622) from
+  their GitHub repository.
+
 
 ### January 2025
 - Add configuration option to ignore dangling lock files in Infinispan

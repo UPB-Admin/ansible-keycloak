@@ -29,12 +29,20 @@
         resource_limits:
           MAX_USER_CONNECTIONS: 3
 
-    - name: Grant permissions for {{ database_prometheus_user }} user on all databases
+    - name: Grant permissions for {{ database_prometheus_user }} user on relevant databases
       community.mysql.mysql_query:
         login_user: root
         login_password: "{{ vault.database.user.root.pass }}"
         login_unix_socket: "{{ database_unix_socket }}"
-        query: "GRANT PROCESS, REPLICATION CLIENT, SLAVE MONITOR, SELECT ON *.* TO '{{ database_prometheus_user }}'@'{{ inventory_hostname }}';"
+        query: "{{ query }}"
+      with_items:
+        - "GRANT PROCESS, SLAVE MONITOR ON *.* TO '{{ database_prometheus_user }}'@'{{ inventory_hostname }}';"
+        - "GRANT SELECT ON performance_schema.* TO '{{ database_prometheus_user }}'@'{{ inventory_hostname }}';"
+        - "REVOKE REPLICATION CLIENT, SELECT ON *.* FROM '{{ database_prometheus_user }}'@'{{ inventory_hostname }}';"
+      loop_control:
+        loop_var: query
+        label: "{{ query }}"
+      notify: restart database exporter
 
     - name: Create database exporter configuration file with credentials
       template:
@@ -43,6 +51,7 @@
         mode: 0440
         owner: root
         group: "{{ prometheus_system_user }}"
+      notify: restart database exporter
 
 - name: Mark database exporter service for restart if the PKI files have changed
   debug:
