@@ -167,21 +167,21 @@ prometheus_service_specific_exporters:
 
 prometheus_exporters_to_install: "{{ prometheus_service_specific_exporters | dict2items | selectattr('key', 'in', group_names) | map(attribute='value') | list | flatten | unique }}"
 
-prometheus_node_exporter_version: 1.7.0
-prometheus_database_exporter_version: 0.15.0
-prometheus_haproxy_exporter_version: 0.12.0
+prometheus_node_exporter_version: 1.9.1
+prometheus_database_exporter_version: 0.17.2
+prometheus_haproxy_exporter_version: 0.15.0
 
 prometheus_exporters:
   node:
     archive: "https://github.com/prometheus/node_exporter/releases/download/v{{ prometheus_node_exporter_version }}/node_exporter-{{ prometheus_node_exporter_version }}.linux-amd64.tar.gz"
-    checksum: sha256:a550cd5c05f760b7934a2d0afad66d2e92e681482f5f57a917465b1fba3b02a6
+    checksum: sha256:becb950ee80daa8ae7331d77966d94a611af79ad0d3307380907e0ec08f5b4e8
     tmp_file: "/tmp/prometheus-node_exporter-{{ prometheus_node_exporter_version }}.tar.gz"
     install_dir: "/opt/prometheus/node_exporter-{{ prometheus_node_exporter_version }}"
     port: 9100
 
   database:
     archive: "https://github.com/prometheus/mysqld_exporter/releases/download/v{{ prometheus_database_exporter_version }}/mysqld_exporter-{{ prometheus_database_exporter_version }}.linux-amd64.tar.gz"
-    checksum: sha256:3973db1c46b0323a957a43916b759ee71ddab9096958ce78401fdff894b0dc51
+    checksum: sha256:ef6a2322b869d7d3c1ee3493e28a939ff80b367373142b9b2f3f70a6709d00d7
     tmp_file: "/tmp/prometheus-database_exporter-{{ prometheus_database_exporter_version }}.tar.gz"
     install_dir: "/opt/prometheus/database_exporter-{{ prometheus_database_exporter_version }}"
     port: 9104
@@ -190,7 +190,7 @@ prometheus_exporters:
 
   haproxy:
     archive: "https://github.com/prometheus/haproxy_exporter/releases/download/v{{ prometheus_haproxy_exporter_version }}/haproxy_exporter-{{ prometheus_haproxy_exporter_version }}.linux-amd64.tar.gz"
-    checksum: sha256:41d797bc7d54023ea0ea23e58be5795a0947289d3d33beab3372c52e4fcbb298
+    checksum: sha256:ac200872b734e2f9c0211997f7f9c0ca5ad6522996c37aed39a732d5f3c0de16
     tmp_file: "/tmp/prometheus-haproxy_exporter-{{ prometheus_haproxy_exporter_version }}.tar.gz"
     install_dir: "/opt/prometheus/haproxy_exporter-{{ prometheus_haproxy_exporter_version }}"
     port: 9101

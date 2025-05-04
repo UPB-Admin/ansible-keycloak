@@ -30,6 +30,12 @@
   [issue #622](https://github.com/prometheus/mysqld_exporter/issues/622) from
   their GitHub repository.
 
+- Update the Prometheus exporters to their latest version. **NOTE**: the HAProxy
+  exporter has been retired for some time, as HAProxy natively supports
+  Prometheus compatible metrics. The service will eventually be removed and,
+  if the option is available using the regular HAProxy binaries, metrics will be
+  enabled in the HAProxy service.
+
 
 ### January 2025
 - Add configuration option to ignore dangling lock files in Infinispan
