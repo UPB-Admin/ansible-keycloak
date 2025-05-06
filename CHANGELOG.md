@@ -40,6 +40,8 @@
   in Prometheus. The information is added in the configuration file of the nginx
   server configured to filter requests to the `/metrics` endpoint.
 
+- Bump Keycloak to version 26.2.3.
+
 
 ### January 2025
 - Add configuration option to ignore dangling lock files in Infinispan
