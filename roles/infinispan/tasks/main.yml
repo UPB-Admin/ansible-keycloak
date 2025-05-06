@@ -242,6 +242,23 @@
 - name: Configure metrics proxy (nginx)
   become: yes
   block:
+    - name: Define Prometheus alert rules for Infinispan
+      run_once: yes
+      set_fact:
+        prometheus_infinispan_alert_rules: |-
+          groups:
+          - name: Infinispan cross-datacenter monitoring
+            rules:
+            {% for (cluster, cache) in node_clusters | product(infinispan_caches.keys()) -%}
+            - alert: Infinispan cache {{ cache }} replication to {{ cluster }} failed
+              expr: vendor_cache_manager_default_cache_{{ cache }}_x_site_admin_{{ cluster }}_status != 1
+              annotations:
+                summary: Cache {{ cache }} replication to cluster {{ cluster }} is down.
+            {% endfor %}
+      when:
+        - node_clusters | length > 1
+        - prometheus_monitor
+
     - name: Setup main nginx.conf configuration file
       template:
         src: nginx.conf

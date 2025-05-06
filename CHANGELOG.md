@@ -36,6 +36,10 @@
   if the option is available using the regular HAProxy binaries, metrics will be
   enabled in the HAProxy service.
 
+- Add instructions to configure Infinispan cross-site replication alerts
+  in Prometheus. The information is added in the configuration file of the nginx
+  server configured to filter requests to the `/metrics` endpoint.
+
 
 ### January 2025
 - Add configuration option to ignore dangling lock files in Infinispan
