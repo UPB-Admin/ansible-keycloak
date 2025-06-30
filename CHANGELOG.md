@@ -9,6 +9,8 @@
   instead of the SHA1 checksum. This approach provides a higher level of trust
   and removes the need to update the checksum manually for every update.
 
+- Bump Keycloak to version 26.2.5.
+
 ### May 2025
 
 - Configure the certificates to have the `CA: true` basic constraint and add the
