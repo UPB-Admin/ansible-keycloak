@@ -305,6 +305,7 @@
     - name: Check if infinispan users exist
       command:
         argv: [ "{{ infinispan_cli }}", "user", "describe", "{{ item }}" ]
+        expand_argument_vars: false
       register: user_describe
       changed_when: False
       failed_when:
@@ -315,6 +316,7 @@
     - name: Create infinispan users that do not exist
       command:
         argv: [ "{{ infinispan_cli }}", "user", "create", "{{ description.item }}", "-p", "{{ vault.infinispan.user[description.item].pass }}" ]
+        expand_argument_vars: false
       when: description.stderr_lines | length > 0
       register: user_create
       failed_when: '"Exception" in user_create.stderr'

@@ -70,6 +70,7 @@
         - name: Force a run of the script now to make sure the server has OCSP configured
           command:
             argv: [ "{{ haproxy_cert_ocsp_script}}", "{{ pki_configs.load_balancers.certificate_crt_path }}" ]
+            expand_argument_vars: false
 
 
 - name: Configure haproxy

@@ -1,5 +1,9 @@
 ## Changelog
 
+### June 2025
+- Add `expand_argument_vars: false` to all `command` tasks to avoid any
+  accidental variable expansions.
+
 ### May 2025
 
 - Configure the certificates to have the `CA: true` basic constraint and add the

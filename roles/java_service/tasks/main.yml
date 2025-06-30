@@ -36,6 +36,7 @@
     - name: Use latest openjdk {{ java_version }} as java alternative
       command:
         argv: [ "update-alternatives", "--set", "{{ item }}", "/usr/lib/jvm/java-{{ java_version }}-openjdk-{{ java_package.version }}-{{ java_package.release }}.{{ java_package.arch }}/bin/{{ item }}" ]
+        expand_argument_vars: false
       notify: restart java service
       with_items:
         - java
