@@ -1,7 +1,8 @@
-keycloak_archive_checksum: sha1:40423b1128286ddda3d97f7c5f811d9af75dfa26
 keycloak_archive_url: "https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz"
+keycloak_archive_sign_url: "https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz.asc"
 keycloak_install_dir: "/opt/keycloak-{{ keycloak_version }}"
 keycloak_tmp_file: "/tmp/keycloak-{{ keycloak_version }}.tar.gz"
+keycloak_tmp_sign_file: "/tmp/keycloak-{{ keycloak_version }}.tar.gz.asc"
 
 keycloak_bin_subdir: "{{ keycloak_install_dir }}/bin"
 keycloak_conf_subdir: "{{ keycloak_install_dir }}/conf"

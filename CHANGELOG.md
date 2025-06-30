@@ -4,6 +4,11 @@
 - Add `expand_argument_vars: false` to all `command` tasks to avoid any
   accidental variable expansions.
 
+- Verify Keycloak downloads using the GPG signing key (available at
+  https://www.keycloak.org/keys - link available from the Downloads page)
+  instead of the SHA1 checksum. This approach provides a higher level of trust
+  and removes the need to update the checksum manually for every update.
+
 ### May 2025
 
 - Configure the certificates to have the `CA: true` basic constraint and add the

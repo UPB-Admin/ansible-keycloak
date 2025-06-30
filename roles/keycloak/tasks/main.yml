@@ -43,16 +43,67 @@
     - name: Download and extract keycloak
       when: not keycloak_dir_stat.stat.exists
       block:
-      - name: Download keycloak server tar archive
+      - name: Download Keycloak server tar archive and signature file
         get_url:
-          url: "{{ keycloak_archive_url }}"
-          dest: "{{ keycloak_tmp_file }}"
+          url: "{{ item.url }}"
+          dest: "{{ item.dest }}"
           http_agent: "wget"
-          checksum: "{{ keycloak_archive_checksum }}"
           timeout: 30
-          mode: 0400
+          mode: 0444
           owner: root
           group: root
+        with_items:
+          - url: "{{ keycloak_archive_url }}"
+            dest: "{{ keycloak_tmp_file }}"
+          - url: "{{ keycloak_archive_sign_url }}"
+            dest: "{{ keycloak_tmp_sign_file }}"
+        loop_control:
+          label: "{{ item.url }} -> {{ item.dest }}"
+
+      - name: Check Keycloak archive's GPG signature
+        become_user: nobody
+        vars:
+          ansible_remote_tmp: "/tmp/${USER}/.ansible"
+        block:
+          - name: Create temporary directory for GPG
+            tempfile:
+              state: directory
+              prefix: gnupg.
+            register: keycloak_gpg_directory
+
+          - name: Copy Keycloak GPG signing key
+            copy:
+              src: keycloak.asc
+              dest: "{{ keycloak_gpg_directory.path }}/keycloak.asc"
+              mode: 0400
+            register: keycloak_signing_key
+
+          - name: Import Keycloak GPG signing key
+            command:
+              argv: ["gpg", "--import", "{{ keycloak_signing_key.dest }}"]
+              expand_argument_vars: false
+            environment:
+              GNUPGHOME: "{{ keycloak_gpg_directory.path | quote }}"
+
+          - name: Check Keycloak archive signature
+            command:
+              argv: ["gpg", "--verify", "{{ keycloak_tmp_sign_file }}", "{{ keycloak_tmp_file }}"]
+              expand_argument_vars: false
+            environment:
+              GNUPGHOME: "{{ keycloak_gpg_directory.path | quote }}"
+            register: keycloak_signature_check
+            changed_when: false
+            ignore_errors: yes
+
+          - name: Remove temporary directory used for GPG
+            file:
+              path: "{{ keycloak_gpg_directory.path }}"
+              state: absent
+
+      - name: Stop playbook if Keycloak archive signature check failed
+        fail:
+          msg: "Signature check failed. Check previous logs for details."
+        when: keycloak_signature_check.rc != 0
 
       - name: Create keycloak directory if it does not exist
         file:
@@ -101,10 +152,13 @@
           owner: root
           group: "{{ keycloak_system_user }}"
 
-      - name: Remove keycloak archive
+      - name: Remove Keycloak archive and signature files
         file:
-          path: "{{ keycloak_tmp_file }}"
+          path: "{{ item }}"
           state: absent
+        with_items:
+          - "{{ keycloak_tmp_file }}"
+          - "{{ keycloak_tmp_sign_file }}"
 
 
 - name: Create keycloak server log subdirectory if it does not exist
