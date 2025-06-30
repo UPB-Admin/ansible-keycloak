@@ -1,9 +1,30 @@
 - hosts: all
   tags: always
+  run_once: true
   tasks:
     - name: Include vault file (with passwords and other secrets) for all hosts
       include_vars:
         file: group_vars/vault
+
+    - name: Assert vault passwords format
+      vars:
+        # List of passwords stored in the vault (variables named "pass")
+        vault_passwords: "{{ lookup('ansible.utils.to_paths', vault) | dict2items | selectattr('key', 'search', '\\.pass$') | map(attribute='value') }}"
+      block:
+        - name: Assert all passwords in the vault have been updated
+          fail:
+            msg: "A password placeholder ({{ vault_password_placeholder }}) found in vault. Make sure to update all passwords."
+          when: vault_password_placeholder in vault_passwords
+
+        - name: Assert passwords in vault do not contain restricted characters
+          fail:
+            msg: "A password containing restricted characters ({{ vault_restricted_characters }}) found in vault. Replace passwords containing these characters."
+          when: vault_passwords | select("search", vault_restricted_characters) | length > 0
+
+        - name: Assert all passwords in the vault are of sufficient length
+          fail:
+            msg: "Short password found in vault. Make sure all passwords are at least {{ vault_password_min_length }} characters long."
+          when: vault_passwords | map("length") | select("<", vault_password_min_length) | length > 0
 
 - hosts: all
   tags: always

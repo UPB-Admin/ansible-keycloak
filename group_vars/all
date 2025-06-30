@@ -1,5 +1,12 @@
 keycloak_version: 26.2.5
 
+# Password placeholder used in vault example file
+vault_password_placeholder: changeme
+# Characters not allowed in vault passwords (regex character set)
+vault_restricted_characters: "[\"'$#]"
+# Vault password minimum length
+vault_password_min_length: 30
+
 # Interfaces, available to the server
 # In case there is more than one interface, the correct internal/external interfaces should be set
 interfaces_internal_name: "{{ ansible_facts.default_ipv4.interface }}"

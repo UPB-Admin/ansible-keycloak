@@ -11,6 +11,12 @@
 
 - Bump Keycloak to version 26.2.5.
 
+- Add checks for passwords in the vault - make sure the passwords have been
+  updated (i.e., the "changeme" placeholder has been replaced everywhere) and
+  the passwords do not contain some special characters that could cause
+  issues in specific circumstances. Even with these restrictions, long
+  (over 30 characters) random passwords should provide adequate security.
+
 ### May 2025
 
 - Configure the certificates to have the `CA: true` basic constraint and add the
