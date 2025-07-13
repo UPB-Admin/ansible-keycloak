@@ -1,5 +1,11 @@
 ## Changelog
 
+### July 2025
+- Set absolute path for Python 3 interpreter in `ansible.cfg`. Using `auto`
+  caused Ansible to display warnings on every run. Note that this can also
+  result in having to manually install the `python3` package on the system prior
+  to running the playbook for the first time.
+
 ### June 2025
 - Add `expand_argument_vars: false` to all `command` tasks to avoid any
   accidental variable expansions.
