@@ -6,6 +6,9 @@
   result in having to manually install the `python3` package on the system prior
   to running the playbook for the first time.
 
+- Bump Keycloak to version 26.3.1 and Infinispan to version 15.0.16 (aligned
+  with the version used by Keycloak).
+
 ### June 2025
 - Add `expand_argument_vars: false` to all `command` tasks to avoid any
   accidental variable expansions.
