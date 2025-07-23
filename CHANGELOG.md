@@ -9,6 +9,9 @@
 - Bump Keycloak to version 26.3.1 and Infinispan to version 15.0.16 (aligned
   with the version used by Keycloak).
 
+- Roll back (remove) `expand_argument_vars` argument from `command` tasks as
+  this functionality may not be available on older versions of Ansible.
+
 ### June 2025
 - Add `expand_argument_vars: false` to all `command` tasks to avoid any
   accidental variable expansions.
