@@ -1,5 +1,8 @@
 ## Changelog
 
+### November 2025
+- Bump Keycloak to version 26.4.2.
+
 ### July 2025
 - Set absolute path for Python 3 interpreter in `ansible.cfg`. Using `auto`
   caused Ansible to display warnings on every run. Note that this can also
