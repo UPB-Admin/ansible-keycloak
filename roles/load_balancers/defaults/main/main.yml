@@ -54,7 +54,7 @@ server_sysctl_params:
   "fs.file-max": 65535
 
   # Allow for more PIDs (to reduce rollover problems); may break some programs
-  "kernel.pid_max": 65536
+  "kernel.pid_max": 4194304
 
   # Increase system IP port limits
   "net.ipv4.ip_local_port_range": 2000 65000
@@ -73,7 +73,10 @@ server_sysctl_params:
   "net.ipv4.tcp_window_scaling": 1
 
   # Increase number of connections
-  "net.core.somaxconn": 65536
+  "net.core.somaxconn": 262144
+
+  # Increase max number of connections in conntrack
+  "net.nf_conntrack_max": 262144
 
   # Reply to ARP requests only if they come on the interface with the IP address
   "net.ipv4.conf.all.arp_ignore": 1

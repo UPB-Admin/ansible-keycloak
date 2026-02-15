@@ -55,6 +55,10 @@
 - Add the LDAP certificate to Keycloak's trust stores to allow configuring
   connections via the `ldaps` protocol.
 
+- Adjust sysctl variables for the load balancer - increase the values of max PID
+  and max connections and configure a reasonably large conntrack limit - without
+  this setting the system may drop connections in high stress settings.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
