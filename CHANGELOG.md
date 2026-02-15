@@ -22,6 +22,13 @@
 
 - Add a task to configure custom entries to `/etc/hosts`.
 
+- Move database creation tasks later in the database playbook. This allows
+  applying configuration changes and restarting the database before attempting
+  to perform any updates on the database. The previous order attempted
+  to perform database operations without applying possible configuration fixes,
+  causing the playbook to always fail if the database could not start
+  because of a bad configuration.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

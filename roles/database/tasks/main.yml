@@ -88,15 +88,6 @@
           - "ALTER USER 'mysql'@'localhost' IDENTIFIED BY '{{ vault.database.user.mysql.pass }}';"
 
 
-- name: Create and setup databases for Keycloak
-  run_once: yes
-  include_tasks: setup_database.yml
-  with_items:
-    - keycloak
-  loop_control:
-    loop_var: service
-
-
 - name: Create marker file if it does not exist
   become: yes
   when: not marker_stat.stat.exists
@@ -184,6 +175,15 @@
 
 - name: Force flush handlers to reload / restart database service
   meta: flush_handlers
+
+
+- name: Create and setup databases for Keycloak
+  run_once: yes
+  include_tasks: setup_database.yml
+  with_items:
+    - keycloak
+  loop_control:
+    loop_var: service
 
 
 - name: Check if the Keycloak admin user exists and set a variable accordingly
