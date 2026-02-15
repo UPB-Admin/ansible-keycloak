@@ -66,6 +66,44 @@
 - name: Configure LDAP and start server
   become: yes
   block:
+    # state changes are ignored, since these operations would always report as changed
+    - name: Fetch certificate used by LDAP service
+      block:
+        - name: Create temporary file where the certificate will be exported
+          tempfile:
+            state: file
+            prefix: ldapcert_
+          register: ldap_certificate_file
+          changed_when: false
+
+        - name: Export the LDAP certificate to the temporary file
+          command:
+            argv: ["/usr/sbin/dsctl", "{{ ldap_instance_name }}", "tls", "export-cert", "--output-file", "{{ ldap_certificate_file.path }}", "Server-Cert"]
+          changed_when: false
+
+        - name: Slurp the LDAP certificate
+          slurp:
+            src: "{{ ldap_certificate_file.path }}"
+          register: ldap_certificate
+          changed_when: false
+
+        - name: Remove temporary certificate file
+          file:
+            path: "{{ ldap_certificate_file.path }}"
+            state: absent
+          changed_when: false
+
+    - name: Update TLS certificate if required
+      when: (ldap_certificate.content | b64decode | regex_replace("\r", "")) != pki_certificate.ldap
+      block:
+      - name: Import server TLS certificate
+        command:
+          argv: ["/usr/sbin/dsctl", "{{ ldap_instance_name }}", "tls", "import-server-key-cert", "{{ pki_configs.ldap.ldap.certificate_crt_path }}", "{{ pki_configs.ldap.ldap.certificate_key_path }}"]
+
+      - name: Import CA TLS certificate
+        command:
+          argv: ["/usr/sbin/dsctl", "{{ ldap_instance_name }}", "tls", "import-ca", "{{ pki_configs.ldap.ldap.certificate_crt_path }}", "Server-Cert"]
+
     - name: Check if the replication Bind DN exists in the file already
       lineinfile:
         path: "{{ ldap_instance_dse_file }}"
