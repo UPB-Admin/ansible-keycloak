@@ -32,6 +32,17 @@
         label: "{{ item.name }} -> {{ item.ip }}"
       with_items: "{{ groups.all | map('extract', hostvars) | list | json_query('[*].{ name: inventory_hostname, ip: interfaces_internal_ip }') }}"
 
+    - name: Add custom hosts entries
+      lineinfile:
+        path: /etc/hosts
+        state: present
+        regexp: "{{ item.name }}"
+        line: "{{ item.ip }} {{ item.name }}"
+      with_items: "{{ hosts_group_names | map('extract', hosts_empty_ruleset | combine(custom_hosts_entries)) | flatten | unique | map('dict2items', 'name', 'ip') }}"
+      vars:
+        hosts_group_names: "{{ group_names + ['all'] }}"
+        hosts_empty_ruleset: "{{ dict(hosts_group_names | zip_longest([], fillvalue=[])) }}"
+
 
 - name: Configure service for NTP synchronization
   become: yes

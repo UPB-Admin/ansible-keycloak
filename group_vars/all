@@ -26,6 +26,13 @@ firewalld_external_zone: "{{ firewalld_dmz_zone if firewalld_has_external else f
 # If set to true Ansible will remove all other configured rules as unexpected
 firewall_configuration_exclusive: true
 
+# List of custom hosts entries. Names are resolved to the given IP address
+# An example for the "load_balancers" group:
+# custom_hosts_entries:
+#   load_balancers:
+#     example.com: 192.0.2.1
+custom_hosts_entries: {}
+
 # Variable used to keep track of whether PKI files have been updated
 pki_changed: False
 

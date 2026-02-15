@@ -130,6 +130,9 @@ problems with special characters in some scripts.
 
 You will need to set some of the following variables for your deployment
 (depending on your needs, but not limited to these):
+  - `custom_hosts_entries`: Dictionary containing entries that should be added
+    to the `/etc/hosts` file. See the comment in `group_vars/all` for the
+    format.
   - `keycloak_path_prefix`: Prefix added to Keycloak paths on the web interface.
     The default value is `/auth`;
   - `pki_country_name`: Country name used in certificates;

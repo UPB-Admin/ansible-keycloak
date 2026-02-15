@@ -20,6 +20,8 @@
   reject traffic, where the rich rules may contain a `type="..."` component
   after the `reject` action string.
 
+- Add a task to configure custom entries to `/etc/hosts`.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
