@@ -40,6 +40,8 @@
   PKI certificates for the `stunnel` connection and encrypt other cluster
   traffic by configuring the `wsrep_provider_options` setting.
 
+- Update LDAP commands to use binaries' full paths.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

@@ -35,7 +35,7 @@
 
     - name: Check if the instance exists
       command:
-        argv: ["dsctl", "{{ ldap_instance_name }}", "status"]
+        argv: ["/usr/sbin/dsctl", "{{ ldap_instance_name }}", "status"]
       register: ldap_instance_status
       failed_when: False
       changed_when: False
@@ -55,7 +55,7 @@
 
         - name: Create the server instance based on the template
           command:
-            argv: ["dscreate", "from-file", "{{ ldap_ds_template_path }}"]
+            argv: ["/usr/sbin/dscreate", "from-file", "{{ ldap_ds_template_path }}"]
 
         - name: Remove directory server template
           file:
