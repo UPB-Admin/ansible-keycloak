@@ -231,6 +231,12 @@ You will need to set some of the following variables for your deployment
     group name from the `group_names` special variable of a host, or `"all"`),
     and the values are lists containing the configurations for hosts in the
     group.
+  - `firewall_configuration_exclusive`: Whether the Ansible playbook is the only
+    entity that manages firewall rules. If set to "True" (the default), Ansible
+    will remove any firewall rules that it does not expect (configured via the
+    `firewall_*_rules` variables). Setting this to "False" may be required if
+    there are other services that may add firewall rules (e.g., fail2ban may
+    automatically add blocking rules).
   - `database_performance_schema`: Whether to enable or disable database
     performance information in MariaDB. Valid options are `ON` and `OFF`. By
     default the performance schema is disabled to reduce the memory footprint

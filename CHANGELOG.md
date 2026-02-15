@@ -9,6 +9,9 @@
   variables.
 - Bump Keycloak to version 26.5.3.
 - Enable MDC (Mapped Diagnostic Context) extra information to Keycloak logs.
+- Add variable to control whether the playbook should remove unexpected firewall
+  rules. It defaults to True, but may be disabled to prevent removing firewall
+  rules configured outside the playbooks.
 
 ### November 2025
 - Bump Keycloak to version 26.4.2.

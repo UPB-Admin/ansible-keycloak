@@ -135,25 +135,24 @@
     verbosity: 2
 
 
-- name: Gather runtime firewall configurations
-  become: yes
-  ansible.posix.firewalld_info:
-    zones:
-      - "{{ firewalld_internal_zone }}"
-      - "{{ firewalld_external_zone }}"
-  register: firewall_runtime_configurations
-
-
-- name: Parse runtime zone configurations
-  include_tasks: parse_zone_config.yml
-  with_dict: "{{ firewall_runtime_configurations.firewalld_info.zones }}"
-  loop_control:
-    loop_var: zone
-    label: "{{ zone.key }}"
-
-
 - name: Add disabling actions for unexpected rules
+  when: firewall_configuration_exclusive
   block:
+    - name: Gather runtime firewall configurations
+      become: yes
+      ansible.posix.firewalld_info:
+        zones:
+          - "{{ firewalld_internal_zone }}"
+          - "{{ firewalld_external_zone }}"
+      register: firewall_runtime_configurations
+
+    - name: Parse runtime zone configurations
+      include_tasks: parse_zone_config.yml
+      with_dict: "{{ firewall_runtime_configurations.firewalld_info.zones }}"
+      loop_control:
+        loop_var: zone
+        label: "{{ zone.key }}"
+
     - name: Set facts for unexpected rules
       set_fact:
         firewall_unexpected_port_rules: "{{ firewall_runtime_port_rules | difference(firewall_expected_port_rules) | unique }}"
