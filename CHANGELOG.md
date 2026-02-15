@@ -7,6 +7,7 @@
   other request). Also includes some minor refactoring to how other roles use
   certificates to align with the new changes and improve usage of PKI-related
   variables.
+- Bump Keycloak to version 26.5.3.
 
 ### November 2025
 - Bump Keycloak to version 26.4.2.
