@@ -257,6 +257,9 @@
         - service: database
           content: "{{ hostvars[function_groups.database.master].pki_certificate.mariadb | default('') }}"
           dest: "{{ database_trusted_certificate_file }}"
+        - service: ldap
+          content: "{{ hostvars[function_groups.ldap.master].pki_certificate.ldap | default('') }}"
+          dest: "{{ ldap_trusted_certificate_file }}"
       loop_control:
         label: "{{ item.service }}"
       notify: restart keycloak

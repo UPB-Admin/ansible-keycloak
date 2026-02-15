@@ -24,6 +24,7 @@ keycloak_log_file: "{{ keycloak_log_subdir }}/keycloak.log"
 
 infinispan_trusted_certificate_file: "{{ keycloak_truststore_subdir }}/infinispan.crt"
 database_trusted_certificate_file: "{{ keycloak_conf_subdir }}/database.crt"
+ldap_trusted_certificate_file: "{{ keycloak_truststore_subdir }}/ldap.crt"
 keycloak_keystore_file: "{{ keycloak_conf_subdir }}/application.keystore"
 
 keycloak_keystore_cert_alias: server

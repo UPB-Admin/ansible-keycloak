@@ -52,6 +52,9 @@
   the service used a different set of certificates, which were created when the
   instance was initially configured.
 
+- Add the LDAP certificate to Keycloak's trust stores to allow configuring
+  connections via the `ldaps` protocol.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
