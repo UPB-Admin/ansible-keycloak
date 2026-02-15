@@ -191,6 +191,12 @@ You will need to set some of the following variables for your deployment
   - `keycloak_disabled_features`: A list of Keycloak features to disable;
   - `keycloak_jboss_event_logging`: Whether to log Keycloak audit events to the
     log files, besides the database (defaults to true);
+  - `keycloak_log_enable_mdc`: A dictionary containing whether MDC (Mapped
+    Diagnostic Context) should be added to log lines. The keys are the log
+    destinations used by Keycloak (i.e., file, console, syslog) and the values
+    are booleans defining whether MDC is enabled for that destination. By
+    default MDC is enabled for all destinations. Note that missing values
+    default to "False".
   - `load_balancer_service`: The type of load balancer to install - either
     `nginx` or `haproxy` can be specified.
   - `rsyslog_log_servers`: A list of rsyslog log servers that can receive log
