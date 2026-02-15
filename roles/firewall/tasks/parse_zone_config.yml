@@ -26,7 +26,7 @@
           "port": rule | regex_replace('.*port port="([^"]+)".*', '\1') | int,
           "protocol": rule | regex_replace('.*protocol="([^"]+)".*', '\1'),
           "family": rule | regex_replace('.*family="([^"]+)".*', '\1'),
-          "action": rule | regex_replace('.*(accept|reject|drop|mark)$', '\1'),
+          "action": rule | regex_replace('.*((accept|reject|drop|mark).*)$', '\1'),
           "state": "enabled",
           "source_ip": rule | regex_replace('.*source address="([^"]+)".*', '\1'),
         }]

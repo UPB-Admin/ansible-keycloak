@@ -7,11 +7,18 @@
   other request). Also includes some minor refactoring to how other roles use
   certificates to align with the new changes and improve usage of PKI-related
   variables.
+
 - Bump Keycloak to version 26.5.3.
+
 - Enable MDC (Mapped Diagnostic Context) extra information to Keycloak logs.
+
 - Add variable to control whether the playbook should remove unexpected firewall
   rules. It defaults to True, but may be disabled to prevent removing firewall
   rules configured outside the playbooks.
+
+- Fix parsing of existing rich rules - tools like `fail2ban` may add rules to
+  reject traffic, where the rich rules may contain a `type="..."` component
+  after the `reject` action string.
 
 ### November 2025
 - Bump Keycloak to version 26.4.2.
