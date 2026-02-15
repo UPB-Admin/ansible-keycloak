@@ -160,7 +160,7 @@
 
     - name: Copy galera config file (master)
       template:
-        src: "{{ 'master_galera.cnf' if inventory_hostname == function_groups.database.master else 'slave_galera.cnf' }}"
+        src: galera.cnf
         dest: /etc/my.cnf.d/galera.cnf
       notify: restart database
 

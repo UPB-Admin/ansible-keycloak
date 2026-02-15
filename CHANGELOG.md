@@ -29,6 +29,11 @@
   causing the playbook to always fail if the database could not start
   because of a bad configuration.
 
+- Unify MariaDB's Galera configuration files. The only difference between the
+  two files was the `wsrep_cluster_address` variable, where the slave nodes only
+  had the master's address configured (instead of the addresses of all the nodes
+  in the cluster), but this difference does not appear necessary.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
