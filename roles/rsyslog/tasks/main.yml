@@ -52,6 +52,7 @@
         group: root
         seuser: system_u
         setype: cert_t
+      register: rsyslog_private_key
 
     - name: Slurp private key
       run_once: true
@@ -71,7 +72,7 @@
       notify: restart rsyslog
 
     - name: Generate and print certificate sign request if a certificate is not found
-      when: not (rsyslog_client_certificate | default(False))
+      when: rsyslog_private_key.changed or not (rsyslog_client_certificate | default(False))
       block:
         - name: Generate certificate sign request
           run_once: true
