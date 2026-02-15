@@ -51,6 +51,8 @@
         setype: "{{ item.setype }}"
       when: >
         pki_certificate_check.failed
-        or pki_certificate_check.subject.commonName | default('') != item.value.common_name
-        or pki_certificate_check.subject_alt_name   | symmetric_difference(item.value.subject_alt_names)
+        or (pki_certificate_check.basic_constraints == None)
+        or ("CA:TRUE" not in pki_certificate_check.basic_constraints)
+        or (pki_certificate_check.subject.commonName | default("") != item.common_name)
+        or (pki_certificate_check.subject_alt_name   | symmetric_difference(item.subject_alt_names))
       notify: pki changed

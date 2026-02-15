@@ -42,6 +42,10 @@
 
 - Update LDAP commands to use binaries' full paths.
 
+- Add condition to replace self-signed certificates if they do not contain the
+  `CA:TRUE` basic constraint. Without this constraint some services could refuse
+  to accept them as CA certificates.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
