@@ -254,6 +254,9 @@ You will need to set some of the following variables for your deployment
     cleanly shutting down the service first). The default is set to `IGNORE`,
     which ignores the lock files and starts the service regardless of how it was
     previously stopped.
+  - `ldap_pbkdf2_num_iterations`: The number of PBKDF2 password hashing
+    iterations. If not configured or "False", the number of iterations is not
+    updated. The value must be a number.
 
 The override variables can be specified inside a YAML file that you will include
 when running the playbooks. An example of an overrides file can be found in the

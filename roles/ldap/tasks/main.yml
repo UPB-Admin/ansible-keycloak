@@ -90,6 +90,31 @@
         enabled: yes
 
 
+- name: Set number of password iterations
+  become: yes
+  when: ldap_pbkdf2_num_iterations | default(False)
+  block:
+    - name: Get number of PBKDF2 iterations currently configured
+      command:
+        argv: ["/usr/sbin/dsconf", "{{ ldap_instance_name }}", "plugin", "pwstorage-scheme", "pbkdf2-sha512", "get-num-iterations"]
+      register: ldap_pbkdf2_get_num_iterations
+      changed_when: False
+
+    - name: Set number of PBKDF2 iterations if necessary
+      command:
+        argv: ["/usr/sbin/dsconf", "{{ ldap_instance_name }}", "plugin", "pwstorage-scheme", "pbkdf2-sha512", "set-num-iterations", "{{ ldap_pbkdf2_num_iterations | int }}"]
+      when: not (ldap_pbkdf2_get_num_iterations.stdout_lines[0] | regex_search(ldap_pbkdf2_num_iterations_regex))
+      vars:
+        ldap_pbkdf2_num_iterations_regex: ": {{ ldap_pbkdf2_num_iterations | int }}$"
+      register: ldap_pbkdf2_set_num_iterations
+
+    - name: Restart the LDAP service if the number of PBKDF2 iterations was changed
+      command:
+        argv: ["/usr/sbin/dsctl", "{{ ldap_instance_name }}", "restart"]
+      when: ldap_pbkdf2_set_num_iterations.changed
+
+
+
 - name: Configure LDAP replication - ALL nodes are masters (max 20)
   become: yes
   throttle: 1

@@ -46,6 +46,8 @@
   `CA:TRUE` basic constraint. Without this constraint some services could refuse
   to accept them as CA certificates.
 
+- Add tasks to control LDAP's number of PBKDF2 password hashing iterations.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
