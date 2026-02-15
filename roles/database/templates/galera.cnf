@@ -41,7 +41,7 @@ wsrep_on=1
 wsrep_provider=/usr/lib64/galera/libgalera_smm.so
 
 # Provider specific configuration options
-#wsrep_provider_options=
+wsrep_provider_options="socket.ssl_ca={{ pki_configs.database.mariadb.certificate_crt_path }};socket.ssl_cert={{ pki_configs.database.mariadb.certificate_crt_path }};socket.ssl_key={{ pki_configs.database.mariadb.certificate_key_path }}"
 
 # Logical cluster name. Should be the same for all nodes.
 wsrep_cluster_name="{{ database_cluster_name }}"
@@ -127,3 +127,8 @@ wsrep_sst_auth=root:
 
 # Protocol version to use
 # wsrep_protocol_version=
+
+[sst]
+tcert="{{ pki_configs.database.stunnel.certificate_crt_path }}"
+tkey="{{ pki_configs.database.stunnel.certificate_key_path }}"
+tca="{{ pki_configs.database.stunnel.certificate_crt_path }}"

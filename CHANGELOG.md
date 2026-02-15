@@ -34,6 +34,12 @@
   had the master's address configured (instead of the addresses of all the nodes
   in the cluster), but this difference does not appear necessary.
 
+- Fix MariaDB Galera cluster communications encryption. Previously only the SST
+  traffic, which was being directed through `stunnel` was encrypted, however, it
+  also did not correctly use PKI to verify the peer's identity. We now use
+  PKI certificates for the `stunnel` connection and encrypt other cluster
+  traffic by configuring the `wsrep_provider_options` setting.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

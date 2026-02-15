@@ -21,6 +21,8 @@ pki_service_specific_configs:
   database:
     - application: mariadb
       file_group: "{{ database_system_user }}"
+    - application: stunnel
+      file_group: "{{ database_system_user }}"
   infinispan:
     - application: infinispan
   keycloak:
