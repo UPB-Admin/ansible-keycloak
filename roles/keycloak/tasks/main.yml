@@ -13,16 +13,6 @@
         state: present
         system: yes
 
-    - name: Set owner / group on PKI files
-      file:
-        state: directory
-        recurse: yes
-        path: "{{ pki_configs.keycloak.root_dir }}"
-        owner: "{{ pki_configs.keycloak.file_owner }}"
-        group: "{{ pki_configs.keycloak.file_group }}"
-        seuser: system_u
-        setype: cert_t
-
     - name: Install required packages
       package:
         name:
@@ -252,27 +242,30 @@
 - name: Configure keycloak for cross DC operation
   become: yes
   block:
-    - name: Copy the certificate used by the infinispan servers
+    - name: Copy the certificate used by the other services
+      when: item.content != ""
       copy:
-        content: "{{ hostvars[function_groups.infinispan.master].pki_certificate.infinispan }}"
-        dest: "{{ infinispan_trusted_certificate_file }}"
+        content: "{{ item.content }}"
+        dest: "{{ item.dest }}"
         mode: 0440
-        owner: "{{ pki_configs.keycloak.file_owner }}"
+        owner: root
         group: "{{ keycloak_system_user }}"
-
-    - name: Copy the certificate used by the database servers
-      copy:
-        content: "{{ hostvars[function_groups.database.master].pki_certificate.database }}"
-        dest: "{{ database_trusted_certificate_file }}"
-        mode: 0440
-        owner: "{{ pki_configs.keycloak.file_owner }}"
-        group: "{{ keycloak_system_user }}"
+      with_items:
+        - service: infinispan
+          content: "{{ hostvars[function_groups.infinispan.master].pki_certificate.infinispan | default('') }}"
+          dest: "{{ infinispan_trusted_certificate_file }}"
+        - service: database
+          content: "{{ hostvars[function_groups.database.master].pki_certificate.mariadb | default('') }}"
+          dest: "{{ database_trusted_certificate_file }}"
+      loop_control:
+        label: "{{ item.service }}"
+      notify: restart keycloak
 
     - name: Create java keystore based on PKI certificate and key
       openssl_pkcs12:
         action: export
-        certificate_path: "{{ pki_configs.keycloak.certificate_crt_path }}"
-        privatekey_path: "{{ pki_configs.keycloak.certificate_key_path }}"
+        certificate_path: "{{ pki_configs.keycloak.keycloak.certificate_crt_path }}"
+        privatekey_path: "{{ pki_configs.keycloak.keycloak.certificate_key_path }}"
         friendly_name: "{{ keycloak_keystore_cert_alias }}"
         path: "{{ keycloak_keystore_file }}"
         passphrase: "{{ vault.keycloak.keystore.pass }}"

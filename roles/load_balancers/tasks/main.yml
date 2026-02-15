@@ -1,63 +1,18 @@
-- name: Load balancer server initial configurations
-  become: yes
-  block:
-    - name: Set owner / group on PKI files
-      file:
-        state: directory
-        recurse: yes
-        path: "{{ pki_configs.load_balancers.root_dir }}"
-        owner: "{{ pki_configs.load_balancers.file_owner }}"
-        group: "{{ pki_configs.load_balancers.file_group }}"
-        seuser: system_u
-        setype: cert_t
-
-
 - name: Install and configure reverse proxy service
   include_tasks: "{{ load_balancer_service }}.yml"
 
 
-- name: Create OpenSSL dummy certificate on first load balancer
+- name: Add the certificate used by the keycloak servers
   become: yes
-  run_once: yes
-  block:
-    - name: Create dummy certificate sign request
-      openssl_csr:
-        path: "{{ pki_dummy_certificate_csr_path }}"
-        privatekey_path: "{{ pki_configs.load_balancers.certificate_key_path }}"
-        subject_alt_name: "DNS:Web-Server"
-        mode: "{{ pki_configs.load_balancers.file_mode }}"
-        seuser: system_u
-        setype: cert_t
-
-    - name: Create dummy OpenSSL certificate
-      openssl_certificate:
-        path: "{{ pki_dummy_certificate_crt_path }}"
-        csr_path: "{{ pki_dummy_certificate_csr_path }}"
-        privatekey_path: "{{ pki_configs.load_balancers.certificate_key_path }}"
-        provider: selfsigned
-        mode: "{{ pki_configs.load_balancers.file_mode }}"
-        seuser: system_u
-        setype: cert_t
-      notify: restart load balancer
-
-
-- name: Setup dummy certificates on other load balancers
-  block:
-    - name: Copy load balancers SSL certificates
-      include_tasks: copy_ssl_files.yml
-      with_items:
-        - "{{ pki_dummy_certificate_csr_path }}"
-        - "{{ pki_dummy_certificate_crt_path }}"
-
-    - name: Add the certificate used by the keycloak servers
-      become: yes
-      copy:
-        content: "{{ hostvars[function_groups.keycloak.master].pki_certificate.keycloak }}"
-        dest: "{{ keycloak_trusted_certificate_path }}"
-        mode: "{{ pki_configs.load_balancers.file_mode }}"
-        seuser: system_u
-        setype: cert_t
-      notify: restart load balancer
+  copy:
+    content: "{{ hostvars[function_groups.keycloak.master].pki_certificate.keycloak }}"
+    dest: "{{ keycloak_trusted_certificate_path }}"
+    mode: "{{ pki_configs.load_balancers.load_balancer.file_mode }}"
+    owner: "{{ pki_configs.load_balancers.load_balancer.file_owner }}"
+    group: "{{ pki_configs.load_balancers.load_balancer.file_group }}"
+    seuser: "{{ pki_configs.load_balancers.load_balancer.seuser }}"
+    setype: "{{ pki_configs.load_balancers.load_balancer.setype }}"
+  notify: restart load balancer
 
 
 - name: Set sysctl parameters

@@ -19,16 +19,6 @@
         state: present
         system: yes
 
-    - name: Set owner / group on PKI files
-      file:
-        state: directory
-        recurse: yes
-        path: "{{ pki_configs.infinispan.root_dir }}"
-        owner: "{{ pki_configs.infinispan.file_owner }}"
-        group: "{{ pki_configs.infinispan.file_group }}"
-        seuser: system_u
-        setype: cert_t
-
 
 - name: Create infinispan server directory and install code
   become: yes
@@ -209,8 +199,8 @@
     - name: Create java keystore based on PKI certificate and key
       openssl_pkcs12:
         action: export
-        certificate_path: "{{ pki_configs.infinispan.certificate_crt_path }}"
-        privatekey_path: "{{ pki_configs.infinispan.certificate_key_path }}"
+        certificate_path: "{{ pki_configs.infinispan.infinispan.certificate_crt_path }}"
+        privatekey_path: "{{ pki_configs.infinispan.infinispan.certificate_key_path }}"
         friendly_name: "{{ infinispan_keystore_cert_alias }}"
         path: "{{ infinispan_keystore }}"
         passphrase: "{{ vault.infinispan.keystore.pass }}"

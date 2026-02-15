@@ -1,47 +1,54 @@
 - become: yes
   block:
-    - name: Check if OpenSSL private keys exists
+    - name: Check if OpenSSL private keys exists ({{ item.identifier }})
       stat:
-        path: "{{ item.value.certificate_key_path }}"
+        path: "{{ item.certificate_key_path }}"
       register: pki_private_key_stat
 
-    - name: Create OpenSSL private key
+    - name: Create OpenSSL private key ({{ item.identifier }})
       openssl_privatekey:
-        path: "{{ item.value.certificate_key_path }}"
-        type: "{{ item.value.key_type }}"
-        size: "{{ item.value.key_size }}"
-        mode: "{{ item.value.file_mode }}"
+        path: "{{ item.certificate_key_path }}"
+        type: "{{ item.key_type }}"
+        size: "{{ item.key_size }}"
+        mode: "{{ item.file_mode }}"
+        seuser: "{{ item.seuser }}"
+        setype: "{{ item.setype }}"
       when: not pki_private_key_stat.stat.exists
       notify: pki changed
 
-    - name: Create certificate sign request
+    - name: Create certificate sign request ({{ item.identifier }})
       openssl_csr:
-        path: "{{ item.value.certificate_csr_path }}"
-        privatekey_path: "{{ item.value.certificate_key_path }}"
-        common_name: "{{ item.value.common_name }}"
-        country_name: "{{ item.value.country_name }}"
-        organization_name: "{{ item.value.organization_name }}"
-        locality_name: "{{ item.value.locality_name }}"
-        subject_alt_name: "{{ item.value.subject_alt_names }}"
+        path: "{{ item.certificate_csr_path }}"
+        privatekey_path: "{{ item.certificate_key_path }}"
+        common_name: "{{ item.common_name }}"
+        country_name: "{{ item.country_name }}"
+        organization_name: "{{ item.organization_name }}"
+        locality_name: "{{ item.locality_name }}"
+        subject_alt_name: "{{ item.subject_alt_names }}"
         basic_constraints:
          - "CA:TRUE"
         basic_constraints_critical: true
-        mode: "{{ item.value.file_mode }}"
+        mode: "{{ item.file_mode }}"
+        seuser: "{{ item.seuser }}"
+        setype: "{{ item.setype }}"
       notify: pki changed
+      register: pki_csr
 
-    - name: Check if certificate contains the correct subject alt names and common name
+    - name: Check if certificate contains the correct subject alt names and common name ({{ item.identifier }})
       openssl_certificate_info:
-        path: "{{ item.value.certificate_crt_path }}"
+        path: "{{ item.certificate_crt_path }}"
       ignore_errors: True
       register: pki_certificate_check
 
-    - name: Create OpenSSL certificate
+    - name: Create OpenSSL certificate ({{ item.identifier }})
       openssl_certificate:
-        path: "{{ item.value.certificate_crt_path }}"
-        privatekey_path: "{{ item.value.certificate_key_path }}"
-        csr_path: "{{ item.value.certificate_csr_path }}"
+        path: "{{ item.certificate_crt_path }}"
+        privatekey_path: "{{ item.certificate_key_path }}"
+        csr_path: "{{ item.certificate_csr_path }}"
         provider: selfsigned
-        mode: "{{ item.value.file_mode }}"
+        mode: "{{ item.file_mode }}"
+        seuser: "{{ item.seuser }}"
+        setype: "{{ item.setype }}"
       when: >
         pki_certificate_check.failed
         or pki_certificate_check.subject.commonName | default('') != item.value.common_name

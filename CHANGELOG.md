@@ -1,5 +1,13 @@
 ## Changelog
 
+### February 2026
+- Refactor PKI generation to allow creating multiple certificates for the same
+  service (e.g., the load balancer has a certificate for requests to the
+  service's public hostname, as well as a dummy certificate that is used for any
+  other request). Also includes some minor refactoring to how other roles use
+  certificates to align with the new changes and improve usage of PKI-related
+  variables.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

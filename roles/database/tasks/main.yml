@@ -31,11 +31,12 @@
       file:
         state: directory
         recurse: yes
-        path: "{{ pki_configs.database.root_dir }}"
-        owner: "{{ pki_configs.database.file_owner }}"
-        group: "{{ pki_configs.database.file_group }}"
-        seuser: system_u
-        setype: cert_t
+        path: "{{ item.value.root_dir }}"
+        owner: "{{ item.value.file_owner }}"
+        group: "{{ item.value.file_group }}"
+      with_dict: "{{ pki_configs.database }}"
+      loop_control:
+        label: "{{ item.key }}"
 
 
 # check if "{{ database_secure_install_marker }}" exists

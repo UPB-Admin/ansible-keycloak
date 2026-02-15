@@ -21,16 +21,6 @@
       when:
         - ansible_facts.distribution_major_version == "9"
 
-    - name: Set owner / group on PKI files
-      file:
-        state: directory
-        recurse: yes
-        path: "{{ pki_configs.ldap.root_dir }}"
-        owner: "{{ pki_configs.ldap.file_owner }}"
-        group: "{{ pki_configs.ldap.file_group }}"
-        seuser: system_u
-        setype: cert_t
-
 
 - name: Set up LDAP directory server instance
   become: yes

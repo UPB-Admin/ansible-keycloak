@@ -22,6 +22,7 @@ firewalld_dmz_zone: dmz
 firewalld_has_external: "{{ interfaces_internal_name != interfaces_external_name }}"
 firewalld_external_zone: "{{ firewalld_dmz_zone if firewalld_has_external else firewalld_internal_zone }}"
 
+
 # Variable used to keep track of whether PKI files have been updated
 pki_changed: False
 
