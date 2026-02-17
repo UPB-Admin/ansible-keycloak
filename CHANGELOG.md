@@ -69,6 +69,9 @@
 
 - Remove Prometheus exporter archives after installation.
 
+- Configure TLS for Infinispan clustering TCP connections to encrypt all
+  cross-site communications.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

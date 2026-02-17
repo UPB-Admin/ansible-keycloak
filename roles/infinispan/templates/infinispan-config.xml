@@ -54,7 +54,13 @@
       <!-- Create a cluster of hosts with all members listening on a specific port
            The MPING protocol is replaced with TCPPING -->
       <stack name="global-cluster" extends="tcp">
-         <TCP bind_port="{{ infinispan_tcpping_port }}"/>
+         <TCP bind_port="{{ infinispan_tcpping_port }}"
+            tls.enabled="true"
+            tls.client_auth="NEED"
+            tls.keystore_path="{{ infinispan_keystore }}"
+            tls.keystore_password="{{ vault.infinispan.keystore.pass }}"
+            tls.keystore_alias="{{ infinispan_keystore_cert_alias }}"
+            tls.protocols="TLSv1.3"/>
          <TCPPING initial_hosts="{{ infinispan_tcpping_server_list }}" stack.combine="REPLACE" stack.position="MPING"/>
       </stack>
 
