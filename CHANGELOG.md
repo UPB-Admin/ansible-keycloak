@@ -65,6 +65,8 @@
 
 - Make sure the database is started before running MySQL queries.
 
+- Bump Infinispan to version 15.0.22.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
