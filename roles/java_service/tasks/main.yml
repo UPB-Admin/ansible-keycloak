@@ -12,31 +12,6 @@
     state: latest
   register: install_out
 
-- name: Update java version and binary alternative
-  become: yes
-  when: install_out.changed
-  block:
-    - name: Gather package information
-      package_facts:
-        manager: auto
-
-    - name: Set openjdk {{ java_version }} package facts
-      set_fact:
-        java_package: "{{ ansible_facts.packages['java-%s-openjdk' % java_version][0] }}"
-
-    - name: Set up {{ java_version }} binary (in bin directory) as alternative
-      alternatives:
-        name: "{{ item }}"
-        link: "/usr/bin/{{ item }}"
-        path: "/usr/lib/jvm/java-{{ java_version }}-openjdk-{{ java_package.version }}-{{ java_package.release }}.{{ java_package.arch }}/bin/{{ item }}"
-      with_items:
-        - java
-        - javac
-
-    - name: Use latest openjdk {{ java_version }} as java alternative
-      command:
-        argv: [ "update-alternatives", "--set", "{{ item }}", "/usr/lib/jvm/java-{{ java_version }}-openjdk-{{ java_package.version }}-{{ java_package.release }}.{{ java_package.arch }}/bin/{{ item }}" ]
-      notify: restart java service
-      with_items:
-        - java
-        - javac
+- name: Set fact for java home directory
+  set_fact:
+    java_home_dir: "/usr/lib/jvm/java-{{ java_version }}-openjdk"

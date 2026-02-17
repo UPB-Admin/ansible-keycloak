@@ -13,6 +13,7 @@ Description=Keycloak Server Service
 After=syslog.target network-online.target mariadb.service infinispan.service
 
 [Service]
+Environment=JAVA_HOME="{{ java_home_dir }}"
 Environment=JAVA_OPTS="{{ keycloak_java_opts }}"
 ExecStart=/bin/bash "{{ keycloak_server_script_file }}" start --optimized
 # Inspired by https://unix.stackexchange.com/a/584965

@@ -16,6 +16,7 @@ After=network-online.target
 
 [Service]
 Environment=INFINISPAN_HOME="{{ infinispan_install_dir }}"
+Environment=JAVA_HOME="{{ java_home_dir }}"
 Environment=JAVA_OPTS="{{ infinispan_java_opts }}"
 ExecStart=/bin/bash "{{ infinispan_server_script }}"
 # Inspired by https://unix.stackexchange.com/a/584965

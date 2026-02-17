@@ -76,6 +76,17 @@
   configurations. This removes the need to manually synchronize the Ansible
   variables with the values in the configuration file.
 
+- Do not update the `java` and `javac` commands globally when installing a new
+  version. Instead, define a variable to the location of the "Java home"
+  directory and use it to configure the `JAVA_HOME` environment variable in the
+  systemd service files. The previous approach did not allow using multiple
+  versions of Java at the same time, since all services used the default `java`
+  binary defined by `update-alternatives`. Note that this may leave the
+  `/usr/bin/java` and `/usr/bin/javac` links broken since they are no longer
+  updated by the playbook (the package installation scripts may still update
+  them, however). If that is the case and you need any of the commands
+  globally, use the `update-alternatives` command to fix the links.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
