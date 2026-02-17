@@ -8,7 +8,8 @@ After=network-online.target
 
 [Service]
 User={{ prometheus_system_user }}
-ExecStart={{ prometheus_exporters.node.install_dir }}/node_exporter
+ExecStart={{ prometheus_exporters.node.install_dir }}/node_exporter \
+	--web.listen-address=":{{ prometheus_exporters.node.port }}"
 
 [Install]
 WantedBy=default.target

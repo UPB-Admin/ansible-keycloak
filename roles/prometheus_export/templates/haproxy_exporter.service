@@ -8,7 +8,9 @@ After=network-online.target
 
 [Service]
 User={{ prometheus_system_user }}
-ExecStart={{ prometheus_expoters.haproxy.install_dir }}/haproxy_exporter --haproxy.scrape-uri=unix:/run/haproxy/admin.sock
+ExecStart={{ prometheus_expoters.haproxy.install_dir }}/haproxy_exporter \
+	--haproxy.scrape-uri=unix:/run/haproxy/admin.sock \
+	--web.listen-address=":{{ prometheus_exporters.haproxy.port }}"
 
 [Install]
 WantedBy=default.target

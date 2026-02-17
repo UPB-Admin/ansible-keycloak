@@ -87,6 +87,8 @@
   them, however). If that is the case and you need any of the commands
   globally, use the `update-alternatives` command to fix the links.
 
+- Explicitly configure the ports Prometheus exporters listen on.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

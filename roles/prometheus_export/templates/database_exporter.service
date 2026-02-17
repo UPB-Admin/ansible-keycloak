@@ -25,7 +25,8 @@ ExecStart={{ prometheus_exporters.database.install_dir }}/mysqld_exporter \
 	--collect.perf_schema.eventswaits \
 	--collect.perf_schema.indexiowaits \
 	--collect.perf_schema.tableiowaits \
-	--collect.slave_status
+	--collect.slave_status \
+	--web.listen-address=":{{ prometheus_exporters.database.port }}"
 
 [Install]
 WantedBy=default.target
