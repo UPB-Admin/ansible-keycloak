@@ -55,23 +55,25 @@
           recurse: yes
           mode: u=rX,g=rX
 
-      - name: Create infinispan server data subdirectory if it does not exist
+      - name: Create required infinispan installation directories
         file:
-          path: "{{ infinispan_server_data_subdir }}"
+          path: "{{ item }}"
           state: directory
           mode: 0770
+        with_items:
+          - "{{ infinispan_install_dir }}/server/cache"
+          - "{{ infinispan_install_dir }}/server/log"
+          - "{{ infinispan_install_dir }}/server/data"
+          - "{{ infinispan_install_dir }}/server/lib"
 
-      - name: Give infinispan write access on users property files
+      - name: Grant infinispan user write access on {{ item }}
         file:
-          path: "{{ infinispan_server_conf_subdir }}/users.properties"
+          path: "{{ item }}"
           state: file
           mode: 0660
-
-      - name: Give infinispan write access on groups property files
-        file:
-          path: "{{ infinispan_server_conf_subdir }}/groups.properties"
-          state: file
-          mode: 0660
+        with_items:
+          - "{{ infinispan_server_conf_subdir }}/users.properties"
+          - "{{ infinispan_server_conf_subdir }}/groups.properties"
 
       - name: Set owner / group on infinispan directory
         file:

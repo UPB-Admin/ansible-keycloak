@@ -8,9 +8,7 @@ infinispan_tmp_file: "/tmp/infinispan-{{ infinispan_version }}.zip"
 infinispan_persistence_data_dir: "/opt/infinispan-persistence"
 
 infinispan_server_bin_subdir:  "{{ infinispan_install_dir }}/bin"
-infinispan_server_data_subdir: "{{ infinispan_install_dir }}/server/data"
 infinispan_server_conf_subdir: "{{ infinispan_install_dir }}/server/conf"
-infinispan_server_lib_subdir:  "{{ infinispan_install_dir }}/server/lib"
 
 infinispan_server_log_subdir:  "/var/log/infinispan"
 infinispan_server_log_file: "{{ infinispan_server_log_subdir }}/server.log"
