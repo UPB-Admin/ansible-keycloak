@@ -14,12 +14,12 @@
     # HAProxy does not have an explicit parameter for key
     - name: Add symlinks for certificate keys as CERT.crt.key
       file:
-        path: "{{ item }}.key"
-        src: "{{ pki_configs.load_balancers.load_balancer.certificate_key_path }}"
+        path: "{{ item.certificate_crt_path }}.key"
+        src: "{{ item.certificate_key_path }}"
         state: link
       with_items:
-        - "{{ pki_configs.load_balancers.load_balancer.certificate_crt_path }}"
-        - "{{ pki_configs.load_balancers.load_balancer_dummy.certificate_crt_path }}"
+        - "{{ pki_configs.load_balancers.load_balancer }}"
+        - "{{ pki_configs.load_balancers.load_balancer_dummy }}"
       notify: restart load balancer
 
     - name: Create chroot directory

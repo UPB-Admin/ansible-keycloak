@@ -32,7 +32,6 @@
         seuser: "{{ item.seuser }}"
         setype: "{{ item.setype }}"
       notify: pki changed
-      register: pki_csr
 
     - name: Check if certificate contains the correct subject alt names and common name ({{ item.identifier }})
       openssl_certificate_info:
