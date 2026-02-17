@@ -26,6 +26,9 @@ ExecStart={{ prometheus_exporters.database.install_dir }}/mysqld_exporter \
 	--collect.perf_schema.indexiowaits \
 	--collect.perf_schema.tableiowaits \
 	--collect.slave_status \
+{% if prometheus_exporters_tls %}
+	--web.config.file="{{ prometheus_exporter_web_conf_file }}" \
+{% endif %}
 	--web.listen-address=":{{ prometheus_exporters.database.port }}"
 
 [Install]

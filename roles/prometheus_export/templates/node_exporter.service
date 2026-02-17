@@ -9,6 +9,9 @@ After=network-online.target
 [Service]
 User={{ prometheus_system_user }}
 ExecStart={{ prometheus_exporters.node.install_dir }}/node_exporter \
+{% if prometheus_exporters_tls %}
+	--web.config.file="{{ prometheus_exporter_web_conf_file }}" \
+{% endif %}
 	--web.listen-address=":{{ prometheus_exporters.node.port }}"
 
 [Install]

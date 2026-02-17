@@ -177,6 +177,8 @@ access_admin_realm_allowed_sources: {}
 prometheus_servers: []
 # Whether to monitor services using Prometheus
 prometheus_monitor: "{{ prometheus_servers | length > 0 }}"
+# Whether to enable TLS for Prometheus exporters
+prometheus_exporters_tls: False
 # Exporters to install on the nodes
 prometheus_service_specific_exporters:
   database: ["node", "database"]

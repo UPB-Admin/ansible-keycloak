@@ -1,6 +1,6 @@
-- name: Slurp contents of {{ item.1[item.0.key] }} from master
+- name: Slurp contents of {{ item.1[item.0.key] }}
   become: yes
-  delegate_to: "{{ function_groups[item.1.function].master }}"
+  delegate_to: "{{ groups[item.1.group] | first }}"
   slurp:
     src: "{{ item.1[item.0.key] }}"
   register: file_contents

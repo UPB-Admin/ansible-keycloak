@@ -10,6 +10,9 @@ After=network-online.target
 User={{ prometheus_system_user }}
 ExecStart={{ prometheus_expoters.haproxy.install_dir }}/haproxy_exporter \
 	--haproxy.scrape-uri=unix:/run/haproxy/admin.sock \
+{% if prometheus_exporters_tls %}
+	--web.config.file="{{ prometheus_exporter_web_conf_file }}" \
+{% endif %}
 	--web.listen-address=":{{ prometheus_exporters.haproxy.port }}"
 
 [Install]

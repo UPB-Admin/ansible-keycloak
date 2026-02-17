@@ -89,6 +89,9 @@
 
 - Explicitly configure the ports Prometheus exporters listen on.
 
+- Add option to configure TLS encryption for Prometheus exporters using
+  self-signed certificates.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

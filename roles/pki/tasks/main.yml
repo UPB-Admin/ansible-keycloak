@@ -1,14 +1,28 @@
+- name: Add prometheus TLS certificates expoters (if enabled)
+  set_fact:
+    pki_service_specific_configs: >-
+      {{
+        pki_service_specific_configs | combine({"all": [{
+          "application": "prometheus_exporters",
+          "file_owner": "root",
+          "file_group": prometheus_system_user,
+        }]}, list_merge="append_rp")
+      }}
+  when:
+    - prometheus_monitor
+    - prometheus_exporters_tls
+
 - name: Configure variables for server PKI configurations
   set_fact:
     pki_configs: |
-      {% set function = item.0.key %}
+      {% set group = item.0.key %}
       {% set config  = item.1 %}
       {% set identifier = config.identifier | default(config.application) %}
       {% set root_dir = "/etc/pki/" + config.application %}
       {{
-        pki_configs | default({}) | combine({function: {
+        pki_configs | default({}) | combine({group: {
           identifier: {
-            "function": function,
+            "group": group,
             "application": config.application,
             "identifier": identifier,
 
@@ -31,8 +45,8 @@
             "country_name": config.country_name | default(pki_country_name),
             "organization_name": config.organization_name | default(pki_organization_name),
             "locality_name": config.locality_name | default(pki_locality_name),
-            "common_name": config.common_name | default(function),
-            "subject_alt_names": config.subject_alt_names | default([function] + groups[function]) | map('regex_replace', '^', 'DNS:') | list,
+            "common_name": config.common_name | default(group),
+            "subject_alt_names": config.subject_alt_names | default([group] + groups[group]) | map('regex_replace', '^', 'DNS:') | list,
 
             "seuser": config.file_seuser | default(pki_file_seuser),
             "setype": config.file_setype | default(pki_file_setype),
@@ -40,7 +54,7 @@
         }}, list_merge='append_rp', recursive=True)
       }}
   with_subelements:
-    - "{{ pki_service_specific_configs | dict2items | selectattr('key', 'in', group_names) }}"
+    - "{{ pki_service_specific_configs | dict2items | selectattr('key', 'in', all_group_names) }}"
     - value
   loop_control:
     label: "{{ item.0.key }}"
@@ -76,13 +90,13 @@
 
 - name: Create PKI certificate files
   include_tasks: create_pki_cert_files.yml
-  when: inventory_hostname == function_groups[item.function].master
+  when: inventory_hostname == (groups[item.group] | first)
   with_items: "{{ pki_file_list }}"
   loop_control:
-    label: "{{ item.function }} - {{ item.identifier }}"
+    label: "{{ item.group }} - {{ item.identifier }}"
 
 
-- name: Copy PKI certificate files from master servers
+- name: Copy PKI certificate files to other nodes
   include_tasks:
     file: copy_ssl_files.yml
   with_cartesian:

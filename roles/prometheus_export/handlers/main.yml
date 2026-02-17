@@ -4,6 +4,8 @@
     name: node_exporter
     state: restarted
     enabled: yes
+  listen:
+    - restart exporters
 
 - name: restart database exporter
   become: yes
@@ -11,6 +13,8 @@
     name: database_exporter
     state: restarted
     enabled: yes
+  listen:
+    - restart exporters
 
 - name: restart haproxy exporter
   become: yes
@@ -18,3 +22,5 @@
     name: haproxy_exporter
     state: restarted
     enabled: yes
+  listen:
+    - restart exporters

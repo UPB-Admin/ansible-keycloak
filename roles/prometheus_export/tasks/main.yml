@@ -14,6 +14,38 @@
         system: yes
 
 
+- name: Configure TLS settings (if enabled)
+  become: yes
+  when:
+    - prometheus_exporters_to_install
+    - prometheus_exporters_tls
+  block:
+    - name: Set owner / group on PKI files
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ pki_configs.all.prometheus_exporters.root_dir }}"
+        owner: "{{ pki_configs.all.prometheus_exporters.file_owner }}"
+        group: "{{ pki_configs.all.prometheus_exporters.file_group }}"
+
+    - name: Create directory for web configuration (common for all exporters)
+      file:
+        path: "{{ prometheus_exporter_etc_dir }}"
+        state: directory
+        mode: 0750
+        owner: root
+        group: "{{ prometheus_system_user }}"
+
+    - name: Create web configuration file with TLS settings
+      template:
+        src: web.yml
+        dest: "{{ prometheus_exporter_web_conf_file }}"
+        mode: 0640
+        owner: root
+        group: "{{ prometheus_system_user }}"
+      notify: restart exporters
+
+
 - name: Install and configure exporters
   include_tasks: "install_exporter.yml"
   when:

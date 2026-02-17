@@ -1,1 +1,4 @@
 database_prometheus_user: exporter
+
+prometheus_exporter_etc_dir: /etc/prometheus_exporter
+prometheus_exporter_web_conf_file: "{{ prometheus_exporter_etc_dir }}/web.yml"

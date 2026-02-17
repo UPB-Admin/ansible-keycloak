@@ -257,6 +257,9 @@ You will need to set some of the following variables for your deployment
   - `ldap_pbkdf2_num_iterations`: The number of PBKDF2 password hashing
     iterations. If not configured or "False", the number of iterations is not
     updated. The value must be a number.
+  - `prometheus_exporters_tls`: Whether to enable TLS for Prometheus exporters.
+    The exporters will use self-signed certificates, similar to how TLS is
+    configured for internal communications for other components.
 
 The override variables can be specified inside a YAML file that you will include
 when running the playbooks. An example of an overrides file can be found in the
