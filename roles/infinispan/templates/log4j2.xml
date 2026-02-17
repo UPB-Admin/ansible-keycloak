@@ -16,8 +16,8 @@
 
     <!-- Rolling file -->
     <RollingFile name="FILE" createOnDemand="true"
-                 fileName="${path}/server.log"
-                 filePattern="${path}/server.log.%d{yyyy-MM-dd}-%i">
+                 fileName="{{ infinispan_server_log_file }}"
+                 filePattern="{{ infinispan_server_log_file }}.%d{yyyy-MM-dd}-%i">
       <Policies>
         <OnStartupTriggeringPolicy />
         <SizeBasedTriggeringPolicy size="100 MB" />
@@ -40,8 +40,8 @@
 
     <!-- Rolling JSON file, disabled by default -->
     <RollingFile name="JSON-FILE" createOnDemand="true"
-                 fileName="${path}/server.log.json"
-                 filePattern="${path}/server.log.json.%d{yyyy-MM-dd}-%i">
+                 fileName="{{ infinispan_server_log_json_file }}"
+                 filePattern="{{ infinispan_server_log_json_file }}.%d{yyyy-MM-dd}-%i">
       <Policies>
         <OnStartupTriggeringPolicy />
         <SizeBasedTriggeringPolicy size="100 MB" />

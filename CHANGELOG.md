@@ -72,6 +72,10 @@
 - Configure TLS for Infinispan clustering TCP connections to encrypt all
   cross-site communications.
 
+- Use absolute paths (i.e., the Ansible variables) for Infinispan log
+  configurations. This removes the need to manually synchronize the Ansible
+  variables with the values in the configuration file.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
