@@ -177,6 +177,13 @@
   meta: flush_handlers
 
 
+- name: Ensure database is started before running queries
+  service:
+    name: mariadb
+    state: started
+    enabled: True
+
+
 - name: Create and setup databases for Keycloak
   run_once: yes
   include_tasks: setup_database.yml
