@@ -48,6 +48,11 @@
           group: root
           recurse: yes
 
+      - name: Remove exporter temporary file
+        file:
+          path: "{{ expoter.value.tmp_file }}"
+          state: absent
+
     # Rules below are not part of the block above
     - name: Configure {{ exporter.key }} exporter service
       template:

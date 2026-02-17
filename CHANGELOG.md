@@ -67,6 +67,8 @@
 
 - Bump Infinispan to version 15.0.22.
 
+- Remove Prometheus exporter archives after installation.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
