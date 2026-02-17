@@ -65,13 +65,9 @@
     label: "{{ exporter.key }}"
 
 
-- name: Consider the "all" group explicitly for host
-  set_fact:
-    firewall_host_groups: "{{ group_names + ['all'] }}"
-
 - name: Create a default empty ruleset for each host group
   set_fact:
-    firewall_empty_ruleset: "{{ dict(firewall_host_groups | zip_longest([], fillvalue=[])) }}"
+    firewall_empty_ruleset: "{{ dict(all_group_names | zip_longest([], fillvalue=[])) }}"
 
 - name: Extract firewall rules relevant for current host
   set_fact:
@@ -98,7 +94,7 @@
           "state": rule.state | default("enabled"),
         }]
       }}
-  with_items: "{{ firewall_host_groups | map('extract', firewall_applicable_port_rules) | flatten | unique }}"
+  with_items: "{{ all_group_names | map('extract', firewall_applicable_port_rules) | flatten | unique }}"
   loop_control:
     loop_var: rule
 
@@ -124,7 +120,7 @@
         }]
       }}
   with_subelements:
-    - "{{ firewall_host_groups | map('extract', firewall_applicable_rich_rules) | flatten | unique }}"
+    - "{{ all_group_names | map('extract', firewall_applicable_rich_rules) | flatten | unique }}"
     - source_ips
   loop_control:
     loop_var: rule

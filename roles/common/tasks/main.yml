@@ -38,10 +38,9 @@
         state: present
         regexp: "{{ item.name }}"
         line: "{{ item.ip }} {{ item.name }}"
-      with_items: "{{ hosts_group_names | map('extract', hosts_empty_ruleset | combine(custom_hosts_entries)) | flatten | unique | map('dict2items', 'name', 'ip') }}"
+      with_items: "{{ all_group_names | map('extract', hosts_empty_ruleset | combine(custom_hosts_entries)) | flatten | unique | map('dict2items', 'name', 'ip') }}"
       vars:
-        hosts_group_names: "{{ group_names + ['all'] }}"
-        hosts_empty_ruleset: "{{ dict(hosts_group_names | zip_longest([], fillvalue=[])) }}"
+        hosts_empty_ruleset: "{{ dict(all_group_names | zip_longest([], fillvalue=[])) }}"
 
 
 - name: Configure service for NTP synchronization

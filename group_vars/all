@@ -122,6 +122,8 @@ java_services:
   - keycloak
 
 
+all_group_names: "{{ group_names + ['all'] }}"
+
 # Number of installed services running on this server
 function_num_services_installed: "{{ function_groups.keys() | intersect(group_names) | length }}"
 # Number of Java services on the server
