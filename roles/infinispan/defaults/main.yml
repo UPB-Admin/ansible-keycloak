@@ -19,10 +19,6 @@ infinispan_cli: "{{ infinispan_server_bin_subdir }}/cli.sh"
 infinispan_server_script: "{{ infinispan_server_bin_subdir }}/server.sh"
 infinispan_keystore: "{{ infinispan_server_conf_subdir }}/server.jks"
 
-# ignore dangling lock files; meant to avoid errors after system reboot
-# may cause some issues if service is started after improperly stopped
-infinispan_unclean_shutdown_action: IGNORE
-
 # synchronous backups have better consistency
 infinispan_backup_strategy: SYNC
 # backup operations time out after 10 seconds

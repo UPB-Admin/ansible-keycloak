@@ -206,14 +206,6 @@ You will need to set some of the following variables for your deployment
     services (Keycloak and Infinispan) if they are installed on a system that
     also runs other services (e.g., database).
 
-- Infinispan:
-  - `infinispan_unclean_shutdown_action`: What action Infinispan should take
-    when a forced cache shutdown is detected (i.e., it uses lock files in
-    the global persistence directory to detect if the server reboots without
-    cleanly shutting down the service first). The default is set to `IGNORE`,
-    which ignores the lock files and starts the service regardless of how it was
-    previously stopped.
-
 - Keycloak:
   - `keycloak_custom_theme`: If a custom theme for Keycloak must be installed,
     it can be configured to be downloaded from a git repository. The following
