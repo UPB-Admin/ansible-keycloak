@@ -25,7 +25,7 @@ handle TLS when communicating with the users, and also offer support for [sticky
 sessions][] to make a user's requests are always handled by the same keycloak
 servers.
 
-![Keycloak architecture](static/cluster.svg "Keycloak architecture")
+![Keycloak architecture](static/cluster.png "Keycloak architecture")
 
 
 ### Notes and warnings

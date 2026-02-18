@@ -102,6 +102,9 @@
   versions of Keycloak appeared to get stuck in a connection loop when
   Infinispan was restarted, but it does not appear to be the case anymore.
 
+- Update architecture diagram to reflect current status and change image format
+  from SVG to PNG.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
