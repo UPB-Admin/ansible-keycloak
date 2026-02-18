@@ -87,10 +87,6 @@
          </authorization>
       </security>
 
-      <global-state unclean-shutdown-action="{{ infinispan_unclean_shutdown_action }}">
-         <persistent-location path="{{ infinispan_persistence_data_dir }}"/>
-      </global-state>
-
 {% for cache_name, cache_config in infinispan_caches.items() %}
       <distributed-cache name="{{ cache_name }}" owners="2">
          <locking acquire-timeout="{{ infinispan_locking_acquire_timeout }}" />
@@ -104,12 +100,6 @@
             </backup>
 {% endfor %}
          </backups>
-         <persistence>
-            <file-store shared="false" preload="true" open-files-limit="{{ infinispan_file_store_limit_no_files | int }}">
-               <data path="file-store-data" max-file-size="{{ infinispan_file_store_data_file_size | int }}"/>
-               <index path="file-store-index"/>
-            </file-store>
-         </persistence>
 
          <security>
             <authorization enabled="true" roles="admin {{ infinispan_keycloak_user }}"/>

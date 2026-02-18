@@ -92,6 +92,11 @@
 - Add option to configure TLS encryption for Prometheus exporters using
   self-signed certificates.
 
+- Completely remove Infinispan persistence. It was originally added as a means
+  to maintain persistence for Keycloak sessions; however, since sessions have
+  been moved to the database, Infinispan persistence no longer serves its
+  original purpose and instead appears to cause some issues after upgrades.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

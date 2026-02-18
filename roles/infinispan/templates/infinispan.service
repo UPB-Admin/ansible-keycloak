@@ -25,7 +25,6 @@ ExecStartPost=/bin/bash -c 'while ! :< "/dev/tcp/{{ interfaces_external_ip|quote
 Type=simple
 User={{ infinispan_system_user }}
 SyslogIdentifier=infinispan
-LimitNOFILE={{ infinispan_limit_no_file }}
 
 # Security settings
 {{ systemd_service_security_settings }}

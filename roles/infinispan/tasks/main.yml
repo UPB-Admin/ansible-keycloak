@@ -101,39 +101,6 @@
     setype: var_log_t
 
 
-# Keycloak marshalling has been changed from JBoss Marshalling to Infinispan protostream.
-# Since the two are incompatible, caches need to be cleaned up.
-# Ignore the errors that say the service does not exist since we do this
-# before configuring the service on a first installation.
-- name: Remove Infinispan persistence data directory if Keycloak is upgrading to version 26
-  become: yes
-  when: hostvars[function_groups.database.master].keycloak_running_version is version("26.0.0", "<")
-  block:
-    - name: Stop Infinispan service before removing the persistence directory
-      systemd:
-        name: infinispan
-        state: stopped
-      register: infinispan_stop
-      failed_when:
-        - infinispan_stop.failed == true
-        - not infinispan_stop.msg | regex_search("Could not find the requested service")
-
-    - name: Remove the persistence data directory
-      file:
-        path: "{{ infinispan_persistence_data_dir }}"
-        state: absent
-
-
-- name: Create Infinispan persistence data directory
-  become: yes
-  file:
-    path: "{{ infinispan_persistence_data_dir }}"
-    state: directory
-    mode: 0770
-    owner: root
-    group: "{{ infinispan_system_user }}"
-
-
 - name: Configure infinispan service
   become: yes
   block:
@@ -179,7 +146,6 @@
         state: present
       with_items:
         - "{{ infinispan_install_dir }}"
-        - "{{ infinispan_persistence_data_dir }}"
         - "{{ infinispan_server_log_subdir }}"
 
     - name: Apply facl permissions on Infinispan directories
@@ -191,7 +157,6 @@
         state: present
       with_items:
         - "{{ infinispan_install_dir }}"
-        - "{{ infinispan_persistence_data_dir }}"
         - "{{ infinispan_server_log_subdir }}"
 
 
@@ -326,6 +291,14 @@
     regexp: "^{{ item }}="
     state: present
   with_items: "{{ infinispan_users }}"
+
+
+# Remove the persistence directory that was used in previous configurations
+- name: Ensure old infinispan persistence directory is removed
+  become: yes
+  file:
+    path: "{{ infinispan_persistence_data_dir }}"
+    state: absent
 
 
 - name: Register rsyslog logging for Infinispan service

@@ -46,10 +46,6 @@ infinispan_transaction_locking: PESSIMISTIC
 infinispan_tcpping_server_list: "{{ groups.infinispan | product(['[%d]' % infinispan_tcpping_port]) | map('join') | join(',') }}"
 infinispan_keystore_cert_alias: server
 
-infinispan_limit_no_file: 10000
-infinispan_file_store_limit_no_files: "{{ infinispan_limit_no_file / 5 }}"
-infinispan_file_store_data_file_size: "{{ 16 * 1024 * 1024 }}" # maximum 16MB
-
 infinispan_users:
   - admin
   - monitor
