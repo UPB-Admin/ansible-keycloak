@@ -368,14 +368,6 @@
     ansible_remote_tmp: "/tmp/${USER}/.ansible"
 
 
-- name: Mark Keycloak for restart when Infinispan was restarted
-  debug:
-    msg: "Notify restart of keycloak service"
-  when: cluster_servers.infinispan | map("extract", hostvars) | selectattr("infinispan_restarted") | list | length > 0
-  changed_when: True
-  notify: restart keycloak
-
-
 - name: Mark Keycloak service for restart if the PKI files have changed
   when: pki_changed
   debug:

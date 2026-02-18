@@ -97,6 +97,11 @@
   been moved to the database, Infinispan persistence no longer serves its
   original purpose and instead appears to cause some issues after upgrades.
 
+- Keycloak is no longer restarted if the playbook has restarted Infinispan
+  (e.g., after a configuration change). Restarting was added since earlier
+  versions of Keycloak appeared to get stuck in a connection loop when
+  Infinispan was restarted, but it does not appear to be the case anymore.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

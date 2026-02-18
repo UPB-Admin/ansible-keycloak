@@ -6,13 +6,6 @@
     enabled: yes
   listen: restart java service
 
-- name: register infinispan restarted
-  set_fact:
-    infinispan_restarted: True
-  listen:
-    - restart infinispan
-    - restart java service
-
 - name: restart metrics proxy
   become: yes
   systemd:
