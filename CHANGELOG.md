@@ -105,6 +105,8 @@
 - Update architecture diagram to reflect current status and change image format
   from SVG to PNG.
 
+- Update README file to improve readability of setting variables.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 

@@ -130,38 +130,92 @@ problems with special characters in some scripts.
 
 You will need to set some of the following variables for your deployment
 (depending on your needs, but not limited to these):
+
+- Common system configurations:
   - `custom_hosts_entries`: Dictionary containing entries that should be added
     to the `/etc/hosts` file. See the comment in `group_vars/all` for the
     format.
-  - `keycloak_path_prefix`: Prefix added to Keycloak paths on the web interface.
-    The default value is `/auth`;
+
+- Firewall:
+  - `firewall_configuration_exclusive`: Whether the Ansible playbook is the only
+    entity that manages firewall rules. If set to "True" (the default), Ansible
+    will remove any firewall rules that it does not expect (configured via the
+    `firewall_*_rules` variables). Setting this to "False" may be required if
+    there are other services that may add firewall rules (e.g., fail2ban may
+    automatically add blocking rules);
+
+  - `firewall_custom_port_rules` and `firewall_custom_rich_rules`: Add
+    "non-standard" configurations for allowed ports and rich rules. If you
+    intend to permanently enable ports or add rich rules, use these variables to
+    add them since the firewall role removes unexpected ports and rich rules
+    when "exclusive" mode is enabled. Refer to the `firewall_port_rules` and
+    `firewall_rich_rules` variables in `roles/firewall/defaults/main.yml` for
+    examples. Both variables are dictionaries, where the keys are
+    **group names** (the names must match a group name from the `group_names`
+    special variable of a host, or `"all"`), and the values are lists containing
+    the configurations for hosts in the group.
+
+- Public key infrastructure (certificates):
   - `pki_country_name`: Country name used in certificates;
+
   - `pki_organization_name`: Organization name used in certificates;
+
   - `pki_locality_name`: Locality name used in certificates;
+
   - `pki_dhparams`: A predefined pair of Diffie-Hellman parameters to copy to
     the servers, since DH parameter generation can take a long time (tens of
-    minutes, up to hours);
+    minutes, up to hours).
+
+- Load balancer:
+  - `load_balancer_service`: The type of load balancer to install - either
+    `nginx` or `haproxy` can be specified;
+
+  - `keycloak_path_prefix`: Prefix added to Keycloak paths on the web interface.
+    The default value is `/auth`;
+
   - `service_hostname_dns`: DNS name that can be used to reach the load
     balancers. Value must be a valid DNS name, as `DNS:` is prepended before
     the name as part of the Subject Alternative Name field during certificate
     generation);
+
   - `access_admin_allowed_sources`: List of IPs that the admin console can be
     reached from. The values must be IPs since the load balancer may not
     resolve names;
+
   - `access_admin_realm_allowed_sources`: Dictionary containing realm names as
     keys and a list of IPs that can reach the realm's admin API realm.
     The values must be IPs since the load balancer may not resolve names.
     Note that the realm names are not verified at all, and the values
     are simply added in the load balancer's;
-  - `access_health_allowed_sources`: List of IPs that can access the `health`
-    endpoint. Defaults to `acess_admin_allowed_sources`;
-  - `access_metrics_allowed_sources`: List of IPs that can access the `metrics`
-    endpoint. Defaults to `prometheus_servers`;
-  - `prometheus_servers`: List of IPs of Prometheus scraper servers (the
-    firewall on each node is configured to allow connections from these IPs to
-    the Prometheus exporter services). The exporters are only installed if at
-    least one IP is listed here;
-  - `keycloak_custom_theme`: If a custom theme for keycloak must be installed,
+
+  - `access_health_allowed_sources`: List of IPs that can access Keycloak's
+    `health` endpoint. Defaults to `acess_admin_allowed_sources`;
+
+  - `access_metrics_allowed_sources`: List of IPs that can access Keycloak's
+    `metrics` endpoint. Defaults to `prometheus_servers`.
+
+- Database:
+  - `database_performance_schema`: Whether to enable or disable database
+    performance information in MariaDB. Valid options are `ON` and `OFF`. By
+    default the performance schema is disabled to reduce the memory footprint
+    of the database (the additional computed data increases the required system
+    memory).
+
+- Java services (e.g. Infinispan, Keycloak):
+  - `java_shared_system_mem_max`: Maximum amount of memory allocated for Java
+    services (Keycloak and Infinispan) if they are installed on a system that
+    also runs other services (e.g., database).
+
+- Infinispan:
+  - `infinispan_unclean_shutdown_action`: What action Infinispan should take
+    when a forced cache shutdown is detected (i.e., it uses lock files in
+    the global persistence directory to detect if the server reboots without
+    cleanly shutting down the service first). The default is set to `IGNORE`,
+    which ignores the lock files and starts the service regardless of how it was
+    previously stopped.
+
+- Keycloak:
+  - `keycloak_custom_theme`: If a custom theme for Keycloak must be installed,
     it can be configured to be downloaded from a git repository. The following
     keys are required:
     - `url`: URL to the git repository that hosts the custom theme;
@@ -174,10 +228,11 @@ You will need to set some of the following variables for your deployment
       directory, and the `custom` name is specified as the parameter above,
       the files inside the repository's `theme` directory will be copied to
       Keycloak's `themes/custom` directory);
+
   - `keycloak_custom_modules`: A list of custom modules to compile and install
     in Keycloak. The modules are compiled using `maven` and the resulting `jar`
     artifact is copied in the `deployments` directory in Keycloak. For each
-    custom module you must specify the following paramters:
+    custom module you must specify the following parameters:
     - `name`: Name of the custom module; this name will be used to create a
       directory to clone to repository into, so we recommend using dashes
       between words (e.g. `custom-module`);
@@ -187,21 +242,40 @@ You will need to set some of the following variables for your deployment
     - `maven_extra_params`: A list of command line arguments to pass to maven;
       this parameter is optional; if not set, the package is built using
       `maven package`;
+
   - `keycloak_enabled_features`: A list of Keycloak features to enable. The
     `keycloak_default_enabled_features` defines a set of features that are
     enabled by default. If you want to disable those features, override the
     variable with an empty list;
+
   - `keycloak_disabled_features`: A list of Keycloak features to disable;
+
   - `keycloak_jboss_event_logging`: Whether to log Keycloak audit events to the
     log files, besides the database (defaults to true);
+
   - `keycloak_log_enable_mdc`: A dictionary containing whether MDC (Mapped
     Diagnostic Context) should be added to log lines. The keys are the log
     destinations used by Keycloak (i.e., file, console, syslog) and the values
     are booleans defining whether MDC is enabled for that destination. By
     default MDC is enabled for all destinations. Note that missing values
     default to "False".
-  - `load_balancer_service`: The type of load balancer to install - either
-    `nginx` or `haproxy` can be specified.
+
+- LDAP:
+  - `ldap_pbkdf2_num_iterations`: The number of PBKDF2 password hashing
+    iterations. If not configured or "False", the number of iterations is not
+    updated. The value must be a number.
+
+- Prometheus metrics:
+  - `prometheus_servers`: List of IPs of Prometheus scraper servers (the
+    firewall on each node is configured to allow connections from these IPs to
+    the Prometheus exporter services). The exporters are only installed if at
+    least one IP is listed here;
+
+  - `prometheus_exporters_tls`: Whether to enable TLS for Prometheus exporters.
+    The exporters will use self-signed certificates, similar to how TLS is
+    configured for internal communications for other components.
+
+- rsyslog:
   - `rsyslog_log_servers`: A list of rsyslog log servers that can receive log
     data. Each entry in the array must have the following fields:
     - `address`: the address to connect to (IP address recommended);
@@ -209,57 +283,24 @@ You will need to set some of the following variables for your deployment
       `tcp` or `udp`. Defaults to `udp`;
     - `port`: port to use when connecting to the log server. Defaults to 514;
     - `cert_cn`: server's common name, if TLS communication is used.
+
   - `rsyslog_log_server_ca_certificate`: The certificate of the certification
     authority used to sign the log servers' certificates, in PEM format.
     Note: This variable is used to determine if TLS should be enabled -
     TLS cannot be used if unset.
+
   - `rsyslog_keycloak_file_format_json` / `rsyslog_infinispan_file_format_json`:
     rsyslog reads the logs for Keycloak and Infinispan from log files. These
     variables control whether the services output the logs in JSON format.
     By default, we assume JSON format if rsyslog remote logging is enabled, or
     the default (the more human-readable format) otherwise.
     You can use these variables to specify if JSON logging is desired (boolean).
+
   - `rsyslog_log_configs`: List of custom log configurations. Can specify either
     logging from the journal, based on the program name, or files, and exposing
     the logs via a tag that is sent to the remote host. The service specific log
     configurations are appended to this list at the end of each role's task
     file. The configuration template can be found in `group_vars/all`.
-  - `firewall_custom_port_rules` and `firewall_custom_rich_rules`: Add
-    "non-standard" configurations for allowed ports and rich rules. If you
-    intend to permanently enable ports or add rich rules, use these variables to
-    add them since the firewall role removes unexpected ports and rich rules.
-    Refer to the `firewall_port_rules` and `firewall_rich_rules` variables in
-    `roles/firewall/defaults/main.yml` for examples. Both variables are
-    dictionaries, where the keys are **group names** (the names must match a
-    group name from the `group_names` special variable of a host, or `"all"`),
-    and the values are lists containing the configurations for hosts in the
-    group.
-  - `firewall_configuration_exclusive`: Whether the Ansible playbook is the only
-    entity that manages firewall rules. If set to "True" (the default), Ansible
-    will remove any firewall rules that it does not expect (configured via the
-    `firewall_*_rules` variables). Setting this to "False" may be required if
-    there are other services that may add firewall rules (e.g., fail2ban may
-    automatically add blocking rules).
-  - `database_performance_schema`: Whether to enable or disable database
-    performance information in MariaDB. Valid options are `ON` and `OFF`. By
-    default the performance schema is disabled to reduce the memory footprint
-    of the database (the additional computed data increases the required system
-    memory).
-  - `java_shared_system_mem_max`: Maximum amount of memory allocated for Java
-    services (Keycloak and Infinispan) if they are installed on a system that
-    also runs other services (e.g., database).
-  - `infinispan_unclean_shutdown_action`: What action Infinispan should take
-    when a forced cache shutdown is detected (i.e., it uses lock files in
-    the global persistence directory to detect if the server reboots without
-    cleanly shutting down the service first). The default is set to `IGNORE`,
-    which ignores the lock files and starts the service regardless of how it was
-    previously stopped.
-  - `ldap_pbkdf2_num_iterations`: The number of PBKDF2 password hashing
-    iterations. If not configured or "False", the number of iterations is not
-    updated. The value must be a number.
-  - `prometheus_exporters_tls`: Whether to enable TLS for Prometheus exporters.
-    The exporters will use self-signed certificates, similar to how TLS is
-    configured for internal communications for other components.
 
 The override variables can be specified inside a YAML file that you will include
 when running the playbooks. An example of an overrides file can be found in the
