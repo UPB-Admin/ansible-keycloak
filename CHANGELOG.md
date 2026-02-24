@@ -107,6 +107,8 @@
 
 - Update README file to improve readability of setting variables.
 
+- Bump Keycloak to version 26.5.4.
+
 ### November 2025
 - Bump Keycloak to version 26.4.2.
 
