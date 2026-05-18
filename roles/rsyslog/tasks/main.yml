@@ -9,7 +9,7 @@
 
 - name: Set up rsyslog server CA certificate if configured
   become: yes
-  when: rsyslog_log_server_ca_certificate
+  when: rsyslog_log_server_ca_certificate | length > 0
   block:
     - name: Register using TLS as fact
       set_fact:
@@ -72,7 +72,7 @@
       notify: restart rsyslog
 
     - name: Generate and print certificate sign request if a certificate is not found
-      when: rsyslog_private_key.changed or not (rsyslog_client_certificate | default(False))
+      when: rsyslog_private_key.changed or (rsyslog_client_certificate | length == 0)
       block:
         - name: Generate certificate sign request
           run_once: true
@@ -123,7 +123,7 @@
             rsyslog_not_fully_configured: true
 
     - name: Copy client certificate to all nodes if configured
-      when: rsyslog_client_certificate | default(False)
+      when: rsyslog_client_certificate | length > 0
       copy:
         content: "{{ rsyslog_client_certificate }}"
         dest: "{{ rsyslog_client_cert_path }}"

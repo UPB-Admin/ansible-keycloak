@@ -11,15 +11,13 @@
         name: "@389-directory-server:stable/default"
         enablerepo: epel-modular
         state: installed
-      when:
-        - ansible_facts.distribution_major_version == "8"
+      when: ansible_facts.distribution_major_version == "8"
 
     - name: Install 389 directory service
       dnf:
         name: 389-ds-base
         state: installed
-      when:
-        - ansible_facts.distribution_major_version == "9"
+      when: ansible_facts.distribution_major_version == "9"
 
 
 - name: Set up LDAP directory server instance
@@ -42,8 +40,8 @@
 
     - name: Create LDAP directory server instance if it does not exist (dsrc not set yet)
       when: >
-        ldap_instance_status.stdout | regex_search("No such instance \'" + ldap_instance_name + "\'")
-        or ldap_instance_status.stderr | regex_search("No such instance \'" + ldap_instance_name + "\'")
+        (ldap_instance_status.stdout | regex_search("No such instance '" + ldap_instance_name + "'")) != None
+        or (ldap_instance_status.stderr | regex_search("No such instance '" + ldap_instance_name + "'")) != None
       block:
         - name: Copy directory server template to the server
           template:
@@ -130,7 +128,7 @@
 
 - name: Set number of password iterations
   become: yes
-  when: ldap_pbkdf2_num_iterations | default(False)
+  when: (ldap_pbkdf2_num_iterations | default(0)) > 0
   block:
     - name: Get number of PBKDF2 iterations currently configured
       command:
@@ -141,7 +139,7 @@
     - name: Set number of PBKDF2 iterations if necessary
       command:
         argv: ["/usr/sbin/dsconf", "{{ ldap_instance_name }}", "plugin", "pwstorage-scheme", "pbkdf2-sha512", "set-num-iterations", "{{ ldap_pbkdf2_num_iterations | int }}"]
-      when: not (ldap_pbkdf2_get_num_iterations.stdout_lines[0] | regex_search(ldap_pbkdf2_num_iterations_regex))
+      when: (ldap_pbkdf2_get_num_iterations.stdout_lines[0] | regex_search(ldap_pbkdf2_num_iterations_regex)) == None
       vars:
         ldap_pbkdf2_num_iterations_regex: ": {{ ldap_pbkdf2_num_iterations | int }}$"
       register: ldap_pbkdf2_set_num_iterations
@@ -175,7 +173,7 @@
           register: changelog_create_out
           failed_when:
             - changelog_create_out.failed
-            - not (changelog_create_out.details | regex_search("Changelog configuration is part of the backend configuration"))
+            - (changelog_create_out.details | regex_search("Changelog configuration is part of the backend configuration")) == None
       rescue:
         - name: Check error reason
           debug:

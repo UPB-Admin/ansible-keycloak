@@ -246,6 +246,7 @@ keycloak_log_enable_mdc:
 rsyslog_log_servers: []
 # CA certificate for rsyslog log servers
 rsyslog_log_server_ca_certificate: ""
+rsyslog_client_certificate: ""
 
 # Whether set up rsyslog
 rsyslog_configure: "{{ rsyslog_log_servers | length > 0 }}"

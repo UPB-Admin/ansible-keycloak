@@ -115,7 +115,7 @@
 - name: Create Diffie-Helman parameters on first host and slurp contents
   become: yes
   run_once: yes
-  when: not (pki_dhparams | default(""))
+  when: pki_dhparams | default("") | length == 0
   block:
     - name: Find if the Diffie-Hellamn parameters have been generated for any service
       stat:

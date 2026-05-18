@@ -18,6 +18,11 @@
 - Decrease Keycloak's database connection pool minimum size, to reduce the
   number of connections kept open in idle conditions.
 
+- Update playbooks to remove implicit conversions from other variable types to
+  booleans, which required truthy conversions that have been deprecated in
+  Ansible core 2.19. More details can be found in the
+  [porting guide for 2.19](https://docs.ansible.com/projects/ansible/latest/porting_guides/porting_guide_core_2.19.html#broken-conditionals).
+
 ### February 2026
 - Refactor PKI generation to allow creating multiple certificates for the same
   service (e.g., the load balancer has a certificate for requests to the

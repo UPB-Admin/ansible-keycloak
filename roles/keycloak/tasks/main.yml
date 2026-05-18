@@ -163,7 +163,7 @@
 
 - name: Add custom theme files
   become: yes
-  when: keycloak_custom_theme | default(False)
+  when: keycloak_custom_theme is defined
   block:
     - name: Make sure custom theme git directory exists
       file:
@@ -290,7 +290,7 @@
 
 - name: Install Keycloak custom modules
   become: yes
-  when: keycloak_custom_modules | default(False)
+  when: keycloak_custom_modules is defined and keycloak_custom_modules | length > 0
   block:
     - name: Prepare common files
       run_once: yes

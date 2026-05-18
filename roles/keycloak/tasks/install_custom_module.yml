@@ -69,7 +69,7 @@
         chdir: "{{ keycloak_custom_module_repo_dir }}"
         cmd: "mvn package -s '{{ keycloak_maven_settings_xml }}' {{ keycloak_custom_module.maven_extra_params | default('') }}"
       register: maven_build_output
-      changed_when: not maven_build_output.stdout | regex_search("Nothing to compile - all classes are up to date")
+      changed_when: (maven_build_output.stdout | regex_search("Nothing to compile - all classes are up to date")) == None
       environment:
         JAVA_HOME: /etc/alternatives/java_sdk
       vars:
