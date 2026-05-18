@@ -66,7 +66,7 @@
           - "{{ infinispan_install_dir }}/server/data"
           - "{{ infinispan_install_dir }}/server/lib"
 
-      - name: Grant infinispan user write access on {{ item }}
+      - name: Grant infinispan user write access on user and group files
         file:
           path: "{{ item }}"
           state: file
@@ -264,17 +264,14 @@
         argv: [ "{{ infinispan_cli }}", "user", "describe", "{{ item }}" ]
       register: user_describe
       changed_when: False
-      failed_when:
-        - user_describe.stderr_lines | length > 0
-        - not user_describe.stderr_lines[0] | regex_search("User `" + item +"` does not exist")
       with_items: "{{ infinispan_users }}"
 
     - name: Create infinispan users that do not exist
       command:
         argv: [ "{{ infinispan_cli }}", "user", "create", "{{ description.item }}", "-p", "{{ vault.infinispan.user[description.item].pass }}" ]
-      when: description.stderr_lines | length > 0
+      when: (description.stdout | regex_search("User `" + description.item +"` does not exist")) != None
       register: user_create
-      failed_when: '"Exception" in user_create.stderr'
+      failed_when: '"Exception" in user_create.stdout'
       with_items: "{{ user_describe.results }}"
       loop_control:
         loop_var: description

@@ -1,4 +1,4 @@
-keycloak_version: 26.5.4
+keycloak_version: 26.6.1
 
 # Password placeholder used in vault example file
 vault_password_placeholder: changeme
@@ -94,11 +94,26 @@ keycloak_all_enabled_features: "{{ keycloak_enabled_features | default([]) + key
 # Caches with their respective cache types (from keycloak's point of view;
 # infinispan creates all caches as replicated caches)
 infinispan_caches:
-  work:
-  authenticationSessions:
-  loginFailures:
   actionTokens:
     max_count: -1
+  authenticationSessions:
+    indexed_entities:
+      - keycloak.RootAuthenticationSessionEntity
+    max_count: -1
+  loginFailures:
+    indexed_entities:
+      - keycloak.LoginFailureEntity
+    max_count: -1
+  work:
+    max_count: -1
+  sessions:
+    owners: 1
+  clientSessions:
+    owners: 1
+  offlineSessions:
+    owners: 1
+  offlineClientSessions:
+    owners: 1
 
 
 # User used by keycloak to connect to the infinispan cluster

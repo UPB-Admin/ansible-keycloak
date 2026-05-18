@@ -1,5 +1,5 @@
-infinispan_version: 15.0.22.Final
-infinispan_archive_checksum: sha256:16364c0df5535a76636c547bb00be2ec39e708fdc8f4cf4fd8e88d44686be7e5
+infinispan_version: 16.1.4
+infinispan_archive_checksum: sha256:34b590c4926c40e1eb37feb8580f9357ec7aa11872a2a8b7bf65a4a195d1ed9b
 infinispan_archive_url: "https://github.com/infinispan/infinispan/releases/download/{{ infinispan_version }}/infinispan-server-{{ infinispan_version }}.zip"
 infinispan_install_base_dir: /opt           # the archive already has a top-level directory in it
 infinispan_install_dir: "{{ infinispan_install_base_dir }}/infinispan-server-{{ infinispan_version }}"
@@ -33,9 +33,9 @@ infinispan_backup_wait_till_offline: 60000
 # not ideal, as Keycloak would stop responding until the issue is resolved
 infinispan_backup_failure_policy: WARN
 # maximum amount of time a cache lock can be held - in milliseconds
-infinispan_locking_acquire_timeout: 500
+infinispan_locking_acquire_timeout: 4000
 # transactions are rolled back on failure (see Infinispan Operator docs in Keycloak High Availability docs)
-infinispan_transaction_mode: NON_XA
+infinispan_transaction_mode: NON_DURABLE_XA
 # pessimistic locking is the only supported mode, as optimistic has high network requirements
 infinispan_transaction_locking: PESSIMISTIC
 

@@ -88,7 +88,7 @@
       </security>
 
 {% for cache_name, cache_config in infinispan_caches.items() %}
-      <distributed-cache name="{{ cache_name }}" owners="2">
+      <distributed-cache name="{{ cache_name }}" owners="{{ cache_config.owners | default(2) }}">
          <locking acquire-timeout="{{ infinispan_locking_acquire_timeout }}" />
          <transaction mode="{{ infinispan_transaction_mode }}" locking="{{ infinispan_transaction_locking }}" />
 
@@ -109,6 +109,16 @@
              <key media-type="application/x-protostream"/>
              <value media-type="application/x-protostream"/>
          </encoding>
+
+{% if "indexed_entities" in cache_config %}
+         <indexing startup-mode="NONE">
+            <indexed-entities>
+{% for indexed_entity in cache_config.indexed_entities %}
+               <indexed-entity>{{ indexed_entity }}</indexed-entity>
+{% endfor %}
+            </indexed-entities>
+         </indexing>
+{% endif %}
 
          <memory max-count="{{ cache_config.max_count | default(10000) }}"/>
       </distributed-cache>

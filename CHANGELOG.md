@@ -1,5 +1,16 @@
 ## Changelog
 
+### May 2026
+- Bump Keycloak to version 26.6.1 and Infinispan 16.1.4 (the upgrade notes for
+  Keycloak recommend using version 16+). Also bump Java version to 25 (required
+  by Infinispan) and update playbooks and cache configurations to work with the
+  new Infinispan settings (e.g., the Infinispan CLI script returns information
+  to standard output, instead of standard error, and Keycloak recommends using
+  indexing for caches). The new Keycloak version also enables the HTTP server
+  port before initialization is complete; however, as we rely on checking
+  whether the port is open to determine whether the services are up, we disable
+  the async bootstrapping process for now.
+
 ### February 2026
 - Refactor PKI generation to allow creating multiple certificates for the same
   service (e.g., the load balancer has a certificate for requests to the
