@@ -3,6 +3,7 @@ nginx_snippets_dir: "{{ nginx_root_dir }}/snippets.d"
 nginx_conf_dir: "{{ nginx_root_dir }}/conf.d"
 nginx_systemd_override_dir: "{{ systemd_override_dir }}/nginx.service.d"
 nginx_systemd_override_file: "{{ nginx_systemd_override_dir }}/limits.conf"
+nginx_gpg_signing_key: /etc/pki/rpm-gpg/RPM-GPG-KEY-nginx
 
 nginx_dirs:
   - disp_name: snippets

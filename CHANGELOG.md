@@ -11,6 +11,10 @@
   whether the port is open to determine whether the services are up, we disable
   the async bootstrapping process for now.
 
+- Add static GPG key configurations for nginx and MariaDB. This avoids
+  downloading the keys from the website for the initial package setup, to ensure
+  that the websites where they are downloaded from were not compromised.
+
 ### February 2026
 - Refactor PKI generation to allow creating multiple certificates for the same
   service (e.g., the load balancer has a certificate for requests to the

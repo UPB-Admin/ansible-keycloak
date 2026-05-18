@@ -1,11 +1,19 @@
 - name: Install nginx
   become: yes
   block:
-    - name: Add nginx repository file
+    - name: Add nginx repository signing key
       copy:
+        src: nginx/nginx-repo-key.asc
+        dest: "{{ nginx_gpg_signing_key }}"
+        mode: 0644
+        owner: root
+        group: root
+
+    - name: Add nginx repository file
+      template:
         src: nginx/nginx.repo
         dest: /etc/yum.repos.d/nginx.repo
-        mode: 0644
+        mode: 0600
         owner: root
         group: root
 

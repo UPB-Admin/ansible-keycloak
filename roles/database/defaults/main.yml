@@ -1,3 +1,5 @@
+mariadb_gpg_signing_key: /etc/pki/rpm-gpg/RPM-GPG-KEY-MariaDB
+
 database_use_unix_socket: True
 
 # Create a Galera cluster if more than one database nodes exist

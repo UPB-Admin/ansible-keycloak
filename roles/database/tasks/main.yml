@@ -1,8 +1,14 @@
 - name: Database server initial configurations
   become: yes
   block:
-    - name: Add mariadb repository file
+    - name: Add mariadb repository signing key
       copy:
+        src: mariadb-repo-key.asc
+        dest: "{{ mariadb_gpg_signing_key }}"
+        mode: 0644
+
+    - name: Add mariadb repository file
+      template:
         src: mariadb.repo
         dest: /etc/yum.repos.d/mariadb.repo
         mode: 0600
