@@ -37,7 +37,8 @@ keycloak_custom_modules_repo_root_dir: "/opt/keycloak-custom-modules"
 keycloak_maven_settings_xml: "{{ keycloak_custom_modules_repo_root_dir }}/settings.xml"
 keycloak_maven_repo_dir: "{{ keycloak_custom_modules_repo_root_dir }}/.m2/repository"
 
-keycloak_database_pool_size: 100
+keycloak_database_max_pool_size: 100
+keycloak_database_min_pool_size: "{{ (keycloak_database_max_pool_size / 5) | int }}"
 keycloak_database_conn_params: "sslMode=verify-full&serverSslCert={{ database_trusted_certificate_file | urlencode }}&enabledSslProtocolSuites=TLSv1.3&enabledSslCipherSuites=TLS_AES_256_GCM_SHA384"
 keycloak_database_servers: "{{ cluster_servers.database | product([':%d' % database_listen_port]) | map('join') | join(',') }}"
 keycloak_database_conn_url: "jdbc:mariadb://{{ keycloak_database_servers }}/{{ database_config.keycloak.dbname }}?{{ keycloak_database_conn_params }}"

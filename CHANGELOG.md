@@ -15,6 +15,9 @@
   downloading the keys from the website for the initial package setup, to ensure
   that the websites where they are downloaded from were not compromised.
 
+- Decrease Keycloak's database connection pool minimum size, to reduce the
+  number of connections kept open in idle conditions.
+
 ### February 2026
 - Refactor PKI generation to allow creating multiple certificates for the same
   service (e.g., the load balancer has a certificate for requests to the
