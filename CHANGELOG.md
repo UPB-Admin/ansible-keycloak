@@ -49,6 +49,8 @@
   database is not fully operational yet, and the service exits with an error
   state.
 
+- Bump Keycloak to version 26.6.2.
+
 ### February 2026
 - Refactor PKI generation to allow creating multiple certificates for the same
   service (e.g., the load balancer has a certificate for requests to the
