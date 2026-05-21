@@ -50,7 +50,7 @@
 
       - name: Remove exporter temporary file
         file:
-          path: "{{ expoter.value.tmp_file }}"
+          path: "{{ exporter.value.tmp_file }}"
           state: absent
 
     # Rules below are not part of the block above
