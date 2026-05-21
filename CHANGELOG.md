@@ -43,6 +43,12 @@
   may be completely removed and the cleanup steps may be moved to a different
   playbook.
 
+- Add automatic service restarting for Keycloak; in certain cases the service
+  may fail to start after a reboot if the database must perform state
+  transfers - Keycloak tries to query the database but fails because the
+  database is not fully operational yet, and the service exits with an error
+  state.
+
 ### February 2026
 - Refactor PKI generation to allow creating multiple certificates for the same
   service (e.g., the load balancer has a certificate for requests to the

@@ -12,17 +12,31 @@
 Description=Keycloak Server Service
 After=syslog.target network-online.target mariadb.service
 
+# Restart at most 5 times in an interval of 5 minutes
+# If the service restarts more times than that, restarting will abort
+StartLimitIntervalSec=5m
+StartLimitBurst=5
+
 [Service]
 Environment=JAVA_HOME="{{ java_home_dir }}"
 Environment=JAVA_OPTS="{{ keycloak_java_opts }}"
 ExecStart=/bin/bash "{{ keycloak_server_script_file }}" start --optimized
 # Inspired by https://unix.stackexchange.com/a/584965
 # For clarity, ":" is the noop operator, and "<" is the redirect operator
-ExecStartPost=/bin/bash -c 'while ! :< "/dev/tcp/{{ interfaces_external_ip|quote }}/{{ keycloak_https_port|quote }}"; do sleep 1; done &>/dev/null'
-Type=simple
+# We use "kill -0 ${MAINPID}" to make sure the main process did not exit
+# Without this, the StartPost command may keep running without being killed by systemd even if the service had encountered an error and exited
+ExecStartPost=/bin/bash -c 'while ! :< "/dev/tcp/{{ interfaces_external_ip|quote }}/{{ keycloak_https_port|quote }}" && kill -0 "${MAINPID}"; do sleep 1; done &>/dev/null'
+
+Type=exec
+ExitType=main
+
 User={{ keycloak_system_user }}
 LimitNOFILE=102642
 SyslogIdentifier=keycloak
+
+# Restart every 30 seconds on failure
+Restart=on-failure
+RestartSec=30
 
 # Security settings
 {{ systemd_service_security_settings }}
