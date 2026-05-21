@@ -34,23 +34,11 @@ firewall_rich_rules:
       source_ips: "{{ groups.load_balancers | default([]) | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
   infinispan:
-    # Allow connections to infinispan inter-cluster clustering port from infinispan servers
+    # Allow connections to the (embedded) Infinispan clustering port from Keycloak servers
     - zone: "{{ firewalld_internal_zone }}"
-      port: "{{ infinispan_tcpping_port }}"
+      port: "{{ infinispan_clustering_port }}"
       protocol: tcp
-      source_ips: "{{ groups.infinispan | map('extract', hostvars, 'interfaces_internal_ip') }}"
-
-    # Allow connections to infinispan hot rod port from infinispan and keycloak servers
-    - zone: "{{ firewalld_internal_zone }}"
-      port: "{{ infinispan_hotrod_port }}"
-      protocol: tcp
-      source_ips: "{{ (groups.keycloak + groups.infinispan) | map('extract', hostvars, 'interfaces_internal_ip') }}"
-
-    # Allow connections to metrics proxy from the Prometheus servers
-    - zone: "{{ firewalld_internal_zone }}"
-      port: "{{ infinispan_metrics_proxy_port }}"
-      protocol: tcp
-      source_ips: "{{ prometheus_servers }}"
+      source_ips: "{{ groups.keycloak | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
   database:
     # Allow connections to database port from client services

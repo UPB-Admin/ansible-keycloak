@@ -23,6 +23,26 @@
   Ansible core 2.19. More details can be found in the
   [porting guide for 2.19](https://docs.ansible.com/projects/ansible/latest/porting_guides/porting_guide_core_2.19.html#broken-conditionals).
 
+- Remove the external Infinispan services. The current Keycloak internal
+  Infinispan functionality appears to cover our intended use-case - distributed
+  clustering of Keycloak with "manual" discovery (instead of relying on
+  multicast packets).  As such, the use of the external Infinispan was a source
+  of issues, especially when the network was unstable, without real benefits
+  over what Keycloak supports out of the box. The `infinispan` role was updated
+  to clean up the installed Infinispan service. By default it only disables the
+  service and removes its systemd service file, with more extensive cleanup
+  operations being controlled by two variables: `infinispan_remove_logs` - if set
+  to `True`, the playbook will remove Infinispan logs saved on the system (by
+  default it updates their permissions so only the `root` user can access them);
+  `infinispan_full_cleanup` - if set to `True` will remove other components used
+  for Infinispan - `nginx` and the entirety of the `/etc/nginx` directory, the
+  Infinispan system user and any directories named `infinispan-*` in the base
+  installation directory (`/opt` by default).  WARNING: make sure that no
+  important files would be removed before using these variables. In most cases
+  it's safe to simply leave the files as-is. In the future the `infinispan` role
+  may be completely removed and the cleanup steps may be moved to a different
+  playbook.
+
 ### February 2026
 - Refactor PKI generation to allow creating multiple certificates for the same
   service (e.g., the load balancer has a certificate for requests to the

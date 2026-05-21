@@ -1,15 +1,4 @@
 vault:
-  infinispan:
-    user:
-      admin: # Credentials for infinispan admin user
-        pass: changeme
-      monitor: # Credentials for infinispan monitor user used to get metrics information
-        pass: changeme
-      keycloak: # Credentials used by keycloak to connect to infinispan
-        pass: changeme
-    keystore: # Password used to lock the keystore used by the infinispan servers
-      pass: changeme
-
   keycloak:
     user:
       admin: # Credentials for the keycloak administrator interface

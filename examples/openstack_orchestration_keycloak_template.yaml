@@ -4,7 +4,7 @@ description: >
     This template creates the topology needed to test and deploy Keycloak.
     This topology will contain three networks: one for the load balancers and two identical clusters.
     The load balancers's network contains one server.
-    A cluster contains: a database, an infinispan instance, a LDAP server and two keycloak instances.
+    A cluster contains: a database, a LDAP server and two keycloak instances.
     All three networks are connected to the same router.
 
 parameters:
@@ -172,24 +172,6 @@ resources:
           networks:
             - port: { get_resource: c1_ldap_port }
 
-    c1_infinispan_port:
-        type: OS::Neutron::Port
-        properties:
-            network_id: { get_resource: cluster1_network }
-            fixed_ips:
-                - subnet_id: { get_resource: cluster1_subnet }
-                  ip_address: { str_replace: { template: { get_param: cluster1_subnet_ip_fmt }, params: { X: "21" }}}
-
-    c1_infinispan:
-        type: OS::Nova::Server
-        properties:
-          name: TEST-KC-IS1
-          image: { get_param: image }
-          flavor: { get_param: flavor }
-          key_name: { get_param: key_name }
-          networks:
-            - port: { get_resource: c1_infinispan_port }
-
     c1_db_port:
         type: OS::Neutron::Port
         properties:
@@ -264,24 +246,6 @@ resources:
           key_name: { get_param: key_name }
           networks:
             - port: { get_resource: c2_ldap_port }
-
-    c2_infinispan_port:
-        type: OS::Neutron::Port
-        properties:
-            network_id: { get_resource: cluster2_network }
-            fixed_ips:
-                - subnet_id: { get_resource: cluster2_subnet }
-                  ip_address: { str_replace: { template: { get_param: cluster2_subnet_ip_fmt }, params: { X: "21" }}}
-
-    c2_infinispan:
-        type: OS::Nova::Server
-        properties:
-          name: TEST-KC-IS2
-          image: { get_param: image }
-          flavor: { get_param: flavor }
-          key_name: { get_param: key_name }
-          networks:
-            - port: { get_resource: c2_infinispan_port }
 
     c2_db_port:
         type: OS::Neutron::Port

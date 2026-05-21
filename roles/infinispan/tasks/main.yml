@@ -1,303 +1,83 @@
-- name: Infinispan server initial configurations
+- name: Disable Infinispan service
   become: yes
   block:
-    - name: Install required packages
-      package:
-        name:
-          - nginx
-        state: latest
+    - name: Gather service status information
+      service_facts:
 
-    - name: Create infinispan user
+    - name: Disable Infinispan service if present
+      when: ansible_facts.services['infinispan.service'].status | default('not-found') != 'not-found'
+      service:
+        name: infinispan
+        state: stopped
+        enabled: no
+
+    - name: Remove infinispan systemd service file
+      file:
+        path: "{{ systemd_service_dir }}/infinispan.service"
+        state: absent
+      notify: systemd reload
+
+- name: Remove or update log file permissions
+  become: yes
+  block:
+    - name: Remove log files
+      when: infinispan_remove_logs | default(False) | bool
+      file:
+        path: "{{ infinispan_server_log_subdir }}"
+        state: absent
+
+    - name: Set restrictive log file permissions
+      when: not infinispan_remove_logs | default(False) | bool
+      block:
+        - name: Check if log directory exists
+          stat:
+            path: "{{ infinispan_server_log_subdir }}"
+          register: infinispan_server_log_subdir_stat
+
+        - name: Remove file ACLs from log directory
+          when: infinispan_server_log_subdir_stat.stat.exists
+          command:
+            argv: ["/usr/bin/setfacl", "-b", "{{ infinispan_server_log_subdir }}"]
+          changed_when: False
+
+        - name: Only allow root to access log files
+          when: infinispan_server_log_subdir_stat.stat.exists
+          file:
+            path: "{{ infinispan_server_log_subdir }}"
+            owner: root
+            group: root
+            mode: u=rwX,g=,o=
+            recurse: yes
+
+- name: Completely remove all files set up for Infinispan and adjacent functionality
+  become: yes
+  when: infinispan_full_cleanup | default(False) | bool
+  block:
+    - name: Remove nginx package
+      package:
+        name: nginx
+        state: absent
+
+    - name: Remove nginx configuration files
+      file:
+        path: /etc/nginx
+        state: absent
+
+    - name: Remove Infinispan user
       user:
         name: "{{ infinispan_system_user }}"
-        comment: Infinispan system user
-        create_home: no
-        home: /
-        local: yes
-        password_lock: yes
-        shell: /sbin/nologin
-        state: present
-        system: yes
+        state: absent
 
+    - name: Find Infinispan installation directories
+      find:
+        paths: "{{ infinispan_install_base_dir }}"
+        recurse: no
+        patterns: "infinispan-*"
+        file_type: directory
+      register: infinispan_install_dirs
 
-- name: Create infinispan server directory and install code
-  become: yes
-  block:
-    - name: Check if infinispan install directory exists
-      stat:
-        path: "{{ infinispan_install_dir }}"
-      register: infinispan_dir_stat
-
-    - name: Download and extract infinispan
-      when: not infinispan_dir_stat.stat.exists
-      block:
-      - name: Download infinispan server zip archive
-        get_url:
-          url: "{{ infinispan_archive_url }}"
-          dest: "{{ infinispan_tmp_file }}"
-          http_agent: wget
-          checksum: "{{ infinispan_archive_checksum }}"
-          timeout: 30
-          mode: 0400
-          owner: root
-          group: root
-
-      - name: Unarchive infinispan
-        unarchive:
-          src: "{{ infinispan_tmp_file }}"
-          dest: "{{ infinispan_install_base_dir }}"
-          remote_src: yes
-
-      - name: Set permissions on infinispan directory
-        file:
-          path: "{{ infinispan_install_dir }}"
-          state: directory
-          recurse: yes
-          mode: u=rX,g=rX
-
-      - name: Create required infinispan installation directories
-        file:
-          path: "{{ item }}"
-          state: directory
-          mode: 0770
-        with_items:
-          - "{{ infinispan_install_dir }}/server/cache"
-          - "{{ infinispan_install_dir }}/server/log"
-          - "{{ infinispan_install_dir }}/server/data"
-          - "{{ infinispan_install_dir }}/server/lib"
-
-      - name: Grant infinispan user write access on user and group files
-        file:
-          path: "{{ item }}"
-          state: file
-          mode: 0660
-        with_items:
-          - "{{ infinispan_server_conf_subdir }}/users.properties"
-          - "{{ infinispan_server_conf_subdir }}/groups.properties"
-
-      - name: Set owner / group on infinispan directory
-        file:
-          path: "{{ infinispan_install_dir }}"
-          state: directory
-          recurse: yes
-          owner: root
-          group: "{{ infinispan_system_user }}"
-
-      - name: Remove infinispan archive
-        file:
-          path: "{{ infinispan_tmp_file }}"
-          state: absent
-
-
-- name: Create infinispan server logs subdirectory if it does not exist
-  become: yes
-  file:
-    path: "{{ infinispan_server_log_subdir }}"
-    state: directory
-    mode: 0770
-    owner: root
-    group: "{{ infinispan_system_user }}"
-    seuser: system_u
-    setype: var_log_t
-
-
-- name: Configure infinispan service
-  become: yes
-  block:
-    - name: Add infinispan systemd service file
-      template:
-        src: infinispan.service
-        dest: "{{ systemd_service_dir }}/infinispan.service"
-        mode: 0640
-        owner: root
-        group: root
-      notify:
-        - systemd reload
-        - restart infinispan
-
-    - name: Leave server wait loop if server java process ended
-      lineinfile:
-        path: "{{ infinispan_server_script }}"
-        line: '         kill -0 $ISPN_PID 2>/dev/null || break'
-        regexp: 'kill -0 \$ISPN_PID 2>/dev/null'
-        insertafter: 'Server process \(\$ISPN_PID\) received \$SIGNAL_NAME signal'
-        state: present
-      notify: restart infinispan
-
-
-- name: Mark infinispan service for restart if the PKI files have changed
-  debug:
-    msg: "Notify restart of infinispan service"
-  when: pki_changed
-  changed_when: True
-  notify: restart infinispan
-
-
-- name: Set file ACLs on infinispan server files
-  become: yes
-  block:
-    - name: Set default facl permissions on Infinispan directories
-      acl:
-        path: "{{ item }}"
-        default: yes
-        etype: other
-        permissions: 0
-        recursive: yes
-        state: present
-      with_items:
-        - "{{ infinispan_install_dir }}"
-        - "{{ infinispan_server_log_subdir }}"
-
-    - name: Apply facl permissions on Infinispan directories
-      acl:
-        path: "{{ item }}"
-        etype: other
-        permissions: 0
-        recursive: yes
-        state: present
-      with_items:
-        - "{{ infinispan_install_dir }}"
-        - "{{ infinispan_server_log_subdir }}"
-
-
-- name: Configure infinispan for cross DC function
-  become: yes
-  block:
-    - name: Create java keystore based on PKI certificate and key
-      openssl_pkcs12:
-        action: export
-        certificate_path: "{{ pki_configs.infinispan.infinispan.certificate_crt_path }}"
-        privatekey_path: "{{ pki_configs.infinispan.infinispan.certificate_key_path }}"
-        friendly_name: "{{ infinispan_keystore_cert_alias }}"
-        path: "{{ infinispan_keystore }}"
-        passphrase: "{{ vault.infinispan.keystore.pass }}"
-        mode: 0440
-        owner: root
-        group: "{{ infinispan_system_user }}"
-        state: present
-      notify: restart infinispan
-
-    - name: Add the infinispan configuration file
-      template:
-        src: infinispan-config.xml
-        dest: "{{ infinispan_server_conf_subdir }}/infinispan.xml"
-        mode: 0440
-        owner: root
-        group: "{{ infinispan_system_user }}"
-      notify: restart infinispan
-
-    - name: Add the Infinispan log configuration file
-      template:
-        src: log4j2.xml
-        dest: "{{ infinispan_server_conf_subdir }}/log4j2.xml"
-        mode: 0440
-        owner: root
-        group: "{{ infinispan_system_user }}"
-      notify: restart infinispan
-
-
-- name: Configure metrics proxy (nginx)
-  become: yes
-  block:
-    - name: Define Prometheus alert rules for Infinispan
-      run_once: yes
-      set_fact:
-        prometheus_infinispan_alert_rules: |-
-          groups:
-          - name: Infinispan cross-datacenter monitoring
-            rules:
-            {% for (cluster, cache) in node_clusters | product(infinispan_caches.keys()) -%}
-            - alert: Infinispan cache {{ cache }} replication to {{ cluster }} failed
-              expr: vendor_cache_manager_default_cache_{{ cache }}_x_site_admin_{{ cluster }}_status != 1
-              annotations:
-                summary: Cache {{ cache }} replication to cluster {{ cluster }} is down.
-            {% endfor %}
-      when:
-        - node_clusters | length > 1
-        - prometheus_monitor
-
-    - name: Setup main nginx.conf configuration file
-      template:
-        src: nginx.conf
-        dest: /etc/nginx/nginx.conf
-        mode: 0400
-        owner: root
-        group: root
-        seuser: system_u
-        setype: httpd_config_t
-      notify: restart metrics proxy
-
-    - name: Allow nginx to connect to the infinispan service
-      seboolean:
-        name: httpd_can_network_connect
-        state: yes
-        persistent: yes
-
-
-- name: Restart infinispan if required, make sure it finishes starting
-  become: yes
-  block:
-    - name: Force flush handlers to reload / restart infinispan service
-      meta: flush_handlers
-
-    - name: Make sure the infinispan service is running
-      systemd:
-        name: infinispan
-        state: started
-        enabled: yes
-
-
-- name: Configure infinispan users
-  become: yes
-  become_user: "{{ infinispan_system_user }}"
-  block:
-    - name: Wait until infinispan starts and opens the hotrod port
-      wait_for:
-        port: "{{ infinispan_hotrod_port }}"
-        host: "{{ inventory_hostname }}"
-        timeout: "{{ service_start_timeout }}"
-        msg: "Infinispan did not start after {{ service_start_timeout }} seconds"
-        state: started
-
-    - name: Check if infinispan users exist
-      command:
-        argv: [ "{{ infinispan_cli }}", "user", "describe", "{{ item }}" ]
-      register: user_describe
-      changed_when: False
-      with_items: "{{ infinispan_users }}"
-
-    - name: Create infinispan users that do not exist
-      command:
-        argv: [ "{{ infinispan_cli }}", "user", "create", "{{ description.item }}", "-p", "{{ vault.infinispan.user[description.item].pass }}" ]
-      when: (description.stdout | regex_search("User `" + description.item +"` does not exist")) != None
-      register: user_create
-      failed_when: '"Exception" in user_create.stdout'
-      with_items: "{{ user_describe.results }}"
-      loop_control:
-        loop_var: description
-        label: "{{ description.item }}"
-  vars:
-    ansible_remote_tmp: "/tmp/${USER}/.ansible"
-
-
-- name: Explicitly grant permissions to users using roles
-  become: yes
-  lineinfile:
-    path: "{{ infinispan_server_conf_subdir }}/groups.properties"
-    line: "{{ item }}={{ item }}"
-    regexp: "^{{ item }}="
-    state: present
-  with_items: "{{ infinispan_users }}"
-
-
-# Remove the persistence directory that was used in previous configurations
-- name: Ensure old infinispan persistence directory is removed
-  become: yes
-  file:
-    path: "{{ infinispan_persistence_data_dir }}"
-    state: absent
-
-
-- name: Register rsyslog logging for Infinispan service
-  set_fact:
-    rsyslog_log_configs: "{{ rsyslog_log_configs + [{ 'type': 'file', 'path': infinispan_log_file, 'tag': 'infinispan' }] }}"
+    - name: Remove Infinispan installation directories
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ infinispan_install_dirs.files }}"

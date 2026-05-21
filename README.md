@@ -15,7 +15,7 @@ of Keycloak [installation guide][].
 
 The figure below shows an overview of the architecture. It is composed of a
 cluster of load balancer servers (running either nginx or HAProxy), and one
-or more clusters with Keycloak, Infinispan, database (MariaDB), and LDAP
+or more clusters with Keycloak, database (MariaDB), and LDAP
 servers. The links between the servers are logical only, and are meant to
 highlight how services are connected.
 
@@ -42,7 +42,7 @@ servers.
 
 The LDAP servers can be omitted, as they are not required for any of the other
 services inside the playbooks. The other services inside each cluster (Keycloak,
-Infinispan, database) are required, however, since Keycloak's functionality is
+database) are required, however, since Keycloak's functionality is
 strictly tied to them.
 
 More than one load balancer server can be configured, but the playbooks
@@ -53,7 +53,7 @@ if they can be reached, but virtual IPs are not migrated automatically.
 All services (except LDAP, which is not configured to use the proper
 certificate, should be added in the future) have SSL enabled. The playbooks
 generate self-signed certificates on one of the servers in each category
-(keycloak, infinispan, and so on), replicates the files on all other services in
+(keycloak, and so on), replicates the files on all other services in
 the same category, and then configures the services to use them. The client
 services are then configured to trust the certificates of the services they
 connect to.
@@ -81,7 +81,7 @@ stack templates with either one or two Keycloak clusters can be found in the
 The clusters must be defined in an inventory file similar to the ones in the
 `examples` directory. You should be able to add however many hosts in any of the
 groups, but make sure to not change the names of the functional groups
-(`load_balancers`, `keycloak`, `database`, `infinispan`, `ldap`), since these
+(`load_balancers`, `keycloak`, `database`, `ldap`), since these
 are used to identify the nodes that services must communicate with.
 
 The example inventories expect hosts to be defined in the control node's SSH
@@ -201,9 +201,9 @@ You will need to set some of the following variables for your deployment
     of the database (the additional computed data increases the required system
     memory).
 
-- Java services (e.g. Infinispan, Keycloak):
+- Java services (e.g. Keycloak):
   - `java_shared_system_mem_max`: Maximum amount of memory allocated for Java
-    services (Keycloak and Infinispan) if they are installed on a system that
+    services (Keycloak) if they are installed on a system that
     also runs other services (e.g., database).
 
 - Keycloak:
@@ -281,12 +281,12 @@ You will need to set some of the following variables for your deployment
     Note: This variable is used to determine if TLS should be enabled -
     TLS cannot be used if unset.
 
-  - `rsyslog_keycloak_file_format_json` / `rsyslog_infinispan_file_format_json`:
-    rsyslog reads the logs for Keycloak and Infinispan from log files. These
-    variables control whether the services output the logs in JSON format.
-    By default, we assume JSON format if rsyslog remote logging is enabled, or
-    the default (the more human-readable format) otherwise.
-    You can use these variables to specify if JSON logging is desired (boolean).
+  - `rsyslog_keycloak_file_format_json`: rsyslog reads the logs for Keycloak
+    from log files. This variable controls whether the service outputs the logs
+    in JSON format. By default, we assume JSON format if rsyslog remote
+    logging is enabled, or the default (the more human-readable format)
+    otherwise. You can use this variable to specify if JSON logging is desired
+    (boolean).
 
   - `rsyslog_log_configs`: List of custom log configurations. Can specify either
     logging from the journal, based on the program name, or files, and exposing

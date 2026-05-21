@@ -54,16 +54,8 @@ keycloak_https_port: 8443
 keycloak_management_port: 9001
 keycloak_management_prefix: /management
 
-# port 11222 is used by default for the hot rod protocol. Is common for
-# Infinispan (server) and Keycloak (client)
-infinispan_hotrod_port: 11222
-# port 7800 is used by default for cluster communication (tcpping)
-infinispan_tcpping_port: 7800
-
-# Metrics port for infinispan status - is proxied through an nginx reverse proxy
-# This must be a valid httpd_port_t value for SELinux
-# Alternately nginx will fail to start, as binding would be blocked by SELinux
-infinispan_metrics_proxy_port: 9000
+# port 7800 is used by default for cluster communication by the Infinispan server embedded into Keycloak
+infinispan_clustering_port: 7800
 
 # Ports LDAP servers listen on
 ldap_listen_port: 389        # server port for non-secure connections
@@ -83,48 +75,14 @@ database_galera_replication_port: 4567
 database_galera_ist_port: 4568
 database_galera_sst_port: 4444
 
-
-# Enable the "multi-site" and "hostname version 2" features by default
-keycloak_default_enabled_features:
-  - multi-site
-  - hostname:v2
+keycloak_default_enabled_features: []
 
 keycloak_all_enabled_features: "{{ keycloak_enabled_features | default([]) + keycloak_default_enabled_features }}"
-
-# Caches with their respective cache types (from keycloak's point of view;
-# infinispan creates all caches as replicated caches)
-infinispan_caches:
-  actionTokens:
-    max_count: -1
-  authenticationSessions:
-    indexed_entities:
-      - keycloak.RootAuthenticationSessionEntity
-    max_count: -1
-  loginFailures:
-    indexed_entities:
-      - keycloak.LoginFailureEntity
-    max_count: -1
-  work:
-    max_count: -1
-  sessions:
-    owners: 1
-  clientSessions:
-    owners: 1
-  offlineSessions:
-    owners: 1
-  offlineClientSessions:
-    owners: 1
-
-
-# User used by keycloak to connect to the infinispan cluster
-infinispan_keycloak_user: keycloak
 
 # Function groups - group of nodes that perform operations
 function_groups:
   database:
     master: "{{ groups.database[0] }}"
-  infinispan:
-    master: "{{ groups.infinispan[0] }}"
   keycloak:
     master: "{{ groups.keycloak[0] }}"
   ldap:
@@ -133,9 +91,7 @@ function_groups:
     master: "{{ (groups.load_balancers | default(['']))[0] }}"
 
 java_services:
-  - infinispan
   - keycloak
-
 
 all_group_names: "{{ group_names + ['all'] }}"
 
@@ -177,7 +133,6 @@ node_clusters: "{{ groups | select('match', 'cluster_*') | list }}"
 
 cluster_servers:
   keycloak: "{{ groups.keycloak | intersect(groups[cluster_name]) }}"
-  infinispan: "{{ groups.infinispan | intersect(groups[cluster_name]) }}"
   database: "{{ groups.database | intersect(groups[cluster_name]) }}"
   ldap: "{{ groups.ldap | default([]) | intersect(groups[cluster_name]) }}"
 
@@ -197,7 +152,6 @@ prometheus_exporters_tls: False
 # Exporters to install on the nodes
 prometheus_service_specific_exporters:
   database: ["node", "database"]
-  infinispan: ["node"]
   keycloak: ["node"]
   ldap: ["node"]
   load_balancers: ["node", "haproxy"]
@@ -263,10 +217,8 @@ rsyslog_configure: "{{ rsyslog_log_servers | length > 0 }}"
 rsyslog_log_configs: []
 
 rsyslog_keycloak_file_format_json: "{{ rsyslog_configure }}"
-rsyslog_infinispan_file_format_json: "{{ rsyslog_configure }}"
 
 database_system_user: mysql
-infinispan_system_user: infinispan
 keycloak_system_user: keycloak
 prometheus_system_user: prometheus
 

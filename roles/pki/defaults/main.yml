@@ -23,8 +23,6 @@ pki_service_specific_configs:
       file_group: "{{ database_system_user }}"
     - application: stunnel
       file_group: "{{ database_system_user }}"
-  infinispan:
-    - application: infinispan
   keycloak:
     - application: keycloak
   ldap:

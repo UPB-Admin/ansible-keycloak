@@ -6,11 +6,11 @@
 # Modify environment properties in this script as appropriate.
 # Copy this script to the following location: /etc/systemd/system
 # Activate with 'systemctl daemon-reload'
-#               'systemctl start|enable infinispan'
+#               'systemctl start|enable keycloak'
 
 [Unit]
 Description=Keycloak Server Service
-After=syslog.target network-online.target mariadb.service infinispan.service
+After=syslog.target network-online.target mariadb.service
 
 [Service]
 Environment=JAVA_HOME="{{ java_home_dir }}"

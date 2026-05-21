@@ -13,9 +13,6 @@ all:
         database_1:
           hosts:
             keycloak-cluster-1-db:
-        infinispan_1:
-          hosts:
-            keycloak-cluster-1-infinispan:
         ldap_1:
           hosts:
             keycloak-cluster-1-ldap:
@@ -27,10 +24,6 @@ all:
     database:
       children:
         database_1:
-
-    infinispan:
-      children:
-        infinispan_1:
 
     ldap:
       children:

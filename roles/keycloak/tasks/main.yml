@@ -251,9 +251,6 @@
         owner: root
         group: "{{ keycloak_system_user }}"
       with_items:
-        - service: infinispan
-          content: "{{ hostvars[function_groups.infinispan.master].pki_certificate.infinispan | default('') }}"
-          dest: "{{ infinispan_trusted_certificate_file }}"
         - service: database
           content: "{{ hostvars[function_groups.database.master].pki_certificate.mariadb | default('') }}"
           dest: "{{ database_trusted_certificate_file }}"
