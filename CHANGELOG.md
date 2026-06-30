@@ -1,5 +1,9 @@
 ## Changelog
 
+### June 2026
+
+- Bump Keycloak to version 26.6.4.
+
 ### May 2026
 - Bump Keycloak to version 26.6.1 and Infinispan 16.1.4 (the upgrade notes for
   Keycloak recommend using version 16+). Also bump Java version to 25 (required
