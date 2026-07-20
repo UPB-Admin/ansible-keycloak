@@ -57,4 +57,4 @@ keycloak_node_name: "{{ 'k_%d%d' % (cluster_number, keycloak_node_index|int + 1)
 keycloak_site_name: "c_{{ cluster_number }}"
 
 # Timeout for first boot. The interval must be enough to allow Keycloak to boot and setup the database and admin user
-keycloak_admin_create_timeout: 180s
+keycloak_admin_create_timeout: 30s

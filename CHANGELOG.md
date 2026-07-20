@@ -46,6 +46,10 @@ rm -rf /root/.my.cnf /var/lib/mysql/ /etc/my.cnf*
 - Remove the UDP version of the database SST port from the firewall. The latest
   MariaDB documentation only mentions SST using a TCP port.
 
+- Reduce the timeout for the initial Keycloak startup, where it creates the
+  admin user to 30 seconds, down from 180. The longer timeout was required
+  in older versions of Keycloak since startup was slower.
+
 ### June 2026
 
 - Bump Keycloak to version 26.6.4.
