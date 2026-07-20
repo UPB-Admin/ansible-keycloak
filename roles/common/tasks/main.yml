@@ -73,6 +73,16 @@
   notify: restart systemd-journald
 
 
+- name: Make sure system-wide backups directory exists
+  become: yes
+  file:
+    path: "{{ system_backups_dir }}"
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+
+
 - name: Clean Keycloak path prefix variable (ensure it has a leading slash)
   set_fact:
     keycloak_path_prefix: "/{{ keycloak_path_prefix | regex_replace('/+', '/') | regex_replace('^/|/$', '') }}"

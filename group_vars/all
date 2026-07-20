@@ -75,6 +75,8 @@ database_galera_replication_port: 4567
 database_galera_ist_port: 4568
 database_galera_sst_port: 4444
 
+system_backups_dir: /var/backup
+
 keycloak_default_enabled_features: []
 
 keycloak_all_enabled_features: "{{ keycloak_enabled_features | default([]) + keycloak_default_enabled_features }}"

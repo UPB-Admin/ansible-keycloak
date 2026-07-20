@@ -10,7 +10,8 @@ database_secure_install_marker: /root/.my.cnf
 
 database_log_dir: /var/log/mariadb
 database_data_dir: /var/lib/mysql
-database_backups_dir: "{{ database_data_dir }}/_backups"
+
+database_backups_dir: "{{ system_backups_dir }}/mysql"
 
 database_systemd_override_dir: "{{ systemd_override_dir }}/mariadb.service.d"
 database_systemd_override_file: "{{ database_systemd_override_dir }}/overrides.conf"

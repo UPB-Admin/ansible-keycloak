@@ -6,6 +6,17 @@
   according to current documentation. Note that this does not affect running
   instances.
 
+- Create a "system backups" directory under `/var/backup` and create new
+  database backups under `/var/backup/mysql`. This has two advantages: it stops
+  the `_backups` directory from being displayed by MariaDB as a database in the
+  CLI and properly separates the backed up data from the service's work
+  directory, so it is not lost if the data directory is removed. You can move
+  old backups and remove the directory if it is not needed:
+```bash
+mv -v /var/lib/mysql/_backups/*.sql /var/backup/mysql/
+rm -r /var/lib/mysql/_backups/
+```
+
 ### June 2026
 
 - Bump Keycloak to version 26.6.4.
