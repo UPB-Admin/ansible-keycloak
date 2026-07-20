@@ -43,6 +43,9 @@ dnf remove MariaDB-server MariaDB-common
 rm -rf /root/.my.cnf /var/lib/mysql/ /etc/my.cnf*
 ```
 
+- Remove the UDP version of the database SST port from the firewall. The latest
+  MariaDB documentation only mentions SST using a TCP port.
+
 ### June 2026
 
 - Bump Keycloak to version 26.6.4.

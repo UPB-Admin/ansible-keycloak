@@ -71,12 +71,6 @@ firewall_rich_rules:
       protocol: tcp
       source_ips: "{{ groups.database | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
-    # Allow connections to State Snapshot Transfer (SST) traffic UDP port from database servers
-    - zone: "{{ firewalld_internal_zone }}"
-      port: "{{ database_galera_sst_port }}"
-      protocol: udp
-      source_ips: "{{ groups.database | map('extract', hostvars, 'interfaces_internal_ip') }}"
-
   ldap:
     # Allow connections to the LDAP non-secure port from keycloak and LDAP servers
     - zone: "{{ firewalld_internal_zone }}"
