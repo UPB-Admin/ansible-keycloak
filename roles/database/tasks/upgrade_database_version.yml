@@ -16,7 +16,7 @@
         dest: /etc/yum.repos.d/mariadb.repo
         mode: 0600
 
-    - name: Install MariaDB server packages
+    - name: Install MariaDB server packages (version {{ mariadb_version }})
       package:
         name: MariaDB-server
         state: latest
@@ -32,7 +32,7 @@
         src: galera.cnf
         dest: /etc/my.cnf.d/galera.cnf
 
-    - name: Start MariaDB service
+    - name: Start MariaDB service (version {{ mariadb_version }})
       service:
         name: mariadb
         state: started

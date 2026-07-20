@@ -8,7 +8,7 @@
         owner: "{{ database_system_user }}"
         group: "{{ database_system_user }}"
 
-    - name: Create database backup
+    - name: Create database backup file {{ database_backup_file }} for database {{ database_name }}
       community.mysql.mysql_db:
         login_user: root
         login_password: "{{ vault.database.user.root.pass }}"
