@@ -50,6 +50,8 @@ rm -rf /root/.my.cnf /var/lib/mysql/ /etc/my.cnf*
   admin user to 30 seconds, down from 180. The longer timeout was required
   in older versions of Keycloak since startup was slower.
 
+- Bump Keycloak to version 26.7.0.
+
 ### June 2026
 
 - Bump Keycloak to version 26.6.4.
