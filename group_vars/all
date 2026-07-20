@@ -66,7 +66,7 @@ database_config:
   keycloak:
     dbname: keycloak
     username: keycloak
-    encoding: utf8mb3
+    encoding: utf8mb4
 
 database_listen_port: 3306
 database_unix_socket: /var/lib/mysql/mysql.sock
