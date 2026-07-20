@@ -5,7 +5,7 @@ mariadb_version_upgrades:
   "10.6": "10.11"
   "10.11": "11.4"
   "11.4": "11.8"
-mariadb_known_versions: "{{ mariadb_version_upgrades.keys() | union(mariadb_version_upgrades.values()) | community.general.version_sort }}"
+mariadb_known_versions: "{{ mariadb_version_upgrades.keys() | list | union(mariadb_version_upgrades.values() | list) | community.general.version_sort }}"
 mariadb_latest_version: "{{ mariadb_known_versions | last }}"
 
 mariadb_gpg_signing_key: /etc/pki/rpm-gpg/RPM-GPG-KEY-MariaDB
