@@ -1,0 +1,27 @@
+- become: yes
+  block:
+    - name: Make sure backup directory exists
+      file:
+        path: "{{ database_backups_dir }}"
+        state: directory
+        mode: 0700
+        owner: "{{ database_system_user }}"
+        group: "{{ database_system_user }}"
+
+    - name: Create database backup
+      community.mysql.mysql_db:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        name: "{{ database_name }}"
+        state: dump
+        target: "{{ database_backups_dir }}/{{ database_backup_file }}"
+        single_transaction: yes
+
+    - name: Set file permissions on backup file
+      file:
+        path: "{{ database_backups_dir }}/{{ database_backup_file }}"
+        state: file
+        mode: 0640
+        owner: root
+        group: "{{ database_system_user }}"
