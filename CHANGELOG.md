@@ -17,6 +17,32 @@ mv -v /var/lib/mysql/_backups/*.sql /var/backup/mysql/
 rm -r /var/lib/mysql/_backups/
 ```
 
+- Add tasks to upgrade MariaDB up to version 11.8, which is currently
+  the latest supported (and LTS) version of MariaDB. The playbooks attempt to
+  figure out an upgrade path automatically based on the currently installed
+  version. The upgrade process will upgrade the database version by version and
+  system by system (i.e., node 1 will be upgraded to the first version in the
+  list, then node 2 will be upgraded to the same version, then node 3, etc.;
+  after all nodes are upgraded the process repeats for the second version in the
+  list). We also add a custom SELinux module that allows MariaDB to run the
+  required commands (`stunnel`) and perform the required operations (TCP port
+  binding and connecting on any port) for encrypted state transfers. Note that
+  there are some cases where the upgrade process fails catastrophically (e.g.,
+  networking issues between the servers) which may leave the cluster in an
+  inconsistent state that the playbooks cannot recover from. In this case, you
+  will have to recover from this issue manually. You can use the database backup
+  that is created before beginning the upgrade process. **Because of this, it
+  is highly recommended to perform this upgrade during a maintenance window**.
+  In the worst case, an option to recover is to remove MariaDB completely using
+  the commands below, re-run the playbooks using a previous commit to set up
+  everything again and importing the Keycloak database from the backup. Keycloak
+  will have to be kept inaccessible while this process runs. After a database
+  import, you will need to restart Keycloak on all nodes to reload the data.
+```bash
+dnf remove MariaDB-server MariaDB-common
+rm -rf /root/.my.cnf /var/lib/mysql/ /etc/my.cnf*
+```
+
 ### June 2026
 
 - Bump Keycloak to version 26.6.4.

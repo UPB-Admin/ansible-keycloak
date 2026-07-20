@@ -1,6 +1,6 @@
 [mariadb]
 name=MariaDB
-baseurl=https://rpm.mariadb.org/10.6/centos/$releasever/$basearch
+baseurl=https://rpm.mariadb.org/{{ mariadb_version }}/centos/$releasever/$basearch
 gpgkey=file://{{ mariadb_gpg_signing_key | realpath }}
 gpgcheck=1
 enabled=1

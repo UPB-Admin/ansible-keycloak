@@ -1,0 +1,5 @@
+- include_tasks: upgrade_database_version.yml
+  when: inventory_hostname == hostname
+  with_items: "{{ groups.database }}"
+  loop_control:
+    loop_var: hostname

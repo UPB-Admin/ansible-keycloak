@@ -1,0 +1,60 @@
+- become: yes
+  block:
+    - name: Stop MariaDB service
+      service:
+        name: mariadb
+        state: stopped
+
+    - name: Remove existing MariaDB server packages
+      package:
+        name: MariaDB-server
+        state: absent
+
+    - name: Add mariadb repository file
+      template:
+        src: mariadb.repo
+        dest: /etc/yum.repos.d/mariadb.repo
+        mode: 0600
+
+    - name: Install MariaDB server packages
+      package:
+        name: MariaDB-server
+        state: latest
+
+    - name: Copy server configuration file
+      template:
+        src: mariadb_server.cnf
+        dest: /etc/my.cnf.d/server.cnf
+
+    - name: Copy galera config file
+      when: database_create_galera_cluster
+      template:
+        src: galera.cnf
+        dest: /etc/my.cnf.d/galera.cnf
+
+    - name: Start MariaDB service
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: Wait until database clustering finishes synchronizing
+      when: database_create_galera_cluster
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ vault.database.user.root.pass }}"
+        login_unix_socket: "{{ database_unix_socket }}"
+        query: "SHOW GLOBAL STATUS LIKE 'wsrep_local_state_comment';"
+      register: mariadb_cluster_status
+      until: mariadb_cluster_status.query_result[0][0].Value == "Synced"
+      delay: 5
+      retries: 30
+
+    - name: Upgrade database tables using mariadb-upgrade
+      become: yes
+      become_user: mysql
+      command:
+        argv: ["/usr/bin/mariadb-upgrade", "-u", "mysql", "-p", "--skip-write-binlog"]
+        stdin: "{{ vault.database.user.mysql.pass }}"
+      vars:
+        ansible_remote_tmp: "/tmp/${USER}/.ansible"

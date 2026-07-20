@@ -1,3 +1,13 @@
+# Check https://www.keycloak.org/server/supported-configurations#_supported_databases for supported database versions
+# only upgrade to a version that is actually supported. The last value in the list must be a supported version
+# Check https://mariadb.com/docs/server/server-management/install-and-upgrade-mariadb/upgrading/mariadb-community-server-upgrade-paths for upgrade paths
+mariadb_version_upgrades:
+  "10.6": "10.11"
+  "10.11": "11.4"
+  "11.4": "11.8"
+mariadb_known_versions: "{{ mariadb_version_upgrades.keys() | union(mariadb_version_upgrades.values()) | community.general.version_sort }}"
+mariadb_latest_version: "{{ mariadb_known_versions | last }}"
+
 mariadb_gpg_signing_key: /etc/pki/rpm-gpg/RPM-GPG-KEY-MariaDB
 
 database_use_unix_socket: True
@@ -7,6 +17,7 @@ database_create_galera_cluster: "{{ (groups.database | length) > 1 }}"
 
 # File to create when the secure installation process is complete, so it is not attempted again
 database_secure_install_marker: /root/.my.cnf
+database_galera_replication_cil_file: /root/mysql-galera-replication.cil
 
 database_log_dir: /var/log/mariadb
 database_data_dir: /var/lib/mysql

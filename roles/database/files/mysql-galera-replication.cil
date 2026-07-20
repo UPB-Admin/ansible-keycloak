@@ -1,0 +1,2 @@
+(allow mysqld_t stunnel_exec_t (file (getattr open read map execute execute_no_trans)))
+(allow mysqld_t port_type (tcp_socket (name_connect name_bind)))

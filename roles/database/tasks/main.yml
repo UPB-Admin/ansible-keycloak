@@ -1,4 +1,4 @@
-- name: Database server initial configurations
+- name: Set up basic configs and install Ansible requirements
   become: yes
   block:
     - name: Add mariadb repository signing key
@@ -6,20 +6,6 @@
         src: mariadb-repo-key.asc
         dest: "{{ mariadb_gpg_signing_key }}"
         mode: 0644
-
-    - name: Add mariadb repository file
-      template:
-        src: mariadb.repo
-        dest: /etc/yum.repos.d/mariadb.repo
-        mode: 0600
-
-    - name: Database install
-      package:
-        name:
-          - MariaDB-server
-          - MariaDB-client
-        state: installed
-      notify: restart database
 
     - name: Install required packages
       package:
@@ -44,13 +30,98 @@
       loop_control:
         label: "{{ item.key }}"
 
+    - name: Check if custom mysql SELinux module to allow Galera replication is installed
+      shell: "semodule -lstandard | grep -q '^{{ database_galera_replication_cil_file | basename | regex_replace('\\.cil$', '') | quote }}$'"
+      changed_when: false
+      failed_when: false
+      register: mysql_galera_module_stat
 
-# check if "{{ database_secure_install_marker }}" exists
-- name: Checking if secure install script was already run
+    - name: Set up custom mysql SELinux module to allow Galera replication if it is not installed
+      when: mysql_galera_module_stat.rc != 0 # grep did not find the module in the list
+      block:
+        - name: Create mysql SELinux module CIL file
+          copy:
+            src: mysql-galera-replication.cil
+            dest: "{{ database_galera_replication_cil_file }}"
+            mode: 0600
+            owner: root
+            group: root
+
+        - name: Install mysql SELinux module
+          command:
+            argv: ["/usr/sbin/semodule", "-X300", "-i", "{{ database_galera_replication_cil_file }}"]
+
+        - name: Remove mysql SElinux module CIL file
+          file:
+            path: "{{ database_galera_replication_cil_file }}"
+            state: absent
+
+
+- name: Check if secure install script was already run
   become: yes
   stat:
     path: "{{ database_secure_install_marker }}"
   register: marker_stat
+
+
+- name: Check installed MariaDB package version
+  when: marker_stat.stat.exists
+  block:
+    - name: Gather package facts
+      package_facts:
+        manager: auto
+
+    - name: Fail if MariaDB appears to be set up, but not installed
+      fail:
+        msg: |-
+          Something went wrong.
+          MariaDB server package is not installed, but service appears to have been set up previously.
+          Please fix the issue manually.
+      when: not "MariaDB-server" in ansible_facts.packages
+
+    - name: Set installed MariaDB server package version as fact (major and minor)
+      set_fact:
+        mariadb_installed_version: "{{ (ansible_facts.packages['MariaDB-server'][0].version | split('.'))[:2] | join('.')  }}"
+
+    - name: Fail if installed version is not part of upgrade path
+      fail:
+        msg: "MariaDB version {{ mariadb_installed_version }} is not part of the upgrade path. Cannot upgrade."
+      when: mariadb_installed_version not in mariadb_known_versions
+
+    - name: Upgrade MariaDB version if required
+      when: mariadb_installed_version is version(mariadb_latest_version, "<")
+      block:
+        - name: Create database backup before upgrade
+          include_tasks: backup_database.yml
+          vars:
+            database_name: all
+            database_backup_file: "mariadb-upgrade-{{ mariadb_installed_version }}.sql"
+
+        - name: Upgrade database to latest version (version by version, system by system)
+          include_tasks: upgrade_database.yml
+          with_list: "{{ mariadb_known_versions | select('version', mariadb_installed_version, '>') }}"
+          loop_control:
+            loop_var: mariadb_version
+
+
+- name: Install MariaDB packages
+  become: yes
+  block:
+    - name: Add mariadb repository file
+      template:
+        src: mariadb.repo
+        dest: /etc/yum.repos.d/mariadb.repo
+        mode: 0600
+      vars:
+        mariadb_version: "{{ mariadb_latest_version }}"
+
+    - name: Database install
+      package:
+        name:
+          - MariaDB-server
+          - MariaDB-client
+        state: installed
+      notify: restart database
 
 
 - name: MySQL Secure Installation
@@ -93,14 +164,11 @@
           - "ALTER USER 'mariadb.sys'@'localhost' IDENTIFIED BY '{{ vault.database.user.mariadb_sys.pass }}';"
           - "ALTER USER 'mysql'@'localhost' IDENTIFIED BY '{{ vault.database.user.mysql.pass }}';"
 
-
-- name: Create marker file if it does not exist
-  become: yes
-  when: not marker_stat.stat.exists
-  copy:
-    content: "# Do not delete this file"
-    dest: "{{ database_secure_install_marker }}"
-    mode: 0400
+    - name: Create marker file if it does not exist
+      copy:
+        content: "# Do not delete this file"
+        dest: "{{ database_secure_install_marker }}"
+        mode: 0400
 
 
 - name: Copy database configuration files
@@ -164,7 +232,7 @@
         dest: /usr/lib64/galera
         state: link
 
-    - name: Copy galera config file (master)
+    - name: Copy galera config file
       template:
         src: galera.cnf
         dest: /etc/my.cnf.d/galera.cnf
@@ -249,7 +317,7 @@
         - name: Determine the latest installed version of Keycloak
           set_fact:
             keycloak_running_version: "{{ item.VERSION }}"
-          when: item.VERSION is version(keycloak_running_version, '>')
+          when: item.VERSION is version(keycloak_running_version, ">")
           with_items: "{{ keycloak_versions.query_result[0] }}"
 
         - name: Fail if keycloak would be downgraded
