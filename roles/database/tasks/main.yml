@@ -252,6 +252,7 @@
 
 
 - name: Ensure database is started before running queries
+  become: yes
   service:
     name: mariadb
     state: started
