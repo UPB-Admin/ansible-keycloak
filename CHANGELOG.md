@@ -1,5 +1,9 @@
 ## Changelog
 
+### September 2026
+
+- Bump Keycloak to version 26.7.4.
+
 ### July 2026
 
 - Change default database encoding for Keycloak from `utf8mb3` to `utf8mb4`,
