@@ -14,6 +14,12 @@
   Keycloak servers were not also included in the `infinispan` group, the
   firewall did not correctly allow clustering of the embedded Infinispan
   service.
+- Add nginx proxy connect timeout setting. Without this setting nginx may
+  continue to forward requests to a backend that does not respond (e.g., if the
+  server crashed) and requests may hang for a long time (defaults to 60
+  seconds). Setting the timeout to 1 second will cause nginx to forward the
+  request to other backends if a backend server does not respond within that
+  amount of time.
 
 ### September 2026
 

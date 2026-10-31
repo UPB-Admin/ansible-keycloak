@@ -27,6 +27,7 @@ nginx_worker_connections: 4096
 nginx_resolver_ips: 1.1.1.1 8.8.8.8
 nginx_resolver_validity: 300s
 nginx_resolver_timeout: 5s
+nginx_proxy_connect_timeout: 1s
 
 nginx_healthcheck_max_fails: 1
 nginx_healthcheck_fail_timeout: 3s
