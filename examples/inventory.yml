@@ -30,6 +30,12 @@ all:
           hosts:
             keycloak-cluster-2-ldap:
 
+    cluster_3:
+      children:
+        database_3:
+          hosts:
+            keycloak-cluster-3-db:
+
     keycloak:
       children:
         keycloak_1:
@@ -39,6 +45,7 @@ all:
       children:
         database_1:
         database_2:
+        database_3:
 
     ldap:
       children:

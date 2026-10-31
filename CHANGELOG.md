@@ -1,5 +1,10 @@
 ## Changelog
 
+### October 2026
+
+- Add host group configuration and example for third cluster containing database
+  server.
+
 ### September 2026
 
 - Bump Keycloak to version 26.7.4.
