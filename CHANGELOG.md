@@ -9,6 +9,11 @@
   times before Keycloak is upgraded (e.g., if the playbook fails after creating
   the backup, but before Keycloak is fully upgraded). To restore the previous
   functionality, set `database_backup_file_include_timestamp` to False.
+- Remove leftover `infinispan` group name in firewall configuration. The
+  group name was left after Infinispan settings were removed, and if the
+  Keycloak servers were not also included in the `infinispan` group, the
+  firewall did not correctly allow clustering of the embedded Infinispan
+  service.
 
 ### September 2026
 

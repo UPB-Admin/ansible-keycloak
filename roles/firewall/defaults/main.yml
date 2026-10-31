@@ -33,7 +33,6 @@ firewall_rich_rules:
       protocol: tcp
       source_ips: "{{ groups.load_balancers | default([]) | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
-  infinispan:
     # Allow connections to the (embedded) Infinispan clustering port from Keycloak servers
     - zone: "{{ firewalld_internal_zone }}"
       port: "{{ infinispan_clustering_port }}"
