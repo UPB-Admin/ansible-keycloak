@@ -4,6 +4,7 @@
     name: node_exporter
     state: restarted
     enabled: yes
+  when: '"node" in prometheus_exporters_to_install'
   listen:
     - restart exporters
 
@@ -13,6 +14,7 @@
     name: database_exporter
     state: restarted
     enabled: yes
+  when: '"database" in prometheus_exporters_to_install'
   listen:
     - restart exporters
 
@@ -22,5 +24,6 @@
     name: haproxy_exporter
     state: restarted
     enabled: yes
+  when: '"haproxy" in prometheus_exporters_to_install'
   listen:
     - restart exporters
