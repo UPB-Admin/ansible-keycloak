@@ -56,6 +56,8 @@ keycloak_management_prefix: /management
 
 # port 7800 is used by default for cluster communication by the Infinispan server embedded into Keycloak
 infinispan_clustering_port: 7800
+# port 57800 is used by default for Infinispan failure detection
+infinispan_failure_detection_port: 57800
 
 # Ports LDAP servers listen on
 ldap_listen_port: 389        # server port for non-secure connections

@@ -20,6 +20,8 @@
   seconds). Setting the timeout to 1 second will cause nginx to forward the
   request to other backends if a backend server does not respond within that
   amount of time.
+- Add Infinispan failure detection port to firewall allowed ports between
+  Keycloak servers in the same cluster.
 
 ### September 2026
 
