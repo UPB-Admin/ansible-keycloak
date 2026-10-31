@@ -22,6 +22,11 @@
   amount of time.
 - Add Infinispan failure detection port to firewall allowed ports between
   Keycloak servers in the same cluster.
+- Bump Keycloak to version 26.8.1 and enable the `stateless` feature by default.
+  Also update database settings to ensure causality checks and commit reattempts
+  to reduce the chance of incoherent access to the database for Keycloak.
+  Furthermore, since Keycloak can sync through the database, we
+  restrict access to (embedded) Infinispan ports to only cluster nodes.
 
 ### September 2026
 

@@ -37,13 +37,13 @@ firewall_rich_rules:
     - zone: "{{ firewalld_internal_zone }}"
       port: "{{ infinispan_clustering_port }}"
       protocol: tcp
-      source_ips: "{{ groups.keycloak | map('extract', hostvars, 'interfaces_internal_ip') }}"
+      source_ips: "{{ cluster_servers.keycloak | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
     # Allow connections to the (embedded) Infinispan failure detection port from Keycloak servers
     - zone: "{{ firewalld_internal_zone }}"
       port: "{{ infinispan_failure_detection_port }}"
       protocol: tcp
-      source_ips: "{{ groups.keycloak | map('extract', hostvars, 'interfaces_internal_ip') }}"
+      source_ips: "{{ cluster_servers.keycloak | map('extract', hostvars, 'interfaces_internal_ip') }}"
 
   database:
     # Allow connections to database port from client services

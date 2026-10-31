@@ -1,4 +1,4 @@
-keycloak_version: 26.7.4
+keycloak_version: 26.8.1
 
 # Password placeholder used in vault example file
 vault_password_placeholder: changeme
@@ -79,7 +79,8 @@ database_galera_sst_port: 4444
 
 system_backups_dir: /var/backup
 
-keycloak_default_enabled_features: []
+keycloak_default_enabled_features:
+  - stateless
 
 keycloak_all_enabled_features: "{{ keycloak_enabled_features | default([]) + keycloak_default_enabled_features }}"
 

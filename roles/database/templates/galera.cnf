@@ -83,7 +83,7 @@ wsrep_debug=0
 wsrep_convert_LOCK_to_trx=0
 
 # how many times to retry deadlocked autocommits
-wsrep_retry_autocommit=1
+wsrep_retry_autocommit=10
 
 # change auto_increment_increment and auto_increment_offset automatically
 wsrep_auto_increment_control=1
@@ -91,8 +91,8 @@ wsrep_auto_increment_control=1
 # retry autoinc insert, which failed for duplicate key error
 wsrep_drupal_282555_workaround=0
 
-# enable "strictly synchronous" semantics for read operations
-wsrep_causal_reads=0
+# ensure causality checks are performed for READ, UPDATE, DELETE, INSERT and REPLACE operations
+wsrep_sync_wait=7
 
 # Command to call when node status or cluster membership changes.
 # Will be passed all or some of the following options:
