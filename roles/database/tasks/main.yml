@@ -1,12 +1,6 @@
-- name: Set up basic configs and install Ansible requirements
+- name: Install Ansible requirements
   become: yes
   block:
-    - name: Add mariadb repository signing key
-      copy:
-        src: mariadb-repo-key.asc
-        dest: "{{ mariadb_gpg_signing_key }}"
-        mode: 0644
-
     - name: Install required packages
       package:
         name:
@@ -17,44 +11,7 @@
         name: pymysql
         state: present
 
-    # This is required for mysql since the service is created as the database user
-    # and is not originally started as root and then forked
-    - name: Set owner / group on PKI files
-      file:
-        state: directory
-        recurse: yes
-        path: "{{ item.value.root_dir }}"
-        owner: "{{ item.value.file_owner }}"
-        group: "{{ item.value.file_group }}"
-      with_dict: "{{ pki_configs.database }}"
-      loop_control:
-        label: "{{ item.key }}"
 
-    - name: Check if custom mysql SELinux module to allow Galera replication is installed
-      shell: "semodule -lstandard | grep -q '^{{ database_galera_replication_cil_file | basename | regex_replace('\\.cil$', '') | quote }}$'"
-      changed_when: false
-      failed_when: false
-      register: mysql_galera_module_stat
-
-    - name: Set up custom mysql SELinux module to allow Galera replication if it is not installed
-      when: mysql_galera_module_stat.rc != 0 # grep did not find the module in the list
-      block:
-        - name: Create mysql SELinux module CIL file
-          copy:
-            src: mysql-galera-replication.cil
-            dest: "{{ database_galera_replication_cil_file }}"
-            mode: 0600
-            owner: root
-            group: root
-
-        - name: Install mysql SELinux module
-          command:
-            argv: ["/usr/sbin/semodule", "-X300", "-i", "{{ database_galera_replication_cil_file }}"]
-
-        - name: Remove mysql SElinux module CIL file
-          file:
-            path: "{{ database_galera_replication_cil_file }}"
-            state: absent
 
 
 - name: Check if secure install script was already run
@@ -107,6 +64,12 @@
 - name: Install MariaDB packages
   become: yes
   block:
+    - name: Add mariadb repository signing key
+      copy:
+        src: mariadb-repo-key.asc
+        dest: "{{ mariadb_gpg_signing_key }}"
+        mode: 0644
+
     - name: Add mariadb repository file
       template:
         src: mariadb.repo
@@ -122,6 +85,45 @@
           - MariaDB-client
         state: installed
       notify: restart database
+
+    # This is required for mysql since the service is created as the database user
+    # and is not originally started as root and then forked
+    - name: Set owner / group on PKI files
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ item.value.root_dir }}"
+        owner: "{{ item.value.file_owner }}"
+        group: "{{ item.value.file_group }}"
+      with_dict: "{{ pki_configs.database }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Check if custom mysql SELinux module to allow Galera replication is installed
+      shell: "semodule -lstandard | grep -q '^{{ database_galera_replication_cil_file | basename | regex_replace('\\.cil$', '') | quote }}$'"
+      changed_when: false
+      failed_when: false
+      register: mysql_galera_module_stat
+
+    - name: Set up custom mysql SELinux module to allow Galera replication if it is not installed
+      when: mysql_galera_module_stat.rc != 0 # grep did not find the module in the list
+      block:
+        - name: Create mysql SELinux module CIL file
+          copy:
+            src: mysql-galera-replication.cil
+            dest: "{{ database_galera_replication_cil_file }}"
+            mode: 0600
+            owner: root
+            group: root
+
+        - name: Install mysql SELinux module
+          command:
+            argv: ["/usr/sbin/semodule", "-X300", "-i", "{{ database_galera_replication_cil_file }}"]
+
+        - name: Remove mysql SElinux module CIL file
+          file:
+            path: "{{ database_galera_replication_cil_file }}"
+            state: absent
 
 
 - name: MySQL Secure Installation
