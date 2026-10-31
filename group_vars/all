@@ -224,4 +224,9 @@ database_system_user: mysql
 keycloak_system_user: keycloak
 prometheus_system_user: prometheus
 
+# Add current timestamp to database backup files. If true, database backup file names will
+# include the current time, so they are not overridden if the playbook runs multiple times
+# on the same version
+database_backup_file_include_timestamp: True
+
 # vim: ft=yaml

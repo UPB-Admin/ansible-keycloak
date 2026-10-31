@@ -4,6 +4,11 @@
 
 - Add host group configuration and example for third cluster containing database
   server.
+- Add the current timestamp to database backup file names. This is meant to
+  prevent overriding the previous backup file if the playbook runs multiple
+  times before Keycloak is upgraded (e.g., if the playbook fails after creating
+  the backup, but before Keycloak is fully upgraded). To restore the previous
+  functionality, set `database_backup_file_include_timestamp` to False.
 
 ### September 2026
 

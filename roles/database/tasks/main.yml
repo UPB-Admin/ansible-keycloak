@@ -12,6 +12,9 @@
         state: present
 
 
+- name: Save current playbook run time as database backups suffix
+  set_fact:
+    database_backup_time_suffix: "{{ now(utc=true, fmt='-%Y%m%d%H%M%S') if database_backup_file_include_timestamp else '' }}"
 
 
 - name: Check if secure install script was already run
@@ -52,7 +55,7 @@
           include_tasks: backup_database.yml
           vars:
             database_name: all
-            database_backup_file: "mariadb-upgrade-{{ mariadb_installed_version }}.sql"
+            database_backup_file: "mariadb-upgrade-{{ mariadb_installed_version }}{{ database_backup_time_suffix }}.sql"
 
         - name: Upgrade database to latest version (version by version, system by system)
           include_tasks: upgrade_database.yml
@@ -342,7 +345,7 @@
   include_tasks: backup_database.yml
   vars:
     database_name: "{{ database_config.keycloak.dbname }}"
-    database_backup_file: "keycloak-{{ keycloak_running_version }}.sql"
+    database_backup_file: "keycloak-{{ keycloak_running_version }}{{ database_backup_time_suffix }}.sql"
 
 
 - name: Register rsyslog logging for MariaDB service
