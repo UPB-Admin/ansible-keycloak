@@ -3,6 +3,15 @@
 ### November 2026
 
 - Install `libuser` package required when running on Alma 10.
+- Extend SELinux policy permissions for mysql. These are required since the
+  default security on Alma 10 appears to behave differently and the `stunnel`
+  and `rsync` processes created by Galera clustering run in their own contexts
+  (i.e., `stunnel_t` / `rsync_t`), instead of the `mysql_t` context used by
+  MariaDB, like it did on RHEL 9 systems. Note that the policy will *not* be
+  automatically updated by the playbooks if it is already installed - policy
+  installation is skipped if the policy is set up. To update it, you will
+  need to remove the policy using `semodule -X300 -r mysql-galera-replication`
+  first.
 
 ### October 2026
 
