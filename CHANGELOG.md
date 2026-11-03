@@ -1,5 +1,9 @@
 ## Changelog
 
+### November 2026
+
+- Install `libuser` package required when running on Alma 10.
+
 ### October 2026
 
 - Add host group configuration and example for third cluster containing database

@@ -12,6 +12,7 @@
           - acl
           - chrony
           - gzip
+          - libuser
           - python3
           - python3-libsemanage
           - python3-pyOpenSSL
