@@ -13,6 +13,11 @@
   need to remove the policy using `semodule -X300 -r mysql-galera-replication`
   first.
 - Only install database SELinux policy module if Galera replication is enabled.
+- Stop Keycloak before performing database backups; database replication
+  causality checks in Galera will likely delay the backup process and Keycloak
+  would be unable to access the database while the backup is in progress
+  regardless. Keycloak is restarted at the end of the database role via
+  handlers.
 
 ### October 2026
 

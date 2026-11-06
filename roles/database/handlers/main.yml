@@ -1,2 +1,10 @@
 - name: restart database
   include_tasks: "restart_database_{{ 'cluster' if database_create_galera_cluster else 'single' }}.yml"
+
+- name: restart keycloak
+  become: yes
+  systemd:
+    name: keycloak
+    state: started
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.keycloak }}"
