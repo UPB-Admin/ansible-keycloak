@@ -12,6 +12,7 @@
   installation is skipped if the policy is set up. To update it, you will
   need to remove the policy using `semodule -X300 -r mysql-galera-replication`
   first.
+- Only install database SELinux policy module if Galera replication is enabled.
 
 ### October 2026
 

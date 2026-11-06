@@ -102,32 +102,6 @@
       loop_control:
         label: "{{ item.key }}"
 
-    - name: Check if custom mysql SELinux module to allow Galera replication is installed
-      shell: "semodule -lstandard | grep -q '^{{ database_galera_replication_cil_file | basename | regex_replace('\\.cil$', '') | quote }}$'"
-      changed_when: false
-      failed_when: false
-      register: mysql_galera_module_stat
-
-    - name: Set up custom mysql SELinux module to allow Galera replication if it is not installed
-      when: mysql_galera_module_stat.rc != 0 # grep did not find the module in the list
-      block:
-        - name: Create mysql SELinux module CIL file
-          copy:
-            src: mysql-galera-replication.cil
-            dest: "{{ database_galera_replication_cil_file }}"
-            mode: 0600
-            owner: root
-            group: root
-
-        - name: Install mysql SELinux module
-          command:
-            argv: ["/usr/sbin/semodule", "-X300", "-i", "{{ database_galera_replication_cil_file }}"]
-
-        - name: Remove mysql SElinux module CIL file
-          file:
-            path: "{{ database_galera_replication_cil_file }}"
-            state: absent
-
 
 - name: MySQL Secure Installation
   become: yes
@@ -242,6 +216,32 @@
         src: galera.cnf
         dest: /etc/my.cnf.d/galera.cnf
       notify: restart database
+
+    - name: Check if custom mysql SELinux module to allow Galera replication is installed
+      shell: "semodule -lstandard | grep -q '^{{ database_galera_replication_cil_file | basename | regex_replace('\\.cil$', '') | quote }}$'"
+      changed_when: false
+      failed_when: false
+      register: mysql_galera_module_stat
+
+    - name: Set up custom mysql SELinux module to allow Galera replication if it is not installed
+      when: mysql_galera_module_stat.rc != 0 # grep did not find the module in the list
+      block:
+        - name: Create mysql SELinux module CIL file
+          copy:
+            src: mysql-galera-replication.cil
+            dest: "{{ database_galera_replication_cil_file }}"
+            mode: 0600
+            owner: root
+            group: root
+
+        - name: Install mysql SELinux module
+          command:
+            argv: ["/usr/sbin/semodule", "-X300", "-i", "{{ database_galera_replication_cil_file }}"]
+
+        - name: Remove mysql SElinux module CIL file
+          file:
+            path: "{{ database_galera_replication_cil_file }}"
+            state: absent
 
 
 - name: Mark database service for restart if the PKI files have changed
