@@ -18,6 +18,7 @@
   would be unable to access the database while the backup is in progress
   regardless. Keycloak is restarted at the end of the database role via
   handlers.
+- Bump Keycloak to version 26.8.2.
 
 ### October 2026
 

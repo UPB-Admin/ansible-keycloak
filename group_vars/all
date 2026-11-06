@@ -1,4 +1,4 @@
-keycloak_version: 26.8.1
+keycloak_version: 26.8.2
 
 # Password placeholder used in vault example file
 vault_password_placeholder: changeme
